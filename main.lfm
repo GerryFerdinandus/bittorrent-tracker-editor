@@ -1,0 +1,332 @@
+object FormTrackerModify: TFormTrackerModify
+  Left = 635
+  Height = 607
+  Top = 177
+  Width = 1179
+  AllowDropFiles = True
+  Caption = 'Bittorrent Tracker Editor'
+  ClientHeight = 587
+  ClientWidth = 1179
+  Constraints.MinHeight = 500
+  Constraints.MinWidth = 640
+  Font.Height = -11
+  Menu = MainMenu
+  OnCreate = FormCreate
+  OnDestroy = FormDestroy
+  OnDropFiles = FormDropFiles
+  OnShow = FormShow
+  Position = poScreenCenter
+  LCLVersion = '1.2.4.0'
+  object PageControl: TPageControl
+    Left = 0
+    Height = 587
+    Top = 0
+    Width = 1179
+    ActivePage = TabSheetTrackersList
+    Align = alClient
+    TabIndex = 0
+    TabOrder = 0
+    object TabSheetTrackersList: TTabSheet
+      Caption = 'Trackers List'
+      ClientHeight = 561
+      ClientWidth = 1171
+      object PanelTop: TPanel
+        Left = 0
+        Height = 561
+        Top = 0
+        Width = 1171
+        Align = alClient
+        ClientHeight = 561
+        ClientWidth = 1171
+        TabOrder = 0
+        object GroupBoxNewTracker: TGroupBox
+          Left = 1
+          Height = 201
+          Top = 1
+          Width = 1169
+          Align = alTop
+          Caption = 'Add trackers to torrent file(s).'
+          ClientHeight = 183
+          ClientWidth = 1165
+          Constraints.MinHeight = 100
+          TabOrder = 0
+          object MemoNewTrackers: TMemo
+            Left = 0
+            Height = 183
+            Top = 0
+            Width = 1165
+            Align = alClient
+            ScrollBars = ssAutoBoth
+            TabOrder = 0
+          end
+        end
+        object GroupBoxPresentTracker: TGroupBox
+          Left = 1
+          Height = 353
+          Top = 207
+          Width = 1169
+          Align = alClient
+          Caption = 'Present trackers in all torrent files. Select the one that you want to keep.'
+          ClientHeight = 335
+          ClientWidth = 1165
+          Constraints.MinHeight = 100
+          ParentBidiMode = False
+          TabOrder = 1
+          object CheckListBoxTrackersList: TCheckListBox
+            Left = 0
+            Height = 335
+            Top = 0
+            Width = 1165
+            Align = alClient
+            Constraints.MinHeight = 50
+            ItemHeight = 0
+            TabOrder = 0
+          end
+        end
+        object Splitter1: TSplitter
+          Cursor = crVSplit
+          Left = 1
+          Height = 5
+          Top = 202
+          Width = 1169
+          Align = alTop
+          ResizeAnchor = akTop
+        end
+      end
+    end
+    object TabSheetPublicPrivateTorrent: TTabSheet
+      Caption = 'Public/Private'
+      ClientHeight = 561
+      ClientWidth = 1171
+      object PanelTopPublicTorrent: TPanel
+        Left = 0
+        Height = 561
+        Top = 0
+        Width = 1171
+        Align = alClient
+        ClientHeight = 561
+        ClientWidth = 1171
+        TabOrder = 0
+        object GroupBoxPublicPrivateTorrent: TGroupBox
+          Left = 1
+          Height = 559
+          Top = 1
+          Width = 1169
+          Align = alClient
+          Caption = 'Checked items are public torrent.  WARNING: change public/private setting will change torrent Hash info.'
+          ClientHeight = 541
+          ClientWidth = 1165
+          TabOrder = 0
+          object CheckListBoxPublicPrivateTorrent: TCheckListBox
+            Left = 0
+            Height = 541
+            Top = 0
+            Width = 1165
+            Align = alClient
+            ItemHeight = 0
+            TabOrder = 0
+          end
+        end
+      end
+    end
+    object TabSheetTorrentData: TTabSheet
+      Caption = 'Data/Info'
+      ClientHeight = 561
+      ClientWidth = 1171
+      object StringGridTorrentData: TStringGrid
+        Left = 0
+        Height = 561
+        Top = 0
+        Width = 1171
+        Align = alClient
+        ColCount = 9
+        ColumnClickSorts = True
+        Columns = <        
+          item
+            Title.Caption = 'Torrent File'
+            Width = 250
+          end        
+          item
+            Title.Caption = 'Info Filename'
+            Width = 250
+          end        
+          item
+            MaxSize = 250
+            Title.Caption = 'Info Hash'
+            Width = 280
+          end        
+          item
+            Title.Caption = 'Created On'
+            Width = 145
+          end        
+          item
+            Title.Caption = 'Created By'
+            Width = 145
+          end        
+          item
+            Title.Caption = 'Comment'
+            Width = 145
+          end        
+          item
+            Title.Caption = 'Private'
+            Width = 50
+          end        
+          item
+            Alignment = taRightJustify
+            Title.Alignment = taRightJustify
+            Title.Caption = 'Piece Length (KiB)'
+            Width = 100
+          end        
+          item
+            Alignment = taRightJustify
+            Title.Alignment = taRightJustify
+            Title.Caption = 'Total size (KiB)'
+            Width = 100
+          end>
+        FixedCols = 0
+        Options = [goFixedVertLine, goFixedHorzLine, goVertLine, goHorzLine, goRangeSelect, goDrawFocusSelected, goColSizing, goColMoving, goSmoothScroll]
+        RowCount = 1
+        TabOrder = 0
+        TitleFont.Height = -11
+        ColWidths = (
+          250
+          250
+          280
+          145
+          145
+          145
+          50
+          100
+          100
+        )
+      end
+    end
+    object TabSheetTorrentsContents: TTabSheet
+      Caption = 'Files/Trackers/Info'
+      ClientHeight = 561
+      ClientWidth = 1171
+      object GroupBoxTorrentContents: TGroupBox
+        Left = 0
+        Height = 561
+        Top = 0
+        Width = 1171
+        Align = alClient
+        Caption = 'Show all the files inside the torrents'
+        ClientHeight = 543
+        ClientWidth = 1167
+        TabOrder = 0
+        object TreeViewFileContents: TTreeView
+          Left = 0
+          Height = 543
+          Top = 0
+          Width = 1167
+          Align = alClient
+          AutoExpand = True
+          DefaultItemHeight = 16
+          PopupMenu = PopupMenuTorrentFilesContent
+          ReadOnly = True
+          ShowRoot = False
+          TabOrder = 0
+          Options = [tvoAutoExpand, tvoAutoItemHeight, tvoHideSelection, tvoKeepCollapsedNodes, tvoReadOnly, tvoShowButtons, tvoShowLines, tvoToolTips, tvoThemedDraw]
+        end
+      end
+    end
+  end
+  object SelectDirectoryDialog1: TSelectDirectoryDialog
+    Title = 'Select a directory with torrent files inside.'
+    left = 560
+    top = 24
+  end
+  object OpenDialog: TOpenDialog
+    Filter = 'torrent|*.torrent'
+    left = 560
+    top = 88
+  end
+  object MainMenu: TMainMenu
+    left = 472
+    top = 152
+    object MenuFile: TMenuItem
+      Caption = '&File'
+      object MenuOpenTorrentFile: TMenuItem
+        Caption = 'Open &one torrent file'
+        Hint = 'Select one torrent file'
+        OnClick = MenuOpenTorrentFileClick
+      end
+      object MenuFileTorrentFolder: TMenuItem
+        Caption = 'Open &multiple torrent files inside one folder'
+        Hint = 'Open multiple torrent files in folder.'
+        OnClick = MenuFileTorrentFolderClick
+      end
+      object MenuFileOpenTrackerList: TMenuItem
+        Caption = 'Open &tracker file list'
+        OnClick = MenuFileOpenTrackerListClick
+      end
+    end
+    object MenuTrackers: TMenuItem
+      Caption = '&Trackers'
+      object MenuTrackersKeepAllTrackers: TMenuItem
+        Tag = 1
+        Caption = '&Keep all the present trackers'
+        OnClick = MenuTrackersKeepOrDeleteAllTrackersClick
+      end
+      object MenuTrackersDeleteAllTrackers: TMenuItem
+        Caption = '&Delete all the present trackers'
+        OnClick = MenuTrackersKeepOrDeleteAllTrackersClick
+      end
+      object MenuTrackersAllTorrentArePublic: TMenuItem
+        Tag = 1
+        Caption = 'All torrent are &public'
+        OnClick = MenuTrackersAllTorrentArePublicPrivateClick
+      end
+      object MenuTrackersAllTorrentArePrivate: TMenuItem
+        Caption = 'All torrent are p&rivate'
+        OnClick = MenuTrackersAllTorrentArePublicPrivateClick
+      end
+    end
+    object MenuUpdateTorrent: TMenuItem
+      Caption = '&Update torrent'
+      Hint = 'Update the torrent files'
+      OnClick = MenuUpdateTorrentClick
+    end
+    object MenuHelp: TMenuItem
+      Caption = '&Help'
+      object MenuHelpVisitWebsite: TMenuItem
+        Caption = '&Visit website'
+        OnClick = MenuHelpVisitWebsiteClick
+      end
+    end
+  end
+  object PopupMenuTorrentFilesContent: TPopupMenu
+    left = 632
+    top = 152
+    object MenuItemTorrentFilesTreeShowAll: TMenuItem
+      Tag = -1
+      Caption = 'Show Everything'
+      OnClick = MenuItemTorrentFilesTreeShowAllClick
+    end
+    object MenuItemTorrentFilesTreeHideAll: TMenuItem
+      Caption = 'Hide All'
+      OnClick = MenuItemTorrentFilesTreeHideAllClick
+    end
+    object MenuItemTorrentFilesTreeShowFiles: TMenuItem
+      AutoCheck = True
+      Caption = 'Show All Files'
+      Checked = True
+      OnClick = MenuItemTorrentFilesTreeShowOrHideItemClick
+    end
+    object MenuItemTorrentFilesTreeShowTrackers: TMenuItem
+      Tag = 1
+      AutoCheck = True
+      Caption = 'Show All Trackers'
+      Checked = True
+      OnClick = MenuItemTorrentFilesTreeShowOrHideItemClick
+    end
+    object MenuItemTorrentFilesTreeShowInfo: TMenuItem
+      Tag = 2
+      AutoCheck = True
+      Caption = 'Show All Info'
+      Checked = True
+      OnClick = MenuItemTorrentFilesTreeShowOrHideItemClick
+    end
+  end
+end

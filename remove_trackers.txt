@@ -1,0 +1,2 @@
+udp://tracker.thepiratebay.org:80/announce
+http://tracker.thepiratebay.org/announce

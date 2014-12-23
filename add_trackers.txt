@@ -1,0 +1,4 @@
+udp://tracker.openbittorrent.com:80/announce
+udp://tracker.publicbt.com:80/announce
+udp://tracker.istole.it:80/announce
+udp://open.demonii.com:1337/announce

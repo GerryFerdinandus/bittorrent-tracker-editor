@@ -1,0 +1,12 @@
+Build from source.
+
+Install latest Lazarus IDE
+http://www.lazarus.freepascal.org/
+
+Open project file:
+menu Project -> open project
+select 'trackereditor.lpi' file
+
+Build:
+Menu Run -> Build
+Executable file is created in the same dir as the trackereditor.lpi

@@ -1,0 +1,31 @@
+------ Version 1.30
+ADD: Tab page Files/trackers/info
+ADD: Optional start program from console. (See readme.txt file)
+ADD: remove_trackers.txt will remove specific trackers form torrent.
+ADD: export_trackers.txt is created after updating the torrent.
+ADD: drag and drop of trackers file (with '*.txt' file extention)
+Fix: tab page Data/info 'Total size' sort functionality.
+Fix: tab page Data/info 'Piece Length' sort functionality.
+Fix: tab page Data/info 'info hash' must be uppercase. 
+FIX: issue 4 + 5 (see website)
+Compiler Lazarus: v1.24
+
+------ Version 1.21
+FIX: Support unicode in filename. (Chinese etc.)
+Compiler Lazarus: v1.0.12
+
+------ Version 1.20
+ADD: torrent Data/info tabpage
+ADD: Drag and drop of torrent files or folder.
+Compiler Lazarus: v1.0.10
+
+------ Version 1.10 (2013-0510)
+ADD: tabpage for public/private torrent
+ADD: Tracker List can be loaded from file
+Add: add_trackers.txt
+FIX: issue 1 (see website)
+Compiler Lazarus: v1.0.8
+
+------ Version 1.00 (2012-0303)
+First release
+Compiler Lazarus: v0.9.30
