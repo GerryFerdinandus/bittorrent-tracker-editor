@@ -16,7 +16,7 @@ object FormTrackerModify: TFormTrackerModify
   OnDropFiles = FormDropFiles
   OnShow = FormShow
   Position = poScreenCenter
-  LCLVersion = '1.2.4.0'
+  LCLVersion = '1.2.6.0'
   object PageControl: TPageControl
     Left = 0
     Height = 587
@@ -293,6 +293,10 @@ object FormTrackerModify: TFormTrackerModify
       object MenuHelpVisitWebsite: TMenuItem
         Caption = '&Visit website'
         OnClick = MenuHelpVisitWebsiteClick
+      end
+      object MenuHelpReportingIssue: TMenuItem
+        Caption = '&Reporting Issue'
+        OnClick = MenuHelpReportingIssueClick
       end
     end
   end

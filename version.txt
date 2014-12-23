@@ -1,3 +1,7 @@
+------ Version 1.3x
+ADD: tab page 'Files/Trackers/Info' show how many files count in one torrent
+ADD: tab page 'Files/Trackers/Info' show how many trackers count in one torrent
+
 ------ Version 1.30
 ADD: Tab page Files/trackers/info
 ADD: Optional start program from console. (See readme.txt file)

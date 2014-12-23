@@ -36,6 +36,7 @@ type
     MenuFile: TMenuItem;
     MenuFileTorrentFolder: TMenuItem;
     MenuFileOpenTrackerList: TMenuItem;
+    MenuHelpReportingIssue: TMenuItem;
     MenuItemTorrentFilesTreeHideAll: TMenuItem;
     MenuItemTorrentFilesTreeShowTrackers: TMenuItem;
     MenuItemTorrentFilesTreeShowInfo: TMenuItem;
@@ -74,6 +75,7 @@ type
     //At start of the program the form will be show/hide
     procedure FormShow(Sender: TObject);
     procedure MenuFileOpenTrackerListClick(Sender: TObject);
+    procedure MenuHelpReportingIssueClick(Sender: TObject);
     procedure MenuHelpVisitWebsiteClick(Sender: TObject);
 
     //Popup menu in treeview show all/hide all/ individual items selection.
@@ -167,7 +169,7 @@ const
     //    'udp://open.demonii.com:1337/announce'
     );
   //program name and version
-  FORM_CAPTION = 'Bittorrent tracker editor (1.30) ';
+  FORM_CAPTION = 'Bittorrent tracker editor (1.3x) BETA';
   TORRENT_FILES_CONTENTS_FORM_CAPTION =
     'Show all the files inside the torrents. (Use right mouse for popup menu.)';
 
@@ -941,6 +943,11 @@ begin
   end;
 end;
 
+procedure TFormTrackerModify.MenuHelpReportingIssueClick(Sender: TObject);
+begin
+    OpenURL('http://code.google.com/p/bittorrent-tracker-editor/issues');
+end;
+
 
 function TFormTrackerModify.ReadAddTrackerFileFromUser(
   const FileName: UTF8String): boolean;
@@ -1320,12 +1327,18 @@ begin
     end;
   end;
 
+  //Show a how many files are there
+   TreeNodeFiles.Text:= TreeNodeFiles.Text + ' (' + IntToStr(TreeNodeFiles.Count) + ')';
+
+
   //Show all the trackers inside the torrent
   for TrackerStr in FDecodePresentTorrent.TrackerList do
   begin
     TreeViewFileContents.Items.AddChild(TreeNodeTrackers, TrackerStr);
   end;
 
+  //Show a how many trackers are there
+   TreeNodeTrackers.Text:= TreeNodeTrackers.Text + ' (' + IntToStr(TreeNodeTrackers.Count) + ')';
 
 
   //Show all the info of torrent
