@@ -1243,12 +1243,13 @@ begin
   TreeViewFileContents.BeginUpdate;
   CheckListBoxPublicPrivateTorrent.Items.BeginUpdate;
 
-  if ClearView then //never used
+  if ClearView then
   begin
-    //Clear the View
+    //Clear all the user data 'View' elements. This will be filled with new data.
     TreeViewFileContents.Items.Clear;
     CheckListBoxPublicPrivateTorrent.Clear; //Use in update torrent!
     StringGridTorrentData.Clear;
+    FControlerGridTorrentData.ClearAllImageIndex;
     //RowCount is 0 after Clear. But must be 1 to make it work.
     StringGridTorrentData.RowCount := 1;
   end;

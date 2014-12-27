@@ -42,7 +42,6 @@ type
       IsColumn: boolean; sIndex, tIndex: integer);
     procedure AddColumn(var GridColumn: TGridColumn; index: integer);
     procedure UpdateColumnTag;
-    procedure ClearAllImageIndex;
     procedure WriteCell(GridColumn: TGridColumn; const Str: UTF8String);
   public
     //All the string that can be written to grid.
@@ -58,6 +57,7 @@ type
     IndexOrder             //9
     : UTF8String;
 
+    procedure ClearAllImageIndex;
     procedure AppendRow;
     procedure ReorderGrid;
     function ReadComment(Rowindex: integer): UTF8String;
@@ -90,7 +90,7 @@ var
 begin
   //fill the 'tag' value as the position of the coulumn.
   //this methode must be only called when the user change the column order.
-  for i := 0 to FStringGridTorrentData.ColCount - 1 do
+  for i := 0 to FStringGridTorrentData.Columns.Count - 1 do
   begin
     FStringGridTorrentData.Columns[i].Tag :=
       FStringGridTorrentData.Columns.IndexOf(FStringGridTorrentData.Columns[i]);
@@ -105,7 +105,7 @@ var
   i: integer;
 begin
   //The sort icon must be removed from the title bar
-    for i := 0 to FStringGridTorrentData.ColCount - 1 do
+    for i := 0 to FStringGridTorrentData.Columns.Count - 1 do
   begin
     FStringGridTorrentData.Columns[i].Title.ImageIndex := -1;
   end;
@@ -174,7 +174,7 @@ begin
   FStringGridTorrentData.OnColRowMoved := @StringGridTorrentDataColRowMoved;
 
   //The view and the controler part must have the same column count.
-  Assert(FStringGridTorrentData.ColCount <> COLUMN_COUNT, 'Wrong column count');
+  Assert(FStringGridTorrentData.Columns.Count <> COLUMN_COUNT, 'Wrong column count');
 
   //Track the column
   AddColumn(FTorrentFile, 0);
