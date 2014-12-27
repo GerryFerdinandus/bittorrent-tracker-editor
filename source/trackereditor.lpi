@@ -40,10 +40,12 @@
         <Filename Value="trackereditor.lpr"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="trackereditor"/>
+        <EditorIndex Value="1"/>
         <WindowIndex Value="0"/>
         <TopLine Value="1"/>
-        <CursorPos X="1" Y="19"/>
+        <CursorPos X="23" Y="20"/>
         <UsageCount Value="200"/>
+        <Loaded Value="True"/>
       </Unit0>
       <Unit1>
         <Filename Value="main.pas"/>
@@ -56,7 +58,7 @@
         <EditorIndex Value="0"/>
         <WindowIndex Value="0"/>
         <TopLine Value="105"/>
-        <CursorPos X="55" Y="166"/>
+        <CursorPos X="50" Y="167"/>
         <UsageCount Value="200"/>
         <Loaded Value="True"/>
         <LoadedDesigner Value="True"/>
@@ -85,7 +87,7 @@
         <Filename Value="bencode.pas"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="BEncode"/>
-        <EditorIndex Value="10"/>
+        <EditorIndex Value="11"/>
         <WindowIndex Value="0"/>
         <TopLine Value="15"/>
         <CursorPos X="42" Y="33"/>
@@ -96,7 +98,7 @@
         <Filename Value="decodetorrent.pas"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="DecodeTorrent"/>
-        <EditorIndex Value="11"/>
+        <EditorIndex Value="12"/>
         <WindowIndex Value="0"/>
         <TopLine Value="369"/>
         <CursorPos X="1" Y="451"/>
@@ -159,7 +161,7 @@
       </Unit13>
       <Unit14>
         <Filename Value="C:\lazarus\lcl\include\control.inc"/>
-        <EditorIndex Value="4"/>
+        <EditorIndex Value="5"/>
         <WindowIndex Value="0"/>
         <TopLine Value="3417"/>
         <CursorPos X="3" Y="3422"/>
@@ -229,7 +231,7 @@
       <Unit23>
         <Filename Value="C:\lazarus\lcl\grids.pas"/>
         <UnitName Value="Grids"/>
-        <EditorIndex Value="5"/>
+        <EditorIndex Value="6"/>
         <WindowIndex Value="0"/>
         <TopLine Value="10798"/>
         <CursorPos X="1" Y="10854"/>
@@ -365,7 +367,7 @@
       <Unit41>
         <Filename Value="C:\lazarus\lcl\comctrls.pp"/>
         <UnitName Value="ComCtrls"/>
-        <EditorIndex Value="8"/>
+        <EditorIndex Value="9"/>
         <WindowIndex Value="0"/>
         <TopLine Value="2769"/>
         <CursorPos X="3" Y="2700"/>
@@ -419,7 +421,7 @@
       <Unit48>
         <Filename Value="C:\lazarus\lcl\controls.pp"/>
         <UnitName Value="Controls"/>
-        <EditorIndex Value="2"/>
+        <EditorIndex Value="3"/>
         <WindowIndex Value="0"/>
         <TopLine Value="2128"/>
         <CursorPos X="15" Y="2181"/>
@@ -428,7 +430,7 @@
       </Unit48>
       <Unit49>
         <Filename Value="C:\lazarus\lcl\include\wincontrol.inc"/>
-        <EditorIndex Value="3"/>
+        <EditorIndex Value="4"/>
         <WindowIndex Value="0"/>
         <TopLine Value="5541"/>
         <CursorPos X="3" Y="5548"/>
@@ -451,7 +453,7 @@
       </Unit51>
       <Unit52>
         <Filename Value="C:\lazarus\lcl\include\treeview.inc"/>
-        <EditorIndex Value="9"/>
+        <EditorIndex Value="10"/>
         <WindowIndex Value="0"/>
         <TopLine Value="1227"/>
         <CursorPos X="3" Y="1229"/>
@@ -489,7 +491,7 @@
       <Unit57>
         <Filename Value="C:\lazarus\lcl\maps.pp"/>
         <UnitName Value="maps"/>
-        <EditorIndex Value="7"/>
+        <EditorIndex Value="8"/>
         <WindowIndex Value="0"/>
         <TopLine Value="95"/>
         <CursorPos X="3" Y="148"/>
@@ -500,7 +502,7 @@
         <Filename Value="controlergridtorrentdata.pas"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="controlergridtorrentdata"/>
-        <EditorIndex Value="1"/>
+        <EditorIndex Value="2"/>
         <WindowIndex Value="0"/>
         <TopLine Value="1"/>
         <CursorPos X="1" Y="1"/>
@@ -510,7 +512,7 @@
       <Unit59>
         <Filename Value="C:\lazarus\lcl\dynamicarray.pas"/>
         <UnitName Value="DynamicArray"/>
-        <EditorIndex Value="6"/>
+        <EditorIndex Value="7"/>
         <WindowIndex Value="0"/>
         <TopLine Value="1"/>
         <CursorPos X="1" Y="63"/>
@@ -645,17 +647,18 @@
     <Version Value="11"/>
     <PathDelim Value="\"/>
     <Target>
-      <Filename Value="trackereditor"/>
+      <Filename Value="..\executable\trackereditor"/>
     </Target>
     <SearchPaths>
       <IncludeFiles Value="$(ProjOutDir)"/>
-      <UnitOutputDirectory Value="lib\$(TargetCPU)-$(TargetOS)"/>
+      <UnitOutputDirectory Value="..\lib\$(TargetCPU)-$(TargetOS)"/>
     </SearchPaths>
     <CodeGeneration>
       <SmartLinkUnit Value="True"/>
     </CodeGeneration>
     <Linking>
       <Debugging>
+        <GenerateDebugInfo Value="False"/>
         <UseLineInfoUnit Value="False"/>
         <StripSymbols Value="True"/>
       </Debugging>

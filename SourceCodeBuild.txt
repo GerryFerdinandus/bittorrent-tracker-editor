@@ -9,4 +9,4 @@ select 'trackereditor.lpi' file
 
 Build:
 Menu Run -> Build
-Executable file is created in the same dir as the trackereditor.lpi
+Executable file is created in the executable directory.

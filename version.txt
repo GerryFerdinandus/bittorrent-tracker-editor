@@ -1,4 +1,4 @@
------- Version 1.3x
+------ Version 1.31
 ADD: tab page 'Files/Trackers/Info' show how many files count in one torrent
 ADD: tab page 'Files/Trackers/Info' show how many trackers count in one torrent
 ADD: Edit comment in data/info grid column.
