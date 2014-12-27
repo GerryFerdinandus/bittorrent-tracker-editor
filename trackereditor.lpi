@@ -35,7 +35,7 @@
         <PackageName Value="LCL"/>
       </Item1>
     </RequiredPackages>
-    <Units Count="57">
+    <Units Count="60">
       <Unit0>
         <Filename Value="trackereditor.lpr"/>
         <IsPartOfProject Value="True"/>
@@ -52,12 +52,15 @@
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Form"/>
         <UnitName Value="main"/>
-        <IsVisibleTab Value="True"/>
         <EditorIndex Value="0"/>
         <WindowIndex Value="0"/>
-        <TopLine Value="946"/>
-        <CursorPos X="71" Y="949"/>
+        <TopLine Value="1251"/>
+        <CursorPos X="11" Y="1263"/>
         <UsageCount Value="200"/>
+        <Bookmarks Count="2">
+          <Item0 X="1" Y="489" ID="0"/>
+          <Item1 X="1" Y="527" ID="1"/>
+        </Bookmarks>
         <Loaded Value="True"/>
         <LoadedDesigner Value="True"/>
       </Unit1>
@@ -85,10 +88,10 @@
         <Filename Value="bencode.pas"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="BEncode"/>
-        <EditorIndex Value="3"/>
+        <EditorIndex Value="10"/>
         <WindowIndex Value="0"/>
         <TopLine Value="15"/>
-        <CursorPos X="62" Y="66"/>
+        <CursorPos X="42" Y="33"/>
         <UsageCount Value="201"/>
         <Loaded Value="True"/>
       </Unit5>
@@ -96,11 +99,14 @@
         <Filename Value="decodetorrent.pas"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="DecodeTorrent"/>
-        <EditorIndex Value="4"/>
+        <EditorIndex Value="11"/>
         <WindowIndex Value="0"/>
-        <TopLine Value="283"/>
-        <CursorPos X="27" Y="339"/>
+        <TopLine Value="369"/>
+        <CursorPos X="1" Y="451"/>
         <UsageCount Value="200"/>
+        <Bookmarks Count="1">
+          <Item0 X="1" Y="425" ID="2"/>
+        </Bookmarks>
         <Loaded Value="True"/>
       </Unit6>
       <Unit7>
@@ -159,10 +165,12 @@
       </Unit13>
       <Unit14>
         <Filename Value="C:\lazarus\lcl\include\control.inc"/>
+        <EditorIndex Value="4"/>
         <WindowIndex Value="0"/>
-        <TopLine Value="2255"/>
-        <CursorPos X="1" Y="2308"/>
-        <UsageCount Value="8"/>
+        <TopLine Value="3417"/>
+        <CursorPos X="3" Y="3422"/>
+        <UsageCount Value="19"/>
+        <Loaded Value="True"/>
       </Unit14>
       <Unit15>
         <Filename Value="C:\lazarus\fpc\2.4.2\source\rtl\objpas\classes\classesh.inc"/>
@@ -227,10 +235,12 @@
       <Unit23>
         <Filename Value="C:\lazarus\lcl\grids.pas"/>
         <UnitName Value="Grids"/>
+        <EditorIndex Value="5"/>
         <WindowIndex Value="0"/>
-        <TopLine Value="1584"/>
-        <CursorPos X="14" Y="1637"/>
-        <UsageCount Value="23"/>
+        <TopLine Value="350"/>
+        <CursorPos X="19" Y="395"/>
+        <UsageCount Value="32"/>
+        <Loaded Value="True"/>
       </Unit23>
       <Unit24>
         <Filename Value="C:\lazarus\fpc\2.6.2\source\rtl\objpas\objpas.pp"/>
@@ -361,11 +371,11 @@
       <Unit41>
         <Filename Value="C:\lazarus\lcl\comctrls.pp"/>
         <UnitName Value="ComCtrls"/>
-        <EditorIndex Value="1"/>
+        <EditorIndex Value="8"/>
         <WindowIndex Value="0"/>
         <TopLine Value="2769"/>
         <CursorPos X="3" Y="2700"/>
-        <UsageCount Value="14"/>
+        <UsageCount Value="24"/>
         <Loaded Value="True"/>
       </Unit41>
       <Unit42>
@@ -415,17 +425,21 @@
       <Unit48>
         <Filename Value="C:\lazarus\lcl\controls.pp"/>
         <UnitName Value="Controls"/>
+        <EditorIndex Value="2"/>
         <WindowIndex Value="0"/>
-        <TopLine Value="140"/>
-        <CursorPos X="12" Y="194"/>
-        <UsageCount Value="11"/>
+        <TopLine Value="2128"/>
+        <CursorPos X="15" Y="2181"/>
+        <UsageCount Value="20"/>
+        <Loaded Value="True"/>
       </Unit48>
       <Unit49>
         <Filename Value="C:\lazarus\lcl\include\wincontrol.inc"/>
+        <EditorIndex Value="3"/>
         <WindowIndex Value="0"/>
-        <TopLine Value="7701"/>
-        <CursorPos X="3" Y="7710"/>
-        <UsageCount Value="11"/>
+        <TopLine Value="5541"/>
+        <CursorPos X="3" Y="5548"/>
+        <UsageCount Value="12"/>
+        <Loaded Value="True"/>
       </Unit49>
       <Unit50>
         <Filename Value="C:\lazarus\lcl\include\customlistbox.inc"/>
@@ -443,11 +457,11 @@
       </Unit51>
       <Unit52>
         <Filename Value="C:\lazarus\lcl\include\treeview.inc"/>
-        <EditorIndex Value="2"/>
+        <EditorIndex Value="9"/>
         <WindowIndex Value="0"/>
         <TopLine Value="1227"/>
         <CursorPos X="3" Y="1229"/>
-        <UsageCount Value="11"/>
+        <UsageCount Value="21"/>
         <Loaded Value="True"/>
       </Unit52>
       <Unit53>
@@ -478,127 +492,159 @@
         <CursorPos X="22" Y="72"/>
         <UsageCount Value="15"/>
       </Unit56>
+      <Unit57>
+        <Filename Value="C:\lazarus\lcl\maps.pp"/>
+        <UnitName Value="maps"/>
+        <EditorIndex Value="7"/>
+        <WindowIndex Value="0"/>
+        <TopLine Value="95"/>
+        <CursorPos X="3" Y="148"/>
+        <UsageCount Value="18"/>
+        <Loaded Value="True"/>
+      </Unit57>
+      <Unit58>
+        <Filename Value="controlergridtorrentdata.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="controlergridtorrentdata"/>
+        <IsVisibleTab Value="True"/>
+        <EditorIndex Value="1"/>
+        <WindowIndex Value="0"/>
+        <TopLine Value="86"/>
+        <CursorPos X="87" Y="121"/>
+        <UsageCount Value="29"/>
+        <Loaded Value="True"/>
+      </Unit58>
+      <Unit59>
+        <Filename Value="C:\lazarus\lcl\dynamicarray.pas"/>
+        <UnitName Value="DynamicArray"/>
+        <EditorIndex Value="6"/>
+        <WindowIndex Value="0"/>
+        <TopLine Value="1"/>
+        <CursorPos X="1" Y="63"/>
+        <UsageCount Value="13"/>
+        <Loaded Value="True"/>
+      </Unit59>
     </Units>
     <JumpHistory Count="30" HistoryIndex="29">
       <Position1>
-        <Filename Value="main.pas"/>
-        <Caret Line="807" Column="1" TopLine="754"/>
+        <Filename Value="C:\lazarus\lcl\grids.pas"/>
+        <Caret Line="1" Column="1" TopLine="1"/>
       </Position1>
       <Position2>
-        <Filename Value="main.pas"/>
-        <Caret Line="810" Column="1" TopLine="754"/>
+        <Filename Value="C:\lazarus\lcl\grids.pas"/>
+        <Caret Line="1116" Column="28" TopLine="1019"/>
       </Position2>
       <Position3>
-        <Filename Value="main.pas"/>
-        <Caret Line="812" Column="1" TopLine="754"/>
+        <Filename Value="controlergridtorrentdata.pas"/>
+        <Caret Line="138" Column="37" TopLine="80"/>
       </Position3>
       <Position4>
-        <Filename Value="main.pas"/>
-        <Caret Line="813" Column="1" TopLine="754"/>
+        <Filename Value="C:\lazarus\lcl\grids.pas"/>
+        <Caret Line="1151" Column="15" TopLine="1099"/>
       </Position4>
       <Position5>
-        <Filename Value="main.pas"/>
-        <Caret Line="815" Column="1" TopLine="754"/>
+        <Filename Value="controlergridtorrentdata.pas"/>
+        <Caret Line="138" Column="44" TopLine="80"/>
       </Position5>
       <Position6>
-        <Filename Value="main.pas"/>
-        <Caret Line="816" Column="1" TopLine="754"/>
+        <Filename Value="controlergridtorrentdata.pas"/>
+        <Caret Line="137" Column="78" TopLine="80"/>
       </Position6>
       <Position7>
-        <Filename Value="main.pas"/>
-        <Caret Line="819" Column="1" TopLine="754"/>
+        <Filename Value="C:\lazarus\lcl\grids.pas"/>
+        <Caret Line="1608" Column="46" TopLine="1558"/>
       </Position7>
       <Position8>
-        <Filename Value="main.pas"/>
-        <Caret Line="823" Column="1" TopLine="754"/>
+        <Filename Value="C:\lazarus\lcl\grids.pas"/>
+        <Caret Line="1" Column="1" TopLine="1"/>
       </Position8>
       <Position9>
-        <Filename Value="main.pas"/>
-        <Caret Line="824" Column="1" TopLine="754"/>
+        <Filename Value="C:\lazarus\lcl\grids.pas"/>
+        <Caret Line="1068" Column="30" TopLine="971"/>
       </Position9>
       <Position10>
-        <Filename Value="main.pas"/>
-        <Caret Line="823" Column="1" TopLine="754"/>
+        <Filename Value="C:\lazarus\lcl\grids.pas"/>
+        <Caret Line="5020" Column="45" TopLine="5015"/>
       </Position10>
       <Position11>
-        <Filename Value="main.pas"/>
-        <Caret Line="824" Column="1" TopLine="754"/>
+        <Filename Value="C:\lazarus\lcl\grids.pas"/>
+        <Caret Line="1" Column="1" TopLine="1"/>
       </Position11>
       <Position12>
-        <Filename Value="decodetorrent.pas"/>
-        <Caret Line="45" Column="14" TopLine="1"/>
+        <Filename Value="C:\lazarus\lcl\grids.pas"/>
+        <Caret Line="733" Column="22" TopLine="634"/>
       </Position12>
       <Position13>
-        <Filename Value="decodetorrent.pas"/>
-        <Caret Line="165" Column="14" TopLine="78"/>
+        <Filename Value="C:\lazarus\lcl\grids.pas"/>
+        <Caret Line="1068" Column="62" TopLine="971"/>
       </Position13>
       <Position14>
-        <Filename Value="decodetorrent.pas"/>
-        <Caret Line="166" Column="24" TopLine="78"/>
+        <Filename Value="C:\lazarus\lcl\grids.pas"/>
+        <Caret Line="3387" Column="68" TopLine="3315"/>
       </Position14>
       <Position15>
-        <Filename Value="decodetorrent.pas"/>
-        <Caret Line="167" Column="14" TopLine="78"/>
+        <Filename Value="C:\lazarus\lcl\grids.pas"/>
+        <Caret Line="1" Column="1" TopLine="1"/>
       </Position15>
       <Position16>
-        <Filename Value="decodetorrent.pas"/>
-        <Caret Line="215" Column="32" TopLine="131"/>
+        <Filename Value="C:\lazarus\lcl\grids.pas"/>
+        <Caret Line="446" Column="24" TopLine="347"/>
       </Position16>
       <Position17>
-        <Filename Value="decodetorrent.pas"/>
-        <Caret Line="222" Column="32" TopLine="131"/>
+        <Filename Value="C:\lazarus\lcl\grids.pas"/>
+        <Caret Line="3378" Column="21" TopLine="3306"/>
       </Position17>
       <Position18>
-        <Filename Value="main.pas"/>
-        <Caret Line="23" Column="75" TopLine="1"/>
+        <Filename Value="C:\lazarus\lcl\grids.pas"/>
+        <Caret Line="3386" Column="36" TopLine="3306"/>
       </Position18>
       <Position19>
-        <Filename Value="main.pas"/>
-        <Caret Line="233" Column="45" TopLine="134"/>
+        <Filename Value="C:\lazarus\lcl\grids.pas"/>
+        <Caret Line="3388" Column="39" TopLine="3306"/>
       </Position19>
       <Position20>
-        <Filename Value="main.pas"/>
-        <Caret Line="1292" Column="78" TopLine="1212"/>
+        <Filename Value="C:\lazarus\lcl\grids.pas"/>
+        <Caret Line="3390" Column="35" TopLine="3306"/>
       </Position20>
       <Position21>
-        <Filename Value="main.pas"/>
-        <Caret Line="1296" Column="37" TopLine="1212"/>
+        <Filename Value="C:\lazarus\lcl\grids.pas"/>
+        <Caret Line="3391" Column="35" TopLine="3306"/>
       </Position21>
       <Position22>
-        <Filename Value="main.pas"/>
-        <Caret Line="1297" Column="56" TopLine="1212"/>
+        <Filename Value="C:\lazarus\lcl\grids.pas"/>
+        <Caret Line="3798" Column="35" TopLine="3699"/>
       </Position22>
       <Position23>
-        <Filename Value="main.pas"/>
-        <Caret Line="1324" Column="17" TopLine="1262"/>
+        <Filename Value="C:\lazarus\lcl\grids.pas"/>
+        <Caret Line="3840" Column="58" TopLine="3741"/>
       </Position23>
       <Position24>
-        <Filename Value="main.pas"/>
-        <Caret Line="1250" Column="20" TopLine="1196"/>
+        <Filename Value="C:\lazarus\lcl\grids.pas"/>
+        <Caret Line="3843" Column="66" TopLine="3744"/>
       </Position24>
       <Position25>
-        <Filename Value="main.pas"/>
-        <Caret Line="1325" Column="18" TopLine="1241"/>
+        <Filename Value="C:\lazarus\lcl\grids.pas"/>
+        <Caret Line="10890" Column="54" TopLine="10791"/>
       </Position25>
       <Position26>
-        <Filename Value="main.pas"/>
-        <Caret Line="1264" Column="70" TopLine="1241"/>
+        <Filename Value="C:\lazarus\lcl\grids.pas"/>
+        <Caret Line="446" Column="24" TopLine="393"/>
       </Position26>
       <Position27>
-        <Filename Value="main.pas"/>
-        <Caret Line="170" Column="56" TopLine="105"/>
+        <Filename Value="C:\lazarus\lcl\grids.pas"/>
+        <Caret Line="3378" Column="21" TopLine="3303"/>
       </Position27>
       <Position28>
-        <Filename Value="main.pas"/>
-        <Caret Line="172" Column="56" TopLine="107"/>
+        <Filename Value="C:\lazarus\lcl\grids.pas"/>
+        <Caret Line="680" Column="5" TopLine="627"/>
       </Position28>
       <Position29>
-        <Filename Value="main.pas"/>
-        <Caret Line="948" Column="3" TopLine="892"/>
+        <Filename Value="C:\lazarus\lcl\grids.pas"/>
+        <Caret Line="3379" Column="21" TopLine="3291"/>
       </Position29>
       <Position30>
-        <Filename Value="main.pas"/>
-        <Caret Line="281" Column="65" TopLine="278"/>
+        <Filename Value="controlergridtorrentdata.pas"/>
+        <Caret Line="45" Column="1" TopLine="1"/>
       </Position30>
     </JumpHistory>
   </ProjectOptions>
@@ -617,7 +663,6 @@
     </CodeGeneration>
     <Linking>
       <Debugging>
-        <GenerateDebugInfo Value="False"/>
         <UseLineInfoUnit Value="False"/>
         <StripSymbols Value="True"/>
       </Debugging>
@@ -636,22 +681,6 @@
     </Other>
   </CompilerOptions>
   <Debugging>
-    <BreakPoints Count="2">
-      <Item1>
-        <Kind Value="bpkSource"/>
-        <WatchScope Value="wpsLocal"/>
-        <WatchKind Value="wpkWrite"/>
-        <Source Value="main.pas"/>
-        <Line Value="195"/>
-      </Item1>
-      <Item2>
-        <Kind Value="bpkSource"/>
-        <WatchScope Value="wpsLocal"/>
-        <WatchKind Value="wpkWrite"/>
-        <Source Value="main.pas"/>
-        <Line Value="573"/>
-      </Item2>
-    </BreakPoints>
     <Exceptions Count="3">
       <Item1>
         <Name Value="EAbort"/>

@@ -139,52 +139,66 @@ object FormTrackerModify: TFormTrackerModify
         Top = 0
         Width = 1171
         Align = alClient
-        ColCount = 9
+        ColCount = 10
         ColumnClickSorts = True
         Columns = <        
           item
+            ReadOnly = True
             Title.Caption = 'Torrent File'
             Width = 250
           end        
           item
+            ReadOnly = True
             Title.Caption = 'Info Filename'
             Width = 250
           end        
           item
             MaxSize = 250
+            ReadOnly = True
             Title.Caption = 'Info Hash'
             Width = 280
           end        
           item
+            ReadOnly = True
             Title.Caption = 'Created On'
             Width = 145
           end        
           item
+            ReadOnly = True
             Title.Caption = 'Created By'
             Width = 145
           end        
           item
-            Title.Caption = 'Comment'
-            Width = 145
+            Title.Caption = 'Comment (can be edited)'
+            Width = 160
           end        
           item
+            ReadOnly = True
             Title.Caption = 'Private'
             Width = 50
           end        
           item
             Alignment = taRightJustify
+            ReadOnly = True
             Title.Alignment = taRightJustify
             Title.Caption = 'Piece Length (KiB)'
             Width = 100
           end        
           item
             Alignment = taRightJustify
+            ReadOnly = True
             Title.Alignment = taRightJustify
             Title.Caption = 'Total size (KiB)'
             Width = 100
+          end        
+          item
+            ReadOnly = True
+            Title.Alignment = taRightJustify
+            Title.Caption = 'IndexOrder (internal used)'
+            Visible = False
           end>
         FixedCols = 0
-        Options = [goFixedVertLine, goFixedHorzLine, goVertLine, goHorzLine, goRangeSelect, goDrawFocusSelected, goColSizing, goColMoving, goSmoothScroll]
+        Options = [goFixedVertLine, goFixedHorzLine, goVertLine, goHorzLine, goRangeSelect, goDrawFocusSelected, goColSizing, goColMoving, goEditing, goSmoothScroll]
         RowCount = 1
         TabOrder = 0
         TitleFont.Height = -11
@@ -194,10 +208,11 @@ object FormTrackerModify: TFormTrackerModify
           280
           145
           145
-          145
+          160
           50
           100
           100
+          0
         )
       end
     end

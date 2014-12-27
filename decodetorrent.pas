@@ -48,6 +48,7 @@ type
 
     //Torrent file must have 'info' item.
     FBEncoded_Info:TBEncoded;
+    FBEncoded_Comment: TBEncoded;
 
     FInfoHash: utf8string;
     FCreatedBy: utf8string;
@@ -68,6 +69,7 @@ type
     function GetName: utf8string;
     function GetPieceLenght: int64;
     function GetPrivateTorrent: boolean;
+    procedure SetComment(const AValue: utf8string);
   public
     //All the trackers inside this torrent file
     TrackerList: TStringList;
@@ -88,7 +90,7 @@ type
     property CreatedDate: TDateTime read FCreatedDate;
 
     //Comment
-    property Comment: utf8string read FComment;
+    property Comment: utf8string read FComment write SetComment;
 
     //info.name
     property Name: utf8string read FName;
@@ -413,6 +415,56 @@ begin
   end;
 end;
 
+procedure TDecodeTorrent.SetComment(const AValue: utf8string);
+var
+//  Encoded: TBEncoded;
+  Data: TBEncodedData;
+begin
+  if FComment=AValue then Exit;
+  FComment:=AValue;
+  try
+    //if empty comment then remove the element.
+    if FComment = '' then
+    begin
+      FBEncoded.ListData.RemoveElement('comment');
+      exit;
+    end;
+
+    //if there is no comment element, then make new one
+    if not assigned(FBEncoded_Comment) then
+    begin
+      FBEncoded_Comment := TBEncoded.Create;
+      FBEncoded_Comment.Format := befString;
+      FBEncoded_Comment.StringData := FComment;
+      Data := TBEncodedData.Create(FBEncoded_Comment);
+      Data.Header := 'comment';
+      FBEncoded.ListData.Add(Data);
+    end
+    else
+    begin
+      FBEncoded_Comment.StringData := FComment;
+    end;
+
+  except
+  end;
+
+end;
+
+
+{
+try
+    Encoded := TBEncoded.Create;
+    Encoded.Format := befString;
+    Encoded.StringData := TrackerURL;
+    Data := TBEncodedData.Create(Encoded);
+    Data.Header := 'announce';
+    FBEncoded.ListData.Add(Data);
+    FBEncoded.ListData.Sort(@sort_);//text must be in alfabetical order.
+except
+end;
+
+}
+
 procedure TDecodeTorrent.RemovePrivateTorrentFlag;
 begin
   try
@@ -588,14 +640,12 @@ begin
 end;
 
 function TDecodeTorrent.GetComment: utf8string;
-var
-  TempBEncoded: TBEncoded;
 begin
   Result := '';
   try
-      TempBEncoded := FBEncoded.ListData.FindElement('comment');
-      if assigned(TempBEncoded) then
-        Result := UTF8Trim( TempBEncoded.StringData);
+      FBEncoded_Comment := FBEncoded.ListData.FindElement('comment');
+      if assigned(FBEncoded_Comment) then
+        Result := UTF8Trim( FBEncoded_Comment.StringData);
   except
   end;
 end;

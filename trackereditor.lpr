@@ -7,7 +7,7 @@ uses
   cthreads,
   {$ENDIF}{$ENDIF}
   Interfaces, // this includes the LCL widgetset
-  Forms, main, bencode, decodetorrent;
+  Forms, main, bencode, decodetorrent, controlergridtorrentdata;
 
 {$R *.res}
 

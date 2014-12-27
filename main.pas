@@ -18,7 +18,7 @@ interface
 uses
   Classes, SysUtils, FileUtil, Forms, Controls, Graphics, Dialogs, StdCtrls,
   ExtCtrls, CheckLst, DecodeTorrent, LCLType, ActnList, Menus, ComCtrls,
-  Grids;
+  Grids, controlergridtorrentdata;
 
 type
 
@@ -83,15 +83,11 @@ type
     procedure MenuItemTorrentFilesTreeHideAllClick(Sender: TObject);
     procedure MenuItemTorrentFilesTreeShowOrHideItemClick(Sender: TObject);
 
-
-
     //Select via menu torrent file or directory
     procedure MenuOpenTorrentFileClick(Sender: TObject);
     procedure MenuFileTorrentFolderClick(Sender: TObject);
 
-
-
-
+    //Menu trackers
     procedure MenuTrackersAllTorrentArePublicPrivateClick(Sender: TObject);
     procedure MenuTrackersKeepOrDeleteAllTrackersClick(Sender: TObject);
 
@@ -116,6 +112,7 @@ type
     FTotalFileSizeInsideTorrent: int64;
     FProcessTimeStart, FProcessTimeTotal: TDateTime;
     FTreeNodeRoot: TTreeNode;
+    FControlerGridTorrentData: TControlerGridTorrentData;
 
     function ByteSizeToBiggerSizeFormatStr(ByteSize: int64): string;
 
@@ -124,8 +121,6 @@ type
     procedure ViewUpdateOneTorrentFileDecoded;
     procedure ViewUpdateEnd;
     procedure ViewUpdateFormCaption;
-    //    procedure ShowTorrentFilesAfterBeingLoaded;//deprecated
-    //    procedure ShowTorrentFilesProperty; //deprecated
     procedure ClearAllTorrentFilesNameAndTrackerInside;
 
     procedure MenuItemTorrentFilesTreeSyncWithPopupMenu;
@@ -194,6 +189,9 @@ procedure TFormTrackerModify.FormCreate(Sender: TObject);
 begin
   Caption := FORM_CAPTION;
 
+  //Create controler for StringGridTorrentData
+  FControlerGridTorrentData := TControlerGridTorrentData.Create(StringGridTorrentData);
+
   //Log file output string List.
   FLogStringList := TStringList.Create;
 
@@ -258,6 +256,7 @@ begin
   FTrackerBanByUserList.Free;
   FTrackerFromInsideTorrentFilesList.Free;
   FTorrentFileNameList.Free;
+  FControlerGridTorrentData.Free;
 end;
 
 procedure TFormTrackerModify.MenuFileTorrentFolderClick(Sender: TObject);
@@ -367,7 +366,14 @@ procedure TFormTrackerModify.MenuUpdateTorrentClick(Sender: TObject);
 var
   Reply, BoxStyle, i, CountTrackers: integer;
   PopUpMenuStr: string;
+
 begin
+  //Update the all the torrent files.
+
+  //The StringGridTorrentData where the comment are place by user
+  //    must be in sync again with FTorrentFileNameList.
+  //Undo all posible sort column used by the user. Sort it back to 'begin state'
+  FControlerGridTorrentData.ReorderGrid;
 
   try
 
@@ -425,7 +431,7 @@ begin
         'There are no Trackers selected!', BoxStyle);
       if Reply <> idOk then
       begin
-        ShowHourGlassCursor(True);
+        ShowHourGlassCursor(False);
         exit;
       end;
       //Reset process timer
@@ -452,7 +458,7 @@ begin
         end;
         1://if one tracker selected then delete 'announce-list'
         begin
-          //Announce use the only tracker in the list. index 0
+          //Announce use the only tracker present in the FTrackerFinalList. index 0
           FDecodePresentTorrent.ChangeAnnounce(FTrackerFinalList[0]);
           FDecodePresentTorrent.RemoveAnnounceList;
         end;
@@ -467,10 +473,9 @@ begin
 
 
       //update the torrent public/private flag
-      //      if CheckListBoxPublicPrivateTorrent.Checked[CheckListBoxPublicPrivateTorrent.Items.IndexOf(FTorrentFileNameList[i])] then
       if CheckListBoxPublicPrivateTorrent.Checked[i] then
       begin
-        //if private torrent then make it public torrent
+        //if private torrent then make it public torrent by removing the private flag.
         if FDecodePresentTorrent.PrivateTorrent then
           FDecodePresentTorrent.RemovePrivateTorrentFlag;
       end
@@ -478,6 +483,9 @@ begin
       begin
         FDecodePresentTorrent.AddPrivateTorrentFlag;
       end;
+
+      //update the comment item
+      FDecodePresentTorrent.Comment := FControlerGridTorrentData.ReadComment(i + 1);
 
       //save the torrent file.
       FDecodePresentTorrent.SaveTorrent(FTorrentFileNameList[i]);
@@ -945,7 +953,7 @@ end;
 
 procedure TFormTrackerModify.MenuHelpReportingIssueClick(Sender: TObject);
 begin
-    OpenURL('http://code.google.com/p/bittorrent-tracker-editor/issues');
+  OpenURL('http://code.google.com/p/bittorrent-tracker-editor/issues');
 end;
 
 
@@ -1256,10 +1264,11 @@ var
   TorrentFileNameStr, TrackerStr, DateTimeStr, PrivateStr: UTF8String;
   TreeNodeTorrent, TreeNodeFiles, TreeNodeTrackers, TreeNodeInfo: TTreeNode;
 begin
-  //Called after loading torrent file
+  //Called after loading torrent file.
 
 
   TorrentFileNameStr := ExtractFileName(FDecodePresentTorrent.FilenameTorrent);
+
   //---------------------   Add it to the checklist box Public/private torrent
   RowIndex := CheckListBoxPublicPrivateTorrent.Items.Add(TorrentFileNameStr);
   //Check it for public/private flag
@@ -1267,7 +1276,7 @@ begin
     not FDecodePresentTorrent.PrivateTorrent;
 
 
-  //-------------------------------------------------------------------------
+  //---------------------  Fill the Grid Torrent Data/Info
 
   //date time in iso format
   if FDecodePresentTorrent.CreatedDate <> 0 then
@@ -1282,21 +1291,24 @@ begin
   else
     PrivateStr := 'no';
 
-  StringGridTorrentData.InsertRowWithValues(
-    StringGridTorrentData.RowCount,//Should be the last row
-    [TorrentFileNameStr,//filename
-    FDecodePresentTorrent.Name,//info.name
-    FDecodePresentTorrent.InfoHash,//InfoHash
-    DateTimeStr,// DateTime
-    FDecodePresentTorrent.CreatedBy,//CreatedBy
-    FDecodePresentTorrent.Comment, //Comment
-    PrivateStr, // yes or no
-    format('%6d', [FDecodePresentTorrent.PieceLenght div 1024]), //Show as KiBytes
-    format('%9d', [FDecodePresentTorrent.TotalFileSize div 1024]) //Show as KiBytes
-    ]
+  //Copy all the torrent info to the grid column.
+  FControlerGridTorrentData.TorrentFile := TorrentFileNameStr;
+  FControlerGridTorrentData.InfoFileName := FDecodePresentTorrent.Name;
+  FControlerGridTorrentData.InfoHash := FDecodePresentTorrent.InfoHash;
+  FControlerGridTorrentData.CreatedOn := DateTimeStr;
+  FControlerGridTorrentData.CreatedBy := FDecodePresentTorrent.CreatedBy;
+  FControlerGridTorrentData.Comment := FDecodePresentTorrent.Comment;
+  FControlerGridTorrentData.PrivateTorrent := PrivateStr;
+  FControlerGridTorrentData.PieceLength :=
+    format('%6d', [FDecodePresentTorrent.PieceLenght div 1024]); //Show as KiBytes
+  FControlerGridTorrentData.TotaSize :=
+    format('%9d', [FDecodePresentTorrent.TotalFileSize div 1024]); //Show as KiBytes
+  FControlerGridTorrentData.IndexOrder :=
+    format('%6d', [StringGridTorrentData.RowCount - 1]);
+  //Must keep track of order when sorted back
 
-    );
-
+  //All the string data are filed. Copy it now to the grid
+  FControlerGridTorrentData.AppendRow;
 
   //---------------------  Fill the treeview with torrent files
 
@@ -1328,7 +1340,7 @@ begin
   end;
 
   //Show a how many files are there
-   TreeNodeFiles.Text:= TreeNodeFiles.Text + ' (' + IntToStr(TreeNodeFiles.Count) + ')';
+  TreeNodeFiles.Text := TreeNodeFiles.Text + ' (' + IntToStr(TreeNodeFiles.Count) + ')';
 
 
   //Show all the trackers inside the torrent
@@ -1338,7 +1350,8 @@ begin
   end;
 
   //Show a how many trackers are there
-   TreeNodeTrackers.Text:= TreeNodeTrackers.Text + ' (' + IntToStr(TreeNodeTrackers.Count) + ')';
+  TreeNodeTrackers.Text := TreeNodeTrackers.Text + ' (' +
+    IntToStr(TreeNodeTrackers.Count) + ')';
 
 
   //Show all the info of torrent
@@ -1427,7 +1440,7 @@ begin
   //Called when user load the torrent + update the torrent.
   Caption := FORM_CAPTION + '( Torrent files: ' +
     IntToStr(FTorrentFileNameList.Count) + ' )';
-//  + ' (Process Time: ' +  ProcessTimeStr + ' )'; //for debug purpose.
+  //  + ' (Process Time: ' +  ProcessTimeStr + ' )'; //for debug purpose.
 end;
 
 procedure TFormTrackerModify.ShowHourGlassCursor(HourGlass: boolean);
@@ -1442,11 +1455,6 @@ begin
     screen.Cursor := crDefault;
     FProcessTimeTotal := now - FProcessTimeStart;
   end;
-
-
-
-
-
 
 
 
