@@ -1,21 +1,24 @@
 ------ Version 1.3x
 ADD: tab page 'Files/Trackers/Info' show how many files count in one torrent
 ADD: tab page 'Files/Trackers/Info' show how many trackers count in one torrent
+ADD: Edit comment in data/info grid column.
+FIX: The data/info column can be moved but it is not updated correctly when
+torrent is reloaded.
 
 ------ Version 1.30
 ADD: Tab page Files/trackers/info
 ADD: Optional start program from console. (See readme.txt file)
 ADD: remove_trackers.txt will remove specific trackers form torrent.
 ADD: export_trackers.txt is created after updating the torrent.
-ADD: drag and drop of trackers file (with '*.txt' file extention)
+ADD: drag and drop of trackers file (with '*.txt' file extension)
 Fix: tab page Data/info 'Total size' sort functionality.
 Fix: tab page Data/info 'Piece Length' sort functionality.
-Fix: tab page Data/info 'info hash' must be uppercase. 
+Fix: tab page Data/info 'info hash' must be upper-case. 
 FIX: issue 4 + 5 (see website)
 Compiler Lazarus: v1.24
 
 ------ Version 1.21
-FIX: Support unicode in filename. (Chinese etc.)
+FIX: Support Unicode in filename. (Chinese etc.)
 Compiler Lazarus: v1.0.12
 
 ------ Version 1.20
