@@ -1430,15 +1430,18 @@ begin
 end;
 
 procedure TFormTrackerModify.ViewUpdateFormCaption;
-var
-  ProcessTimeStr: string;
-  Hour, Minute, Second, MilliSecond: word;
+//var
+  //ProcessTimeStr: string;
+//  Hour, Minute, Second, MilliSecond: word;
 begin
-  //Show user how many files are loaded
+  //Called when user load the torrent + update the torrent.
+
+{ //for performance debugging.
   DecodeTime(FProcessTimeTotal, Hour, Minute, Second, MilliSecond);
   ProcessTimeStr := IntToStr((Second * 1000) + MilliSecond) + ' mSec';
+}
 
-  //Called when user load the torrent + update the torrent.
+  //Show user how many files are loaded
   Caption := FORM_CAPTION + '( Torrent files: ' +
     IntToStr(FTorrentFileNameList.Count) + ' )';
   //  + ' (Process Time: ' +  ProcessTimeStr + ' )'; //for debug purpose.

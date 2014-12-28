@@ -39,7 +39,7 @@ type
 
     FRowIsMovedNeedUpdate: boolean;
     procedure StringGridTorrentDataColRowMoved(Sender: TObject;
-      IsColumn: boolean; sIndex, tIndex: integer);
+      {%H-}IsColumn: boolean; {%H-}sIndex, {%H-}tIndex: integer);
     procedure AddColumn(var GridColumn: TGridColumn; index: integer);
     procedure UpdateColumnTag;
     procedure WriteCell(GridColumn: TGridColumn; const Str: UTF8String);
