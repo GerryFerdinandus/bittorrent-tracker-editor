@@ -27,7 +27,7 @@ There is no backup function in this software. Used it at your own risk. Bittorre
 ---
 
 ## Downloads: ##
-  * [From google drive: Executable file for win32](https://googledrive.com/host/0B4lG_fvmX5NZMU5lZ00zM3Z0Nmc)
+  * [From GitHub: Executable file for win32](https://github.com/GerryFerdinandus/bittorrent-tracker-editor/releases)
 
 ---
 
