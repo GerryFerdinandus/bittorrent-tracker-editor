@@ -35,6 +35,7 @@ There is no backup function in this software. Used it at your own risk. Bittorre
 ### 1.31 ###
   * Add: Edit comment in data/info grid column.
   * FIX:  ([Issue 6](https://code.google.com/p/bittorrent-tracker-editor/issues/detail?id=6))
+
 ### 1.30 ###
   * Add: Tab page Files/trackers/info
   * Add: Optional start as console program. (See readme.txt inside download)
@@ -42,6 +43,7 @@ There is no backup function in this software. Used it at your own risk. Bittorre
   * Add: export\_trackers.txt is created after updating the torrent.
   * Add: drag and drop of trackers file (with '.txt' file extension)
   * FIX:  ([Issue 4](https://code.google.com/p/bittorrent-tracker-editor/issues/detail?id=4)) + ([Issue 5](https://code.google.com/p/bittorrent-tracker-editor/issues/detail?id=5))
+
 ### 1.21 ###
   * FIX: Support for Unicode in filename. (Chinese etc.)
 
@@ -53,7 +55,7 @@ There is no backup function in this software. Used it at your own risk. Bittorre
   * Add: Tab page for public/private flag. ([Issue 1](https://code.google.com/p/bittorrent-tracker-editor/issues/detail?id=1))
   * Add: Load tracker list from file via menu or at start-up, when file add\_trackers.txt is present in the same folder as the executable file.
 
-## 1.00 ##
+### 1.00 ###
   * First release
 
 ---
