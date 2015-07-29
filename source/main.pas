@@ -754,7 +754,7 @@ end;
 function TFormTrackerModify.ValidTrackerURL(const TrackerURL: UTF8String): boolean;
 begin
   //TrackerURL should be cleanup with UTF8trim()
-  Result := (Pos('http://', TrackerURL) = 1) or (Pos('udp://', TrackerURL) = 1);
+  Result := (Pos('http://', TrackerURL) = 1) or (Pos('https://', TrackerURL) = 1) or (Pos('udp://', TrackerURL) = 1);
 end;
 
 function TFormTrackerModify.CopyUserInputNewTrackersToList: boolean;
@@ -775,7 +775,7 @@ begin
     if TrackerStr = '' then
       continue;
 
-    //All the tracker must begin with 'http://' or 'udp://'
+    //All the tracker must begin with 'http(s)://' or 'udp://'
     if ValidTrackerURL(TrackerStr) then
     begin
       FTrackerAddedByUserList.Add(TrackerStr);
@@ -791,7 +791,7 @@ begin
       begin
         //Show error
         Application.MessageBox(PChar(@TrackerStr[1]),
-          'Error: Tracker URL must begin with http:// or udp://', MB_ICONERROR);
+          'Error: Tracker URL must begin with http(s):// or udp://', MB_ICONERROR);
       end;
       //dot not continue with error.
       Result := False;
