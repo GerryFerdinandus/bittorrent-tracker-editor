@@ -277,7 +277,7 @@ end;
 procedure TFormTrackerModify.MenuHelpVisitWebsiteClick(Sender: TObject);
 begin
   //There is no help file in this progam. Show user main web site.
-  OpenURL('http://code.google.com/p/bittorrent-tracker-editor');
+  OpenURL('https://github.com/GerryFerdinandus/bittorrent-tracker-editor');
 end;
 
 procedure TFormTrackerModify.MenuItemTorrentFilesTreeHideAllClick(Sender: TObject);
@@ -953,7 +953,7 @@ end;
 
 procedure TFormTrackerModify.MenuHelpReportingIssueClick(Sender: TObject);
 begin
-  OpenURL('http://code.google.com/p/bittorrent-tracker-editor/issues');
+  OpenURL('https://github.com/GerryFerdinandus/bittorrent-tracker-editor/issues');
 end;
 
 
