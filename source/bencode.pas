@@ -337,7 +337,7 @@ end;
 
 function TBEncodedDataList.Last: TBEncodedData;
 begin
-  Result := TBEncodedData(inherited First);
+  Result := TBEncodedData(inherited Last);
 end;
 
 function TBEncodedDataList.Remove(AClass: TBEncodedData): Integer;
