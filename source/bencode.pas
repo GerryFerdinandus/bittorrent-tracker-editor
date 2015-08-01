@@ -1,11 +1,13 @@
 {
-Decode and encode the Bencode format used in torrent files
-
 public domain code?
 Source code from:
 http://www.torry.net/quicksearchd.php?String=bencode&Title=Yes
 
 With some minor modification made by Gerry Ferdinandus
+}
+
+{
+Decode and encode the Bencode format used in torrent files
 }
 
 {
