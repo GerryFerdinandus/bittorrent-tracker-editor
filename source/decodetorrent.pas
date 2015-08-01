@@ -47,7 +47,7 @@ type
     FTotalFileSize: int64;
 
     //Torrent file must have 'info' item.
-    FBEncoded_Info:TBEncoded;
+    FBEncoded_Info: TBEncoded;
     FBEncoded_Comment: TBEncoded;
 
     FInfoHash: utf8string;
@@ -149,10 +149,12 @@ begin
   //Every torrent have
   FObjectListFileNameAndLength := TObjectList.Create;
 
-
+  //List for all the trackers.
   TrackerList := TStringList.Create;
   TrackerList.Duplicates := dupIgnore;
-  TrackerList.Sorted := True;
+  //Must keep the original order.
+  TrackerList.Sorted := False;
+
   FMemoryStream := TMemoryStream.Create;
 
 end;
@@ -207,32 +209,42 @@ function TDecodeTorrent.GetAnnounceList: boolean;
 var
   TempBEncoded: TBEncoded;
   i, Count: integer;
+  TrackerStr: UTF8String;
 begin
   //return false, if crash at decoding. Announce is optional in torrent file.
   TrackerList.Clear;
   Result := True;
   try
     {find 'announce-list' and copy the list content to TrackerList}
-      //process 'announce'
-      TempBEncoded := FBEncoded.ListData.FindElement('announce');
-      if assigned(TempBEncoded) then
-      begin
-        TrackerList.Add(TempBEncoded.StringData);
-      end;
+    //process 'announce'
+    TempBEncoded := FBEncoded.ListData.FindElement('announce');
+    if assigned(TempBEncoded) then
+    begin
+      TrackerList.Add(TempBEncoded.StringData);
+    end;
 
-      //process 'announce-list'
-      TempBEncoded := FBEncoded.ListData.FindElement('announce-list');
-      if assigned(TempBEncoded) then
+    //process 'announce-list'
+    TempBEncoded := FBEncoded.ListData.FindElement('announce-list');
+    if assigned(TempBEncoded) then
+    begin
+      Count := TempBEncoded.ListData.Count;
+      if Count > 0 then
       begin
-        Count := TempBEncoded.ListData.Count;
-        if Count > 0 then
+        for i := 0 to Count - 1 do
         begin
-          for i := 0 to Count - 1 do
-          begin//there is a list in side a list!
-            TrackerList.Add(TempBEncoded.ListData.Items[i].Data.ListData.First.Data.StringData);
+          //there is a list in side a list!
+          TrackerStr := TempBEncoded.ListData.Items[
+            i].Data.ListData.First.Data.StringData;
+
+          // TrackerList is not sorted. Must use IndexOf to ignore duplicated enteries.
+          if TrackerList.IndexOf(TrackerStr) < 0 then
+          begin
+            TrackerList.Add(TrackerStr);
           end;
+
         end;
       end;
+    end;
 
   except
     Result := False;
@@ -242,7 +254,7 @@ end;
 function TDecodeTorrent.GetFileList: boolean;
 var
   //TempBEncodedInfo,
-    TempBEncodedInfoFiles, TempBEncodedInfoFilesPath: TBEncoded;
+  TempBEncodedInfoFiles, TempBEncodedInfoFilesPath: TBEncoded;
   TempBEncodedInfoFilesData: TBEncodedData;
 
   i, x, countFiles, countPath: integer;
@@ -262,60 +274,60 @@ begin
   try
 
     {find 'info.files' }
-      TempBEncodedInfoFiles := FBEncoded_Info.ListData.FindElement('files');
+    TempBEncodedInfoFiles := FBEncoded_Info.ListData.FindElement('files');
 
-      if assigned(TempBEncodedInfoFiles) then
-      begin //'info.files' found
-        countFiles := TempBEncodedInfoFiles.ListData.Count;
-        if countFiles > 0 then
+    if assigned(TempBEncodedInfoFiles) then
+    begin //'info.files' found
+      countFiles := TempBEncodedInfoFiles.ListData.Count;
+      if countFiles > 0 then
+      begin
+        for i := 0 to countFiles - 1 do
         begin
-          for i := 0 to countFiles - 1 do
+          //Get the info.files node.
+          TempBEncodedInfoFilesData := TempBEncodedInfoFiles.ListData.Items[i];
+
+          //Get the file name with path
+          FilenameWithPathStr := '';
+          TempBEncodedInfoFilesPath :=
+            TempBEncodedInfoFilesData.Data.ListData.FindElement('path');
+          countPath := TempBEncodedInfoFilesPath.ListData.Count;
+          for x := 0 to countPath - 1 do
           begin
-            //Get the info.files node.
-            TempBEncodedInfoFilesData := TempBEncodedInfoFiles.ListData.Items[i];
-
-            //Get the file name with path
-            FilenameWithPathStr := '';
-            TempBEncodedInfoFilesPath :=
-              TempBEncodedInfoFilesData.Data.ListData.FindElement('path');
-            countPath := TempBEncodedInfoFilesPath.ListData.Count;
-            for x := 0 to countPath - 1 do
-            begin
-              FilenameWithPathStr :=
-                FilenameWithPathStr + DirectorySeparator +
-                TempBEncodedInfoFilesPath.ListData.Items[x].Data.StringData;
-            end;
-
-
-            //Get the file length
-            FileLength := TempBEncodedInfoFilesData.Data.ListData.FindElement(
-              'length').IntegerData;
-
-            DecodeTorrentFileName := TDecodeTorrentFileNameAndLength.Create;
-            DecodeTorrentFileName.Filename := FilenameWithPathStr;
-            DecodeTorrentFileName.FileLength := FileLength;
-            FObjectListFileNameAndLength.Add(DecodeTorrentFileName);
-            //add it to the total sum of all files inside the torrent.
-            Inc(FTotalFileSize, FileLength);
+            FilenameWithPathStr :=
+              FilenameWithPathStr + DirectorySeparator +
+              TempBEncodedInfoFilesPath.ListData.Items[x].Data.StringData;
           end;
 
+
+          //Get the file length
+          FileLength := TempBEncodedInfoFilesData.Data.ListData.FindElement(
+            'length').IntegerData;
+
+          DecodeTorrentFileName := TDecodeTorrentFileNameAndLength.Create;
+          DecodeTorrentFileName.Filename := FilenameWithPathStr;
+          DecodeTorrentFileName.FileLength := FileLength;
+          FObjectListFileNameAndLength.Add(DecodeTorrentFileName);
+          //add it to the total sum of all files inside the torrent.
+          Inc(FTotalFileSize, FileLength);
         end;
-      end
-      else //there is no 'info.files' found. This is an 'one file' torrent.
-      begin//  Look for'info.name' and 'info.length'
-        //Get the file name
-        Filename := FBEncoded_Info.ListData.FindElement('name').StringData;
 
-        FileLength := FBEncoded_Info.ListData.FindElement('length').IntegerData;
-
-        DecodeTorrentFileName := TDecodeTorrentFileNameAndLength.Create;
-        DecodeTorrentFileName.Filename := Filename;
-        DecodeTorrentFileName.FileLength := FileLength;
-        FObjectListFileNameAndLength.Add(DecodeTorrentFileName);
-
-
-        Inc(FTotalFileSize, FileLength);
       end;
+    end
+    else //there is no 'info.files' found. This is an 'one file' torrent.
+    begin//  Look for'info.name' and 'info.length'
+      //Get the file name
+      Filename := FBEncoded_Info.ListData.FindElement('name').StringData;
+
+      FileLength := FBEncoded_Info.ListData.FindElement('length').IntegerData;
+
+      DecodeTorrentFileName := TDecodeTorrentFileNameAndLength.Create;
+      DecodeTorrentFileName.Filename := Filename;
+      DecodeTorrentFileName.FileLength := FileLength;
+      FObjectListFileNameAndLength.Add(DecodeTorrentFileName);
+
+
+      Inc(FTotalFileSize, FileLength);
+    end;
 
 
 
@@ -358,12 +370,12 @@ begin
 
     //torrent file MUST begin with befDictionary.
     if FBEncoded.Format <> befDictionary then
-        exit; //error
+      exit; //error
 
     //torrent MUST have 'info'
     FBEncoded_Info := FBEncoded.ListData.FindElement('info');
     if not assigned(FBEncoded_Info) then
-       exit; //error
+      exit; //error
 
 
     //Accept torrent only when there is no issue in reading AnnounceList and file list
@@ -372,13 +384,13 @@ begin
       Result := True;
     end;
 
-      FInfoHash := GetInfoHash;
-      FCreatedBy := GetCreatedBy;
-      FCreatedDate := GetCreatedDate;
-      FComment := GetComment;
-      FName := GetName;
-      FPieceLenght := GetPieceLenght;
-      FPrivateTorrent:=GetPrivateTorrent;
+    FInfoHash := GetInfoHash;
+    FCreatedBy := GetCreatedBy;
+    FCreatedDate := GetCreatedDate;
+    FComment := GetComment;
+    FName := GetName;
+    FPieceLenght := GetPieceLenght;
+    FPrivateTorrent := GetPrivateTorrent;
 
   except
   end;
@@ -417,11 +429,12 @@ end;
 
 procedure TDecodeTorrent.SetComment(const AValue: utf8string);
 var
-//  Encoded: TBEncoded;
+  //  Encoded: TBEncoded;
   Data: TBEncodedData;
 begin
-  if FComment=AValue then Exit;
-  FComment:=AValue;
+  if FComment = AValue then
+    Exit;
+  FComment := AValue;
   try
     //if empty comment then remove the element.
     if FComment = '' then
@@ -477,18 +490,18 @@ end;
 
 procedure TDecodeTorrent.AddPrivateTorrentFlag;
 var
-   Encoded: TBEncoded;
+  Encoded: TBEncoded;
   Data: TBEncodedData;
 begin//remove the old one and create a new one
   RemovePrivateTorrentFlag;
   try
-      Encoded := TBEncoded.Create;
-      Encoded.Format := befInteger;
-      Encoded.IntegerData := 1;
-      Data := TBEncodedData.Create(Encoded);
-      Data.Header := 'private';
-      FBEncoded_Info.ListData.Add(Data);
-      FBEncoded_Info.ListData.Sort(@sort_);//text must be in alfabetical order.
+    Encoded := TBEncoded.Create;
+    Encoded.Format := befInteger;
+    Encoded.IntegerData := 1;
+    Data := TBEncodedData.Create(Encoded);
+    Data.Header := 'private';
+    FBEncoded_Info.ListData.Add(Data);
+    FBEncoded_Info.ListData.Sort(@sort_);//text must be in alfabetical order.
   except
   end;
   //read databack again
@@ -498,7 +511,7 @@ end;
 procedure TDecodeTorrent.RemoveAnnounce;
 begin
   try
-      FBEncoded.ListData.RemoveElement('announce');
+    FBEncoded.ListData.RemoveElement('announce');
   except
   end;
 end;
@@ -506,7 +519,7 @@ end;
 procedure TDecodeTorrent.RemoveAnnounceList;
 begin
   try
-      FBEncoded.ListData.RemoveElement('announce-list');
+    FBEncoded.ListData.RemoveElement('announce-list');
   except
   end;
 end;
@@ -542,13 +555,13 @@ var
 begin//remove the old one and create a new one
   RemoveAnnounce;
   try
-      Encoded := TBEncoded.Create;
-      Encoded.Format := befString;
-      Encoded.StringData := TrackerURL;
-      Data := TBEncodedData.Create(Encoded);
-      Data.Header := 'announce';
-      FBEncoded.ListData.Add(Data);
-      FBEncoded.ListData.Sort(@sort_);//text must be in alfabetical order.
+    Encoded := TBEncoded.Create;
+    Encoded.Format := befString;
+    Encoded.StringData := TrackerURL;
+    Data := TBEncodedData.Create(Encoded);
+    Data.Header := 'announce';
+    FBEncoded.ListData.Add(Data);
+    FBEncoded.ListData.Sort(@sort_);//text must be in alfabetical order.
   except
   end;
 end;
@@ -556,47 +569,45 @@ end;
 procedure TDecodeTorrent.ChangeAnnounceList(StringList: TStringList);
 var
   EncodedListRoot, EncodedList, EncodedString: TBEncoded;
-  Data, Data2, DataRootBEncodedData: TBEncodedData;
+  DataRootBEncodedData: TBEncodedData;
   i: integer;
 begin
   //remove the present one.
   RemoveAnnounceList;
+
   //if there is nothing in the list then exit.
   if StringList.Count = 0 then
     Exit;
+
   //create a new anounce list
   try
-      //Create the 'announce-list'
-      EncodedListRoot := TBEncoded.Create;
-      EncodedListRoot.Format := befList;
-      EncodedListRoot.ListData := TBEncodedDataList.Create;
-      DataRootBEncodedData := TBEncodedData.Create(EncodedListRoot);
-      DataRootBEncodedData.Header := 'announce-list';
-      FBEncoded.ListData.Add(DataRootBEncodedData); //root
+    //Create the 'announce-list'
+    EncodedListRoot := TBEncoded.Create;
+    EncodedListRoot.Format := befList;
+    DataRootBEncodedData := TBEncodedData.Create(EncodedListRoot);
+    DataRootBEncodedData.Header := 'announce-list';
+    FBEncoded.ListData.Add(DataRootBEncodedData); //root
 
-      //Create list inside 'announce-list'
-      //            Str := TempBEncoded.ListData.Items[i].Data.ListData.First.Data.StringData;
+    //Create list inside 'announce-list'
+    //            Str := TempBEncoded.ListData.Items[i].Data.ListData.First.Data.StringData;
 
-      for i := 0 to StringList.Count - 1 do
-      begin
-        //create a list with string element
-        EncodedList := TBEncoded.Create;
-        EncodedList.Format := befList;
-        EncodedList.ListData := TBEncodedDataList.Create;
-        Data := TBEncodedData.Create(EncodedList);
-        // add list to the list
-        EncodedListRoot.ListData.Add(Data);
+    for i := 0 to StringList.Count - 1 do
+    begin
+      //create a list with string element
+      EncodedList := TBEncoded.Create;
+      EncodedList.Format := befList;
+      // add list to the list via TBEncodedData
+      EncodedListRoot.ListData.Add(TBEncodedData.Create(EncodedList));
 
-        //String ellement inside the list
-        EncodedString := TBEncoded.Create;
-        EncodedString.Format := befString;
-        EncodedString.StringData := StringList[i];
-        Data2 := TBEncodedData.Create(EncodedString);
+      //String ellement inside the list
+      EncodedString := TBEncoded.Create;
+      EncodedString.Format := befString;
+      EncodedString.StringData := StringList[i];
+      // add string to the list via TBEncodedData
+      EncodedList.ListData.Add(TBEncodedData.Create(EncodedString));
+    end;
 
-        EncodedList.ListData.Add(DAta2);
-      end;
-
-      FBEncoded.ListData.Sort(@sort_);//text must be in alfabetical order.
+    FBEncoded.ListData.Sort(@sort_);//text must be in alfabetical order.
   except
   end;
 end;
@@ -606,8 +617,8 @@ begin
   Result := '';
   try
     //The info.value will be hash with SHA1
-      TBEncoded.Encode(FBEncoded_Info, Result);
-      Result := UpperCase(  SHA1Print(SHA1String(Result)));
+    TBEncoded.Encode(FBEncoded_Info, Result);
+    Result := UpperCase(SHA1Print(SHA1String(Result)));
   except
   end;
 end;
@@ -618,9 +629,9 @@ var
 begin
   Result := '';
   try
-      TempBEncoded := FBEncoded.ListData.FindElement('created by');
-      if assigned(TempBEncoded) then
-        Result := TempBEncoded.StringData;
+    TempBEncoded := FBEncoded.ListData.FindElement('created by');
+    if assigned(TempBEncoded) then
+      Result := TempBEncoded.StringData;
 
   except
   end;
@@ -632,9 +643,9 @@ var
 begin
   Result := 0; //Some torrent have no creation date
   try
-      TempBEncoded := FBEncoded.ListData.FindElement('creation date');
-      if assigned(TempBEncoded) then
-        Result := UnixToDateTime(TempBEncoded.IntegerData);
+    TempBEncoded := FBEncoded.ListData.FindElement('creation date');
+    if assigned(TempBEncoded) then
+      Result := UnixToDateTime(TempBEncoded.IntegerData);
   except
   end;
 end;
@@ -643,9 +654,9 @@ function TDecodeTorrent.GetComment: utf8string;
 begin
   Result := '';
   try
-      FBEncoded_Comment := FBEncoded.ListData.FindElement('comment');
-      if assigned(FBEncoded_Comment) then
-        Result := UTF8Trim( FBEncoded_Comment.StringData);
+    FBEncoded_Comment := FBEncoded.ListData.FindElement('comment');
+    if assigned(FBEncoded_Comment) then
+      Result := UTF8Trim(FBEncoded_Comment.StringData);
   except
   end;
 end;
@@ -657,7 +668,7 @@ begin
   Result := '';
   try
     {find 'name' }
-    TempBEncoded :=  FBEncoded_Info.ListData.FindElement('name');
+    TempBEncoded := FBEncoded_Info.ListData.FindElement('name');
     if assigned(TempBEncoded) then
       Result := TempBEncoded.StringData;
   except

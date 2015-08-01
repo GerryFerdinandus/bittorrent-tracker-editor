@@ -1,7 +1,7 @@
 object FormTrackerModify: TFormTrackerModify
-  Left = 635
+  Left = 743
   Height = 607
-  Top = 177
+  Top = 103
   Width = 1179
   AllowDropFiles = True
   Caption = 'Bittorrent Tracker Editor'
@@ -16,7 +16,7 @@ object FormTrackerModify: TFormTrackerModify
   OnDropFiles = FormDropFiles
   OnShow = FormShow
   Position = poScreenCenter
-  LCLVersion = '1.2.6.0'
+  LCLVersion = '1.4.2.0'
   object PageControl: TPageControl
     Left = 0
     Height = 587
@@ -301,7 +301,18 @@ object FormTrackerModify: TFormTrackerModify
     object MenuUpdateTorrent: TMenuItem
       Caption = '&Update torrent'
       Hint = 'Update the torrent files'
-      OnClick = MenuUpdateTorrentClick
+      object MenuUpdateTorrentAddBefore: TMenuItem
+        Caption = 'Add new trackers &Before original trackers (new trackers + original trackers)'
+        OnClick = MenuUpdateTorrentAddBeforeClick
+      end
+      object MenuUpdateTorrentAddAfter: TMenuItem
+        Caption = 'Add new trackers &After original trackers (original trackers + new trackers)'
+        OnClick = MenuUpdateTorrentAddAfterClick
+      end
+      object MenuUpdateTorrentSort: TMenuItem
+        Caption = '&Sort the trackers by name.'
+        OnClick = MenuUpdateTorrentSortClick
+      end
     end
     object MenuHelp: TMenuItem
       Caption = '&Help'
