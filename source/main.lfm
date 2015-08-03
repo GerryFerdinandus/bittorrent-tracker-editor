@@ -301,13 +301,13 @@ object FormTrackerModify: TFormTrackerModify
     object MenuUpdateTorrent: TMenuItem
       Caption = '&Update torrent'
       Hint = 'Update the torrent files'
-      object MenuUpdateTorrentAddBefore: TMenuItem
-        Caption = 'Add new trackers &Before original trackers (new trackers + original trackers)'
-        OnClick = MenuUpdateTorrentAddBeforeClick
-      end
       object MenuUpdateTorrentAddAfter: TMenuItem
         Caption = 'Add new trackers &After original trackers (original trackers + new trackers)'
         OnClick = MenuUpdateTorrentAddAfterClick
+      end
+      object MenuUpdateTorrentAddBefore: TMenuItem
+        Caption = 'Add new trackers &Before original trackers (new trackers + original trackers)'
+        OnClick = MenuUpdateTorrentAddBeforeClick
       end
       object MenuUpdateTorrentSort: TMenuItem
         Caption = '&Sort the trackers by name.'
