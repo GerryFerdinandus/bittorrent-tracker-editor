@@ -42,7 +42,12 @@ uses
 type
 
   //Updated torrent file trackers list order.
-  TTrackerListOrder = (tloInsertBefore, tloAppendAfter, tloSort);
+  TTrackerListOrder = (
+    tloInsertNewBeforeAndKeepOriginalIntact,
+    tloInsertNewBeforeAndKeepNewIntact,
+    tloAppendNewAfterAndKeepOriginalIntact,
+    tloAppendNewAfterAndKeepNewIntact,
+    tloSort);
 
 
   { TFormTrackerModify }
@@ -60,6 +65,10 @@ type
     MenuFileTorrentFolder: TMenuItem;
     MenuFileOpenTrackerList: TMenuItem;
     MenuHelpReportingIssue: TMenuItem;
+    MenuUpdateTorrentAddBeforeRemoveOriginal: TMenuItem;
+    MenuUpdateTorrentAddAfterRemoveOriginal: TMenuItem;
+    MenuUpdateTorrentAddBeforeRemoveNew: TMenuItem;
+    MenuUpdateTorrentAddAfterRemoveNew: TMenuItem;
     MenuUpdateTorrentSort: TMenuItem;
     MenuUpdateTorrentAddAfter: TMenuItem;
     MenuUpdateTorrentAddBefore: TMenuItem;
@@ -116,8 +125,10 @@ type
     procedure MenuTrackersKeepOrDeleteAllTrackersClick(Sender: TObject);
 
     //Menu update torrent
-    procedure MenuUpdateTorrentAddAfterClick(Sender: TObject);
-    procedure MenuUpdateTorrentAddBeforeClick(Sender: TObject);
+    procedure MenuUpdateTorrentAddAfterRemoveNewClick(Sender: TObject);
+    procedure MenuUpdateTorrentAddAfterRemoveOriginalClick(Sender: TObject);
+    procedure MenuUpdateTorrentAddBeforeRemoveNewClick(Sender: TObject);
+    procedure MenuUpdateTorrentAddBeforeRemoveOriginalClick(Sender: TObject);
     procedure MenuUpdateTorrentSortClick(Sender: TObject);
 
   private
@@ -135,8 +146,7 @@ type
     // All the torrent files that must be updated
     FTorrentFileNameList,
     //Log string text output
-    FLogStringList
-    : TStringList;
+    FLogStringList: TStringList;
     // is the present torrent file being process
     FDecodePresentTorrent: TDecodeTorrent;
     FConcoleMode, //user have start the program in console mode
@@ -499,10 +509,9 @@ begin
       if not FDecodePresentTorrent.DecodeTorrent(FTorrentFileNameList[i]) then
         Continue;
 
-      //tloInsertBefore and tloAppendAfter need the list be updated or each torrent file.
-      //for tloSort it is already process one time.
-      if (FTrackerListOrderForUpdatedTorrent = tloInsertBefore) or
-        (FTrackerListOrderForUpdatedTorrent = tloAppendAfter) then
+
+      //tloSort it is already process. But it not tloSort then process it.
+      if FTrackerListOrderForUpdatedTorrent <> tloSort then
       begin
         //Add the new tracker before of after the original trackers inside the torrent.
         CombineFiveTrackerListToOne(FTrackerListOrderForUpdatedTorrent);
@@ -898,7 +907,6 @@ var
   TrackerDeselectTempList, TrackerFromInsideOneTorrentFile: TStringList;
 
 begin
-  //Must keep the original order of trackers inside the torrent file.
   //The new trackers can be added at the begin of end of the list.
 
   // FTrackerFinalList =
@@ -915,8 +923,7 @@ begin
     //Begin with an empty list
     FTrackerFinalList.Clear;
 
-    if (FTrackerListOrderForUpdatedTorrent = tloInsertBefore) or
-      (FTrackerListOrderForUpdatedTorrent = tloAppendAfter) then
+    if FTrackerListOrderForUpdatedTorrent <> tloSort then
     begin
 
       //Read the trackers inside the torrent file
@@ -926,46 +933,80 @@ begin
         AddButIngnoreDuplicates(TrackerFromInsideOneTorrentFile, TrackerStr);
       end;
 
-      //Remove the trackers that we do not want, but these trackers can be posible added again.
-      RemoveTrackersFromList(FTrackerBanByUserList, TrackerFromInsideOneTorrentFile);
-      RemoveTrackersFromList(FTrackerManualyDeselectedByUserList,
-        TrackerFromInsideOneTorrentFile);
-
     end;
 
     //Add the new tracker list before of after the original trackers list inside the torrent file.
     case TrackerListOrder of
 
-      tloInsertBefore:
+      tloInsertNewBeforeAndKeepOriginalIntact:
       begin
         //Before
 
-        //Must be place as first FTrackerAddedByUserList
+        //Must be place as first FTrackerAddedByUserList (Not instact when duplicated)
         for TrackerStr in FTrackerAddedByUserList do
           AddButIngnoreDuplicates(FTrackerFinalList, TrackerStr);
 
-        //original tracker list is second place
+        //original tracker list is second place (Keep original intact)
+        RemoveTrackersFromList(TrackerFromInsideOneTorrentFile, FTrackerFinalList);
         for TrackerStr in TrackerFromInsideOneTorrentFile do
           AddButIngnoreDuplicates(FTrackerFinalList, TrackerStr);
 
-        //'Others' trackers added as last.
+        //'Others' trackers added as last. (Not instact when duplicated)
         for TrackerStr in FTrackerFromInsideTorrentFilesList do
           AddButIngnoreDuplicates(FTrackerFinalList, TrackerStr);
       end;
 
-      tloAppendAfter:
+
+      tloInsertNewBeforeAndKeepNewIntact:
       begin
-        //After
+        //Before
 
-        //original tracker list must be place first.
-        for TrackerStr in TrackerFromInsideOneTorrentFile do
-          AddButIngnoreDuplicates(FTrackerFinalList, TrackerStr);
-
-        //Must be place after TrackerFromInsideOneTorrentFile
+        //Must be place as first FTrackerAddedByUserList (keep new instact)
         for TrackerStr in FTrackerAddedByUserList do
           AddButIngnoreDuplicates(FTrackerFinalList, TrackerStr);
 
-        //'Others' trackers added as last.
+        //original tracker list is second place (Not instact when duplicated)
+        for TrackerStr in TrackerFromInsideOneTorrentFile do
+          AddButIngnoreDuplicates(FTrackerFinalList, TrackerStr);
+
+        //'Others' trackers added as last. (Not instact when duplicated)
+        for TrackerStr in FTrackerFromInsideTorrentFilesList do
+          AddButIngnoreDuplicates(FTrackerFinalList, TrackerStr);
+      end;
+
+
+      tloAppendNewAfterAndKeepOriginalIntact:
+      begin
+        //After
+
+        //original tracker list must be place first. (keep original instact)
+        for TrackerStr in TrackerFromInsideOneTorrentFile do
+          AddButIngnoreDuplicates(FTrackerFinalList, TrackerStr);
+
+        //Must be place after TrackerFromInsideOneTorrentFile (Not instact when duplicated)
+        for TrackerStr in FTrackerAddedByUserList do
+          AddButIngnoreDuplicates(FTrackerFinalList, TrackerStr);
+
+        //'Others' trackers added as last.  (Not instact when duplicated)
+        for TrackerStr in FTrackerFromInsideTorrentFilesList do
+          AddButIngnoreDuplicates(FTrackerFinalList, TrackerStr);
+
+      end;
+
+      tloAppendNewAfterAndKeepNewIntact:
+      begin
+        //After
+
+        //original tracker list must be place first. (Not instact when duplicated)
+        for TrackerStr in TrackerFromInsideOneTorrentFile do
+          AddButIngnoreDuplicates(FTrackerFinalList, TrackerStr);
+
+        //Must be place after TrackerFromInsideOneTorrentFile (keep new instact)
+        RemoveTrackersFromList(FTrackerAddedByUserList, FTrackerFinalList);
+        for TrackerStr in FTrackerAddedByUserList do
+          AddButIngnoreDuplicates(FTrackerFinalList, TrackerStr);
+
+        //'Others' trackers added as last. (Not instact when duplicated)
         for TrackerStr in FTrackerFromInsideTorrentFilesList do
           AddButIngnoreDuplicates(FTrackerFinalList, TrackerStr);
 
@@ -996,16 +1037,17 @@ begin
     //Must keep FTrackerManualyDeselectedByUserList intact. Copy it to TrackerDeselectTempList
     TrackerDeselectTempList := TStringList.Create;
     TrackerDeselectTempList.Text := FTrackerManualyDeselectedByUserList.Text;
-
     RemoveTrackersFromList(FTrackerAddedByUserList, TrackerDeselectTempList);
 
     //Remove the trackers that we do not want in FTrackerFinalList must be the last step.
     RemoveTrackersFromList(FTrackerBanByUserList, FTrackerFinalList);
     RemoveTrackersFromList(TrackerDeselectTempList, FTrackerFinalList);
 
+    //No longer needed
     TrackerDeselectTempList.Free;
 
   finally
+    //No longer needed
     TrackerFromInsideOneTorrentFile.Free;
   end;
 end;
@@ -1015,6 +1057,7 @@ procedure TFormTrackerModify.UpdateTrackerInsideFileList;
 var
   i: integer;
 begin
+  //Collect data what the user want to keep
   //Copy items from CheckListBoxTrackersList to FTrackerFromInsideTorrentFilesList
   //Copy items from CheckListBoxTrackersList to FTrackerManualyDeselectedByUserList
 
@@ -1176,17 +1219,35 @@ begin
   CheckedOnOffAllTrackers(TMenuItem(Sender).Tag = 1);
 end;
 
-procedure TFormTrackerModify.MenuUpdateTorrentAddAfterClick(Sender: TObject);
+procedure TFormTrackerModify.MenuUpdateTorrentAddAfterRemoveNewClick(Sender: TObject);
 begin
-  //User can select to add new tracker before after the original
-  FTrackerListOrderForUpdatedTorrent := tloAppendAfter;
+  //User have selected to add new tracker.
+  FTrackerListOrderForUpdatedTorrent := tloAppendNewAfterAndKeepOriginalIntact;
   UpdateTorrent;
 end;
 
-procedure TFormTrackerModify.MenuUpdateTorrentAddBeforeClick(Sender: TObject);
+procedure TFormTrackerModify.MenuUpdateTorrentAddAfterRemoveOriginalClick(
+  Sender: TObject);
 begin
-  //User can select to add new tracker before after the original
-  FTrackerListOrderForUpdatedTorrent := tloInsertBefore;
+  //User have selected to add new tracker.
+  FTrackerListOrderForUpdatedTorrent := tloAppendNewAfterAndKeepNewIntact;
+  UpdateTorrent;
+end;
+
+procedure TFormTrackerModify.MenuUpdateTorrentAddBeforeRemoveNewClick(Sender: TObject);
+
+
+begin
+  //User have selected to add new tracker.
+  FTrackerListOrderForUpdatedTorrent := tloInsertNewBeforeAndKeepOriginalIntact;
+  UpdateTorrent;
+end;
+
+procedure TFormTrackerModify.MenuUpdateTorrentAddBeforeRemoveOriginalClick(
+  Sender: TObject);
+begin
+  //User have selected to add new tracker.
+  FTrackerListOrderForUpdatedTorrent := tloInsertNewBeforeAndKeepNewIntact;
   UpdateTorrent;
 end;
 

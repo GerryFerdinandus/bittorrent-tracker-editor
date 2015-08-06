@@ -302,15 +302,29 @@ object FormTrackerModify: TFormTrackerModify
       Caption = '&Update torrent'
       Hint = 'Update the torrent files'
       object MenuUpdateTorrentAddAfter: TMenuItem
-        Caption = 'Add new trackers &After original trackers (original trackers + new trackers)'
-        OnClick = MenuUpdateTorrentAddAfterClick
+        Caption = 'Insert new trackers list &BEFORE, the original trackers list inside the torrent file'
+        object MenuUpdateTorrentAddBeforeRemoveOriginal: TMenuItem
+          Caption = 'And remove possible duplicated trackers from the ORIGINAL trackers list.'
+          OnClick = MenuUpdateTorrentAddBeforeRemoveOriginalClick
+        end
+        object MenuUpdateTorrentAddBeforeRemoveNew: TMenuItem
+          Caption = 'And remove possible duplicated trackers from the NEW trackers list.'
+          OnClick = MenuUpdateTorrentAddBeforeRemoveNewClick
+        end
       end
       object MenuUpdateTorrentAddBefore: TMenuItem
-        Caption = 'Add new trackers &Before original trackers (new trackers + original trackers)'
-        OnClick = MenuUpdateTorrentAddBeforeClick
+        Caption = 'Append new trackers list &AFTER, the original trackers list inside the torrent file.'
+        object MenuUpdateTorrentAddAfterRemoveOriginal: TMenuItem
+          Caption = 'And remove possible duplicated trackers from the ORIGINAL trackers list.'
+          OnClick = MenuUpdateTorrentAddAfterRemoveOriginalClick
+        end
+        object MenuUpdateTorrentAddAfterRemoveNew: TMenuItem
+          Caption = 'And remove possible duplicated trackers from the NEW trackers list.'
+          OnClick = MenuUpdateTorrentAddAfterRemoveNewClick
+        end
       end
       object MenuUpdateTorrentSort: TMenuItem
-        Caption = '&Sort the trackers by name.'
+        Caption = '&Sort the trackers list by name.'
         OnClick = MenuUpdateTorrentSortClick
       end
     end
