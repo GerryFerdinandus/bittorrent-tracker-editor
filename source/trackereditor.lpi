@@ -554,7 +554,7 @@
     <Version Value="11"/>
     <PathDelim Value="\"/>
     <Target>
-      <Filename Value="..\executable\trackereditor"/>
+      <Filename Value="..\enduser\trackereditor"/>
     </Target>
     <SearchPaths>
       <IncludeFiles Value="$(ProjOutDir)"/>
