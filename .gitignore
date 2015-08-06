@@ -1,3 +1,6 @@
 /export_trackers.txt
 /console_log.txt
 /*.txt
+/lib
+/source/backup
+/enduser
