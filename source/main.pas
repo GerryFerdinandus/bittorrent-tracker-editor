@@ -43,11 +43,32 @@ type
 
   //Updated torrent file trackers list order.
   TTrackerListOrder = (
-    tloInsertNewBeforeAndKeepOriginalIntact,
+
+    // Console parameter: -U0
+    // Insert new trackers list BEFORE, the original trackers list inside the torrent file.
+    // And remove possible duplicated trackers from the ORIGINAL trackers list.
     tloInsertNewBeforeAndKeepNewIntact,
-    tloAppendNewAfterAndKeepOriginalIntact,
+
+    // Console parameter: -U1
+    // Insert new trackers list BEFORE, the original trackers list inside the torrent file.
+    // And remove possible duplicated trackers from the NEW trackers list.
+    tloInsertNewBeforeAndKeepOriginalIntact,
+
+    // Console parameter: -U2
+    // Append new trackers list AFTER, the original trackers list inside the torrent file.
+    // And remove possible duplicated trackers from the ORIGINAL trackers list.
     tloAppendNewAfterAndKeepNewIntact,
-    tloSort);
+
+    // Console parameter: -U3
+    // Append new trackers list AFTER, the original trackers list inside the torrent file.
+    // And remove possible duplicated trackers from the NEW trackers list.
+    tloAppendNewAfterAndKeepOriginalIntact,
+
+    // Console parameter: -U4
+    // Sort the trackers list by name.
+    tloSort
+    );
+
 
 
   { TFormTrackerModify }
@@ -179,6 +200,8 @@ type
     procedure MenuItemTorrentFilesTreeSyncWithPopupMenu;
     procedure SaveTrackerFinalListToFile;
     procedure ConsoleMode;
+    function ConsoleModeDecodeParameter(out FileNameOrDirStr: UTF8String): boolean;
+    function DecodeConsoleUpdateParameter(ConsoleUpdateParameter: UTF8String): boolean;
     procedure UpdateViewRemoveTracker;
 
 
@@ -675,8 +698,8 @@ begin
     AssignFile(FLogFile, ExtractFilePath(Application.ExeName) + LOG_FILE_NAME);
     ReWrite(FLogFile);
 
-    //Get the first parameter.
-    FileNameOrDirStr := UTF8Trim(ParamStr(1));
+    //Get the console parameters.
+    ConsoleModeDecodeParameter(FileNameOrDirStr);
 
     //If FLogStringList empty then there is no error.
     if FLogStringList.Text = '' then
@@ -694,7 +717,6 @@ begin
           //Some tracker must be removed. Console and windows mode.
           UpdateViewRemoveTracker;
           //update torrent
-          FTrackerListOrderForUpdatedTorrent := tloSort;
           UpdateTorrent;
         end;
       end
@@ -715,7 +737,6 @@ begin
             //Some tracker must be removed. Console and windows mode.
             UpdateViewRemoveTracker;
             //update torrent
-            FTrackerListOrderForUpdatedTorrent := tloSort;
             UpdateTorrent;
           finally
             StringList.Free;
@@ -742,6 +763,100 @@ begin
 
 end;
 
+
+function TFormTrackerModify.ConsoleModeDecodeParameter(
+  out FileNameOrDirStr: UTF8String): boolean;
+begin
+  {
+   Console mode can be started with 2 parameter
+      Update methode: -U0 , -U1, -U2, -U3, -U4
+      String with a link to folder or to torrent file. 'C:\dir'
+
+  }
+
+  case Paramcount of
+    0:
+    begin
+      FLogStringList.Add('ERROR: There are no parameter detected.');
+      Result := False;
+      exit;
+    end;
+    1:
+    begin
+      //one parameter. Must be a link.
+      FileNameOrDirStr := UTF8Trim(ParamStr(1));
+      //Keep the same behaviour as the previeus software version.
+      FTrackerListOrderForUpdatedTorrent := tloSort;
+      Result := True;
+    end;
+    2:
+    begin
+      //Two parameters. The user can select the update methode.
+      //Check for '-U' contruction as first parameter
+      if (Pos('-U', ParamStr(1)) = 1) then
+      begin
+        //Update parameter is the first parameter
+        Result := DecodeConsoleUpdateParameter(ParamStr(1));
+        FileNameOrDirStr := UTF8Trim(ParamStr(2));
+      end
+      else
+      begin
+        //Update parameter is the second parameter
+        Result := DecodeConsoleUpdateParameter(ParamStr(2));
+        FileNameOrDirStr := UTF8Trim(ParamStr(1));
+      end;
+
+    end;
+    else
+    begin
+      FLogStringList.Add('ERROR: There can only be maximum of 2 parameter. Not: ' +
+        IntToStr(ParamCount));
+      Result := False;
+      exit;
+    end;
+
+  end;
+end;
+
+function TFormTrackerModify.DecodeConsoleUpdateParameter(
+  ConsoleUpdateParameter: UTF8String): boolean;
+var
+  i: integer;
+begin
+  //Decode the '-Ux' x is number [0..4]
+
+  //verify string content.
+  Result := (Pos('-U', ConsoleUpdateParameter) = 1) and
+    (length(ConsoleUpdateParameter) = 3);
+
+  if Result then
+  begin
+    //get the number
+    Result := TryStrToInt(ConsoleUpdateParameter[3], i);
+    if Result then
+    begin
+      //decode number [0..4]
+      case i of
+        0: FTrackerListOrderForUpdatedTorrent := tloInsertNewBeforeAndKeepNewIntact;
+        1: FTrackerListOrderForUpdatedTorrent := tloInsertNewBeforeAndKeepOriginalIntact;
+        2: FTrackerListOrderForUpdatedTorrent := tloAppendNewAfterAndKeepNewIntact;
+        3: FTrackerListOrderForUpdatedTorrent := tloAppendNewAfterAndKeepOriginalIntact;
+        4: FTrackerListOrderForUpdatedTorrent := tloSort;
+        else
+        begin
+          //the number is out of range.
+          Result := False;
+        end;
+      end;
+    end;
+  end;
+
+  if not Result then
+  begin
+    FLogStringList.Add('ERROR: can not decode update parameter -U : ' +
+      ConsoleUpdateParameter);
+  end;
+end;
 
 procedure TFormTrackerModify.UpdateViewRemoveTracker;
 var
@@ -923,7 +1038,7 @@ begin
     //Begin with an empty list
     FTrackerFinalList.Clear;
 
-    if FTrackerListOrderForUpdatedTorrent <> tloSort then
+    if TrackerListOrder <> tloSort then
     begin
 
       //Read the trackers inside the torrent file
@@ -1235,7 +1350,6 @@ begin
 end;
 
 procedure TFormTrackerModify.MenuUpdateTorrentAddBeforeRemoveNewClick(Sender: TObject);
-
 
 begin
   //User have selected to add new tracker.
