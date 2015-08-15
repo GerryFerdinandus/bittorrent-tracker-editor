@@ -240,7 +240,7 @@ const
     //    'udp://open.demonii.com:1337/announce'
     );
   //program name and version
-  FORM_CAPTION = 'Bittorrent tracker editor (1.31)';
+  FORM_CAPTION = 'Bittorrent tracker editor (1.32 BETA)';
   TORRENT_FILES_CONTENTS_FORM_CAPTION =
     'Show all the files inside the torrents. (Use right mouse for popup menu.)';
 
