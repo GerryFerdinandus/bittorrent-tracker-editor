@@ -116,7 +116,7 @@ constructor TBEncoded.Create(Stream: TStream);
       begin
         if Buffer = '' then
           raise Exception.Create('');
-        if Length(Buffer) > 6 then
+        if Length(Buffer) > 7 then
           raise Exception.Create('');
         SetLength(Result, StrToInt(Buffer));
         if Stream.Read(Result[1], Length(Result)) <> Length(Result) then
