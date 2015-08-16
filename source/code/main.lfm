@@ -8,7 +8,7 @@ object FormTrackerModify: TFormTrackerModify
   ClientHeight = 587
   ClientWidth = 1179
   Constraints.MinHeight = 500
-  Constraints.MinWidth = 640
+  Constraints.MinWidth = 700
   Font.Height = -11
   Menu = MainMenu
   OnCreate = FormCreate
@@ -45,7 +45,7 @@ object FormTrackerModify: TFormTrackerModify
           Top = 1
           Width = 1169
           Align = alTop
-          Caption = 'Add trackers to torrent file(s).'
+          Caption = 'Add new trackers to torrent file(s).'
           ClientHeight = 183
           ClientWidth = 1165
           Constraints.MinHeight = 100

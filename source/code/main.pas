@@ -244,6 +244,10 @@ const
   TORRENT_FILES_CONTENTS_FORM_CAPTION =
     'Show all the files inside the torrents. (Use right mouse for popup menu.)';
 
+  GROUPBOX_PRESENT_TRACKERS_CAPTION =
+  'Present trackers in all torrent files. Select the one that you want to keep. And added to all torrent files.';
+
+
   //'add trackers' text file must be place in the same directory as the program.
   ADD_TRACKERS_FILE_NAME = 'add_trackers.txt';
 
@@ -263,7 +267,6 @@ const
 
 procedure TFormTrackerModify.FormCreate(Sender: TObject);
 begin
-  Caption := FORM_CAPTION;
 
   //Create controler for StringGridTorrentData
   FControlerGridTorrentData := TControlerGridTorrentData.Create(StringGridTorrentData);
@@ -324,7 +327,11 @@ begin
   //Check is program is started as console
   ConsoleMode;
 
+  //Update some captions
+  Caption := FORM_CAPTION;
   GroupBoxTorrentContents.Caption := TORRENT_FILES_CONTENTS_FORM_CAPTION;
+  GroupBoxPresentTracker.Caption := GROUPBOX_PRESENT_TRACKERS_CAPTION
+
 end;
 
 procedure TFormTrackerModify.FormDestroy(Sender: TObject);
@@ -1815,9 +1822,8 @@ begin
     ByteSizeToBiggerSizeFormatStr(FTotalFileSizeInsideTorrent) + '';
 
 
-  GroupBoxPresentTracker.Caption :=
-    'Present trackers in all torrent files.' +
-    ' Select the one that you want to keep. (List count: ' +
+  GroupBoxPresentTracker.Caption := GROUPBOX_PRESENT_TRACKERS_CAPTION +
+    ' (List count: ' +
     IntToStr(FTrackerFromInsideTorrentFilesList.Count) + ' )';
 
 
