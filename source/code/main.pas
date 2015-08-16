@@ -932,7 +932,9 @@ var
 begin
   //Copy the trackers found in one torrent file to FTrackerFromInsideTorrentFilesList
   for TrackerStr in FDecodePresentTorrent.TrackerList do
+  begin
     AddButIngnoreDuplicates(FTrackerFromInsideTorrentFilesList, TrackerStr);
+  end;
 end;
 
 procedure TFormTrackerModify.ShowTrackerInsideFileList;
@@ -958,10 +960,13 @@ var
   i: integer;
 begin
   //Set all the trackers checkbox ON or OFF
-  with CheckListBoxTrackersList do
-    if Count > 0 then
-      for i := 0 to Count - 1 do
-        Checked[i] := Value;
+    if CheckListBoxTrackersList.Count > 0 then
+    begin
+      for i := 0 to CheckListBoxTrackersList.Count - 1 do
+      begin
+        CheckListBoxTrackersList.Checked[i] := Value;
+      end;
+    end;
 end;
 
 function TFormTrackerModify.ValidTrackerURL(const TrackerURL: UTF8String): boolean;
@@ -1288,10 +1293,13 @@ begin
     exit;
 
   //Set all the trackers publick/private checkbox ON or OFF
-  with CheckListBoxPublicPrivateTorrent do
-    if Count > 0 then
-      for i := 0 to Count - 1 do
-        Checked[i] := TMenuItem(Sender).Tag = 1;
+    if CheckListBoxPublicPrivateTorrent.Count > 0 then
+    begin
+      for i := 0 to CheckListBoxPublicPrivateTorrent.Count - 1 do
+      begin
+        CheckListBoxPublicPrivateTorrent.Checked[i] := TMenuItem(Sender).Tag = 1;
+      end;
+    end;
 end;
 
 
@@ -1728,8 +1736,9 @@ begin
 
   //Add the torrent file name + size of all the files combined.
   TorrentFileNameStr := TorrentFileNameStr + '     SIZE: ' +
-    ByteSizeToBiggerSizeFormatStr(FDecodePresentTorrent.TotalFileSize);
-
+    ByteSizeToBiggerSizeFormatStr(FDecodePresentTorrent.TotalFileSize)
+    +  '  Files: ' + IntToStr(FDecodePresentTorrent.InfoFilesCount) + ''
+    +  '  Tracker: ' + IntToStr(FDecodePresentTorrent.TrackerList.Count) + '';
 
 
   TreeNodeTorrent := TreeViewFileContents.Items.AddChild(FTreeNodeRoot,
@@ -1755,7 +1764,6 @@ begin
 
   //Show a how many files are there
   TreeNodeFiles.Text := TreeNodeFiles.Text + ' (' + IntToStr(TreeNodeFiles.Count) + ')';
-
 
   //Show all the trackers inside the torrent
   for TrackerStr in FDecodePresentTorrent.TrackerList do
@@ -1788,7 +1796,6 @@ begin
   begin
     TreeViewFileContents.Items.AddChild(TreeNodeInfo, 'Private: no');
   end;
-
 
   //All the files count inside the torrent must be added to FTotalFileInsideTorrent
   Inc(FTotalFileInsideTorrent, FDecodePresentTorrent.InfoFilesCount);
