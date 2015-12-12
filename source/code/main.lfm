@@ -1,7 +1,7 @@
 object FormTrackerModify: TFormTrackerModify
-  Left = 743
+  Left = 1386
   Height = 607
-  Top = 103
+  Top = 210
   Width = 1179
   AllowDropFiles = True
   Caption = 'Bittorrent Tracker Editor'
@@ -16,7 +16,7 @@ object FormTrackerModify: TFormTrackerModify
   OnDropFiles = FormDropFiles
   OnShow = FormShow
   Position = poScreenCenter
-  LCLVersion = '1.4.2.0'
+  LCLVersion = '1.4.4.0'
   object PageControl: TPageControl
     Left = 0
     Height = 587
@@ -311,6 +311,10 @@ object FormTrackerModify: TFormTrackerModify
           Caption = 'And remove possible duplicated trackers from the NEW trackers list.'
           OnClick = MenuUpdateTorrentAddBeforeRemoveNewClick
         end
+        object MenuUpdateTorrentAddBeforeKeepOriginalInstactAndRemoveNothing: TMenuItem
+          Caption = 'Keep original tracker list unchanged and remove nothing.'
+          OnClick = MenuUpdateTorrentAddBeforeKeepOriginalInstactAndRemoveNothingClick
+        end
       end
       object MenuUpdateTorrentAddBefore: TMenuItem
         Caption = 'Append new trackers list &AFTER, the original trackers list inside the torrent file.'
@@ -321,6 +325,10 @@ object FormTrackerModify: TFormTrackerModify
         object MenuUpdateTorrentAddAfterRemoveNew: TMenuItem
           Caption = 'And remove possible duplicated trackers from the NEW trackers list.'
           OnClick = MenuUpdateTorrentAddAfterRemoveNewClick
+        end
+        object MenuUpdateTorrentAddAfterKeepOriginalInstactAndRemoveNothing: TMenuItem
+          Caption = 'Keep original tracker list unchanged and remove nothing.'
+          OnClick = MenuUpdateTorrentAddAfterKeepOriginalInstactAndRemoveNothingClick
         end
       end
       object MenuUpdateTorrentSort: TMenuItem

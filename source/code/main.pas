@@ -66,7 +66,18 @@ type
 
     // Console parameter: -U4
     // Sort the trackers list by name.
-    tloSort
+    tloSort,
+
+    // Console parameter: -U5
+    // Append new trackers list BEFORE, the original trackers list inside the torrent file.
+    // Keep original tracker list unchanged and remove nothing.
+    tloInsertNewBeforeAndKeepOriginalIntactAndRemoveNothing,
+
+    // Console parameter: -U6
+    // Append new trackers list AFTER, the original trackers list inside the torrent file.
+    // Keep original tracker list unchanged and remove nothing.
+    tloAppendNewAfterAndKeepOriginalIntactAndRemoveNothing
+
     );
 
 
@@ -86,6 +97,8 @@ type
     MenuFileTorrentFolder: TMenuItem;
     MenuFileOpenTrackerList: TMenuItem;
     MenuHelpReportingIssue: TMenuItem;
+    MenuUpdateTorrentAddBeforeKeepOriginalInstactAndRemoveNothing: TMenuItem;
+    MenuUpdateTorrentAddAfterKeepOriginalInstactAndRemoveNothing: TMenuItem;
     MenuUpdateTorrentAddBeforeRemoveOriginal: TMenuItem;
     MenuUpdateTorrentAddAfterRemoveOriginal: TMenuItem;
     MenuUpdateTorrentAddBeforeRemoveNew: TMenuItem;
@@ -144,10 +157,14 @@ type
     //Menu trackers
     procedure MenuTrackersAllTorrentArePublicPrivateClick(Sender: TObject);
     procedure MenuTrackersKeepOrDeleteAllTrackersClick(Sender: TObject);
+    procedure MenuUpdateTorrentAddAfterKeepOriginalInstactAndRemoveNothingClick(Sender: TObject
+      );
 
     //Menu update torrent
     procedure MenuUpdateTorrentAddAfterRemoveNewClick(Sender: TObject);
     procedure MenuUpdateTorrentAddAfterRemoveOriginalClick(Sender: TObject);
+    procedure MenuUpdateTorrentAddBeforeKeepOriginalInstactAndRemoveNothingClick(Sender: TObject
+      );
     procedure MenuUpdateTorrentAddBeforeRemoveNewClick(Sender: TObject);
     procedure MenuUpdateTorrentAddBeforeRemoveOriginalClick(Sender: TObject);
     procedure MenuUpdateTorrentSortClick(Sender: TObject);
@@ -239,8 +256,8 @@ const
     'udp://tracker.istole.it:80/announce'
     //    'udp://open.demonii.com:1337/announce'
     );
-  //program name and version
-  FORM_CAPTION = 'Bittorrent tracker editor (1.32 BETA)';
+  //program name and version (http://semver.org/)
+  FORM_CAPTION = 'Bittorrent tracker editor (1.32.0-RC.2)';
   TORRENT_FILES_CONTENTS_FORM_CAPTION =
     'Show all the files inside the torrents. (Use right mouse for popup menu.)';
 
@@ -540,7 +557,7 @@ begin
         Continue;
 
 
-      //tloSort it is already process. But it not tloSort then process it.
+      //tloSort it is already process. But if not tloSort then process it.
       if FTrackerListOrderForUpdatedTorrent <> tloSort then
       begin
         //Add the new tracker before of after the original trackers inside the torrent.
@@ -612,12 +629,36 @@ begin
   end
   else
   begin
-    //Via popup show user how many trackers are inside the torrent after update.
-    PopUpMenuStr := 'All torrent file(s) have now ' + IntToStr(CountTrackers) +
-      ' trackers.';
+
+    case FTrackerListOrderForUpdatedTorrent of
+      tloInsertNewBeforeAndKeepNewIntact,
+      tloInsertNewBeforeAndKeepOriginalIntact,
+      tloAppendNewAfterAndKeepNewIntact,
+      tloAppendNewAfterAndKeepOriginalIntact,
+      tloSort:
+      begin
+        //Via popup show user how many trackers are inside the torrent after update.
+        PopUpMenuStr := 'All torrent file(s) have now ' + IntToStr(CountTrackers) +
+          ' trackers.';
+      end;
+
+      tloInsertNewBeforeAndKeepOriginalIntactAndRemoveNothing,
+      tloAppendNewAfterAndKeepOriginalIntactAndRemoveNothing:
+      begin
+        //Via popup show user that all the torrent files are updated.
+        PopUpMenuStr := 'All torrent file(s) are updated.';
+      end;
+      else
+      begin
+        Assert(True, 'case else: Should never been called. UpdateTorrent');
+      end;
+    end;
+
+    //Show the MessageBox
     Application.MessageBox(
       PChar(@PopUpMenuStr[1]),
       '', MB_ICONINFORMATION + MB_OK);
+
   end;
 
 end;
@@ -849,6 +890,8 @@ begin
         2: FTrackerListOrderForUpdatedTorrent := tloAppendNewAfterAndKeepNewIntact;
         3: FTrackerListOrderForUpdatedTorrent := tloAppendNewAfterAndKeepOriginalIntact;
         4: FTrackerListOrderForUpdatedTorrent := tloSort;
+        5: FTrackerListOrderForUpdatedTorrent := tloInsertNewBeforeAndKeepOriginalIntactAndRemoveNothing;
+        6: FTrackerListOrderForUpdatedTorrent := tloAppendNewAfterAndKeepOriginalIntactAndRemoveNothing;
         else
         begin
           //the number is out of range.
@@ -1034,7 +1077,7 @@ var
   TrackerDeselectTempList, TrackerFromInsideOneTorrentFile: TStringList;
 
 begin
-  //The new trackers can be added at the begin of end of the list.
+  //The new trackers can be added at the begin or at the end of the list.
 
   // FTrackerFinalList =
   //                   (TrackerFromInsideOneTorrentFile
@@ -1151,6 +1194,46 @@ begin
 
         FTrackerFinalList.Sort;
       end;
+
+     tloInsertNewBeforeAndKeepOriginalIntactAndRemoveNothing:
+     begin
+       //Before
+
+       //remove duplicate from the list that need to be added.
+       RemoveTrackersFromList(TrackerFromInsideOneTorrentFile, FTrackerAddedByUserList);
+
+       //Must be place as first FTrackerAddedByUserList.
+       for TrackerStr in FTrackerAddedByUserList do
+         AddButIngnoreDuplicates(FTrackerFinalList, TrackerStr);
+
+       //original tracker list is second place (Keep original intact)
+       for TrackerStr in TrackerFromInsideOneTorrentFile do
+         AddButIngnoreDuplicates(FTrackerFinalList, TrackerStr);
+
+       //Nothing should be removed
+       FTrackerManualyDeselectedByUserList.Clear;
+     end;
+
+
+     tloAppendNewAfterAndKeepOriginalIntactAndRemoveNothing:
+      begin
+        //After
+
+        //remove duplicate from the list that need to be added.
+        RemoveTrackersFromList(TrackerFromInsideOneTorrentFile, FTrackerAddedByUserList);
+
+        //original tracker list is first place (Keep original intact)
+        for TrackerStr in TrackerFromInsideOneTorrentFile do
+          AddButIngnoreDuplicates(FTrackerFinalList, TrackerStr);
+
+        //Must be place as second FTrackerAddedByUserList.
+        for TrackerStr in FTrackerAddedByUserList do
+          AddButIngnoreDuplicates(FTrackerFinalList, TrackerStr);
+
+        //Nothing should be removed
+        FTrackerManualyDeselectedByUserList.Clear;
+      end;
+
 
       else
       begin
@@ -1349,6 +1432,14 @@ begin
   CheckedOnOffAllTrackers(TMenuItem(Sender).Tag = 1);
 end;
 
+procedure TFormTrackerModify.MenuUpdateTorrentAddAfterKeepOriginalInstactAndRemoveNothingClick(
+  Sender: TObject);
+begin
+  //User have selected to add new tracker.
+  FTrackerListOrderForUpdatedTorrent := tloAppendNewAfterAndKeepOriginalIntactAndRemoveNothing;
+  UpdateTorrent;
+end;
+
 procedure TFormTrackerModify.MenuUpdateTorrentAddAfterRemoveNewClick(Sender: TObject);
 begin
   //User have selected to add new tracker.
@@ -1361,6 +1452,14 @@ procedure TFormTrackerModify.MenuUpdateTorrentAddAfterRemoveOriginalClick(
 begin
   //User have selected to add new tracker.
   FTrackerListOrderForUpdatedTorrent := tloAppendNewAfterAndKeepNewIntact;
+  UpdateTorrent;
+end;
+
+procedure TFormTrackerModify.MenuUpdateTorrentAddBeforeKeepOriginalInstactAndRemoveNothingClick(
+  Sender: TObject);
+begin
+  //User have selected to add new tracker.
+  FTrackerListOrderForUpdatedTorrent := tloInsertNewBeforeAndKeepOriginalIntactAndRemoveNothing;
   UpdateTorrent;
 end;
 

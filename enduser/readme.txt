@@ -87,4 +87,11 @@ Console parameter: -U3
 Console parameter: -U4
 	Sort the trackers list by name.
 
+Console parameter: -U5
+	Append new trackers list BEFORE, the original trackers list inside the torrent file.
+	Keep original tracker list unchanged and remove nothing.
+
+Console parameter: -U6
+	Append new trackers list AFTER, the original trackers list inside the torrent file.
+	Keep original tracker list unchanged and remove nothing.
 
