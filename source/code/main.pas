@@ -473,6 +473,7 @@ procedure TFormTrackerModify.UpdateTorrent;
 var
   Reply, BoxStyle, i, CountTrackers: integer;
   PopUpMenuStr: string;
+  SomeFilesAreReadOnly: Boolean;
 
 begin
   //Update all the torrent files.
@@ -547,15 +548,26 @@ begin
       ShowHourGlassCursor(True);
     end;
 
+    //initial value is false, will be set to true if read only files are found
+    SomeFilesAreReadOnly := False;
+
     //process all the files one by one.
     //FTorrentFileNameList is not sorted it is still in sync with CheckListBoxPublicPrivateTorrent
     for i := 0 to FTorrentFileNameList.Count - 1 do
     begin //read the torrent file in FDecodePresentTorrent and modify it.
 
+      //check for read only files. It can not be updated by tracker editor
+      if (FileGetAttr(FTorrentFileNameList[i]) and faReadOnly) <> 0 then
+      begin
+        SomeFilesAreReadOnly := True;
+        Continue;
+      end;
+
       //read one torrent file. If error then skip it. (continue)
       if not FDecodePresentTorrent.DecodeTorrent(FTorrentFileNameList[i]) then
+      begin
         Continue;
-
+      end;
 
       //tloSort it is already process. But if not tloSort then process it.
       if FTrackerListOrderForUpdatedTorrent <> tloSort then
@@ -652,6 +664,13 @@ begin
       begin
         Assert(True, 'case else: Should never been called. UpdateTorrent');
       end;
+
+    end;//case
+
+    if SomeFilesAreReadOnly then
+    begin
+      //add warning if read only files are detected.
+      PopUpMenuStr := PopUpMenuStr + ' Warning: Some torrent files are not updated bacause they are READ-ONLY files.';
     end;
 
     //Show the MessageBox
