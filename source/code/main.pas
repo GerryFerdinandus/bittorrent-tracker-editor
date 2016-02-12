@@ -473,7 +473,7 @@ procedure TFormTrackerModify.UpdateTorrent;
 var
   Reply, BoxStyle, i, CountTrackers: integer;
   PopUpMenuStr: string;
-  SomeFilesAreReadOnly: Boolean;
+  SomeFilesCannotBeWriten, SomeFilesAreReadOnly: boolean;
 
 begin
   //Update all the torrent files.
@@ -482,6 +482,9 @@ begin
   //    must be in sync again with FTorrentFileNameList.
   //Undo all posible sort column used by the user. Sort it back to 'begin state'
   FControlerGridTorrentData.ReorderGrid;
+
+  //initial value is false, will be set to true if some file fails to write
+  SomeFilesCannotBeWriten := False;
 
   try
 
@@ -615,8 +618,12 @@ begin
       FDecodePresentTorrent.Comment := FControlerGridTorrentData.ReadComment(i + 1);
 
       //save the torrent file.
-      FDecodePresentTorrent.SaveTorrent(FTorrentFileNameList[i]);
-    end;
+      if not FDecodePresentTorrent.SaveTorrent(FTorrentFileNameList[i]) then
+      begin
+        SomeFilesCannotBeWriten := True;
+      end;
+
+    end;//for
 
     //Create tracker.txt file
     SaveTrackerFinalListToFile;
@@ -670,7 +677,15 @@ begin
     if SomeFilesAreReadOnly then
     begin
       //add warning if read only files are detected.
-      PopUpMenuStr := PopUpMenuStr + ' Warning: Some torrent files are not updated bacause they are READ-ONLY files.';
+      PopUpMenuStr := PopUpMenuStr +
+        ' WARNING: Some torrent files are not updated bacause they are READ-ONLY files.';
+    end;
+
+    if SomeFilesCannotBeWriten then
+    begin
+      //add warning if some files writen are failed. Someting is wrong with the disk.
+      PopUpMenuStr := PopUpMenuStr +
+        ' WARNING: Some torrent files are not updated bacause they failed at write.';
     end;
 
     //Show the MessageBox

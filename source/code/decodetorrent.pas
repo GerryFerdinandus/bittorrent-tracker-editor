@@ -543,7 +543,6 @@ var
   str: utf8string;
   S: TFileStreamUTF8;
 begin
-  Result := True;
   try
     //Encode it to string format
     str := '';
@@ -551,7 +550,7 @@ begin
     //Write string to file. Support filename with unicode.
     S := TFileStreamUTF8.Create(FileName, fmCreate);
     try
-      s.Write(Str[1], length(Str));
+      Result := s.Write(Str[1], length(Str)) = length(Str);
     finally
       S.Free;
     end;
