@@ -1218,12 +1218,12 @@ begin
      begin
        //Before
 
-       //remove duplicate from the list that need to be added.
-       RemoveTrackersFromList(TrackerFromInsideOneTorrentFile, FTrackerAddedByUserList);
+        //Must be place as first FTrackerAddedByUserList.
+        for TrackerStr in FTrackerAddedByUserList do
+          AddButIngnoreDuplicates(FTrackerFinalList, TrackerStr);
 
-       //Must be place as first FTrackerAddedByUserList.
-       for TrackerStr in FTrackerAddedByUserList do
-         AddButIngnoreDuplicates(FTrackerFinalList, TrackerStr);
+        //remove duplicate from the list.
+        RemoveTrackersFromList(TrackerFromInsideOneTorrentFile, FTrackerFinalList);
 
        //original tracker list is second place (Keep original intact)
        for TrackerStr in TrackerFromInsideOneTorrentFile do
@@ -1237,9 +1237,6 @@ begin
      tloAppendNewAfterAndKeepOriginalIntactAndRemoveNothing:
       begin
         //After
-
-        //remove duplicate from the list that need to be added.
-        RemoveTrackersFromList(TrackerFromInsideOneTorrentFile, FTrackerAddedByUserList);
 
         //original tracker list is first place (Keep original intact)
         for TrackerStr in TrackerFromInsideOneTorrentFile do
