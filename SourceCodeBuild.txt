@@ -1,5 +1,6 @@
 Build from source.
 
+-------- Windows
 Install latest Lazarus IDE
 http://www.lazarus.freepascal.org/
 
@@ -9,4 +10,12 @@ select 'trackereditor.lpi' file
 
 Build:
 Menu Run -> Build
-Executable file is created in the executable directory.
+Executable file is created in the 'enduser' directory.
+
+-------- Linux Ubuntu 14.04
+sudo apt-get update
+sudo apt-get install lazarus -y
+cd source/project/tracker_editor/
+lazbuild trackereditor.lpi
+
+Executable file is created in the 'enduser' directory.
