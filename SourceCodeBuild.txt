@@ -6,7 +6,7 @@ http://www.lazarus.freepascal.org/
 
 Open project file:
 menu Project -> open project
-select 'trackereditor.lpi' file
+select 'trackereditor.lpi' file inside 'source/project/tracker_editor/'
 
 Build:
 Menu Run -> Build
