@@ -1,0 +1,43 @@
+# Part of `travis-lazarus` (https://github.com/nielsAD/travis-lazarus)
+# License: MIT
+
+sudo: true
+
+os:
+  - linux
+  - osx
+
+env:
+  global:
+    - WINEPREFIX=~/.winelaz
+    - DISPLAY=:99.0
+  matrix:
+    - LAZ_PKG=true   # Use the latest version from the default package manager
+    - LAZ_VER=1.0.14 # Use specific (binary) release
+    - LAZ_VER=1.2.6
+    - LAZ_VER=1.4.4
+
+matrix:
+  include:
+    - os: linux
+      env: LAZ_VER=1.0.14 LAZ_ENV=wine WINEARCH=win32 LAZ_OPT="--os=win32 --cpu=i386"
+    - os: linux
+      env: LAZ_VER=1.2.6  LAZ_ENV=wine WINEARCH=win32 LAZ_OPT="--os=win32 --cpu=i386"
+    - os: linux
+      env: LAZ_VER=1.4.4  LAZ_ENV=wine WINEARCH=win32 LAZ_OPT="--os=win32 --cpu=i386"
+    - os: linux
+      env: LAZ_VER=1.2.6  LAZ_ENV=wine WINEARCH=win64 LAZ_OPT="--os=win64 --cpu=x86_64"
+    - os: linux
+      env: LAZ_VER=1.4.4  LAZ_ENV=wine WINEARCH=win64 LAZ_OPT="--os=win64 --cpu=x86_64"
+
+before_install:
+    # Start virtual display server
+  - sh -e /etc/init.d/xvfb start || true
+
+install:
+    # Install prerequisites (fpc/lazarus/wine/qemu)
+  - ./.travis.install.py
+
+script:
+  - lazbuild $LAZ_OPT my_lazarus_tests.lpi               # Build my_lazarus_test project
+  - $LAZ_ENV ./bin/my_lazarus_tests --all --format=plain # Run my_lazarus_test testsuite
