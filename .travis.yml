@@ -36,8 +36,9 @@ before_install:
 
 install:
     # Install prerequisites (fpc/lazarus/wine/qemu)
-  - ./.travis.install.py
+  - ./travis-lazarus/.travis.install.py
 
 script:
-  - lazbuild $LAZ_OPT my_lazarus_tests.lpi               # Build my_lazarus_test project
-  - $LAZ_ENV ./bin/my_lazarus_tests --all --format=plain # Run my_lazarus_test testsuite
+  - cd source/project/tracker_editor/				# change to correct folder	
+  - lazbuild $LAZ_OPT trackereditor.lpi           	# Build trackereditor project
+ 
