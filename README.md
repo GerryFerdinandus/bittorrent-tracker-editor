@@ -3,6 +3,10 @@ This software works on Windows XP SP3, Windows 7+
 
 ---
 
+[![Build Status](https://travis-ci.org/GerryFerdinandus/bittorrent-tracker-editor.svg?branch=master)](https://travis-ci.org/GerryFerdinandus/bittorrent-tracker-editor)
+
+---
+
 ## Warning: ##
 There is no backup function in this software. Used it at your own risk. Bittorrent work fine without this program. You probably don't need this software.
 
