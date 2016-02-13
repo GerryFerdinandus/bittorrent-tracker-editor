@@ -4,6 +4,7 @@ This software works on Windows XP SP3, Windows 7+
 ---
 
 [![Build Status](https://travis-ci.org/GerryFerdinandus/bittorrent-tracker-editor.svg?branch=master)](https://travis-ci.org/GerryFerdinandus/bittorrent-tracker-editor)
+for Windows, Linux and Mac build.
 
 ---
 
