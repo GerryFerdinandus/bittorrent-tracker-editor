@@ -9,25 +9,16 @@ os:
 
 env:
   global:
+    - LPIEDITORPATH=source/project/tracker_editor
     - WINEPREFIX=~/.winelaz
     - DISPLAY=:99.0
   matrix:	#For linux and mac osx build
-    - LAZ_VER=1.0.14 # Use specific (binary) release
-    - LAZ_VER=1.2.6
     - LAZ_VER=1.4.4
 
 matrix:		#For windows build with linux wine. Use the same lazarus version as linux/mac build.
   include:
     - os: linux
-      env: LAZ_VER=1.0.14 LAZ_ENV=wine WINEARCH=win32 LAZ_OPT="--os=win32 --cpu=i386"
-    - os: linux
-      env: LAZ_VER=1.2.6  LAZ_ENV=wine WINEARCH=win32 LAZ_OPT="--os=win32 --cpu=i386"
-    - os: linux
       env: LAZ_VER=1.4.4  LAZ_ENV=wine WINEARCH=win32 LAZ_OPT="--os=win32 --cpu=i386"
-    - os: linux
-      env: LAZ_VER=1.2.6  LAZ_ENV=wine WINEARCH=win64 LAZ_OPT="--os=win64 --cpu=x86_64"
-    - os: linux
-      env: LAZ_VER=1.4.4  LAZ_ENV=wine WINEARCH=win64 LAZ_OPT="--os=win64 --cpu=x86_64"
 
 before_install:
     # Start virtual display server
@@ -38,6 +29,4 @@ install:
   - ./travis-lazarus/.travis.install.py
 
 script:
-  - cd source/project/tracker_editor/				# change to correct folder	
-  - lazbuild $LAZ_OPT trackereditor.lpi           	# Build trackereditor project
- 
+  - lazbuild $LAZ_OPT $LPIEDITORPATH/trackereditor.lpi      # Build trackereditor project
