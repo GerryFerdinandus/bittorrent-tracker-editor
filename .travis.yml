@@ -44,3 +44,5 @@ deploy:
   on:
     tags: true 
     repo: GerryFerdinandus/bittorrent-tracker-editor
+    #deploy only at the last build. Linux -> OSX -> Windows
+    condition: $LAZ_ENV=wine
