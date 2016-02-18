@@ -41,7 +41,7 @@ deploy:
   api_key:
     secure: "s2OquTSTFNECWme15GLuLHGykXQK9Q/ie38eI8wwzPZUQ3WCFJxYRGrR6XSaFWe/VfjNlDTfPaUsKfo4Fi9atOec1fp7ewA9JNnFUclw38o9UHirDYgzDNQD8BMhXXMaaxvYJBT+aN3CFvaBkkTyIb8jYO6RsvHfBQmOb6B//Fl2IFAgI/j8+qUKVtZWYEezGUCMCKZ+r/sFgfK91DsKtH7T51WVrJ9oI/HvvGISw6K1sG0X56LZry/shy8f3NPvGfFofooZ/9uPUamDmZwNR7YR91P10cykihZnarPDbCaCAD77D+AeFSDpcRyusr07dRfqIqNFQ1Hcu3GMIZL2W1dfGdZ9z0PJWQcMZQtwmjimV+2cEgIQTCvmG1wzbOTOW4T9QnDFB72M5njcxd1RYlVJwXq3SgSN1smQzRfArUd1bFeD0crGQ4urhfU12CJ50isgXXgXrOT7RclWUR2i1QISFS2ISDtGuCyh1vSGjVPQ9RSYSgG7/OufwdUXA/ZyK2mFpbZ0iKGNEYtZaL8/ZQMM9KlkyWPoQaSve/zTs+D3N5rFcOfQ7EHAAPTzz/fjpU7Yd3a0yf4pLSpr+ConVw1Kwc7d3VYSsoxhnLp2fgij+Xs/skRud8PLiOUsk8L3hUMS4p9X4ANkE181aQTAmzv7qc6qtXOSkhpzsIIxWGY="
   file: "${RELEASE_ZIP_FILE}"
-   on:
+  on:
     tags: true 
     repo: GerryFerdinandus/bittorrent-tracker-editor
 
