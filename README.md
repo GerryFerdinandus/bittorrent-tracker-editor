@@ -3,6 +3,7 @@ This software works on Windows XP SP3, Windows 7+
 
 ---
 
+## Code Status: ##
 [![Build Status](https://travis-ci.org/GerryFerdinandus/bittorrent-tracker-editor.svg?branch=master)](https://travis-ci.org/GerryFerdinandus/bittorrent-tracker-editor)
 for Windows, Linux and Mac build.
 
@@ -72,6 +73,11 @@ This screen shot show the program, after a folder is selected with 97 torrent fi
 ---
 
 ![https://8d7d8faefd7e24e8562f235c97f55f248c7636d1.googledrive.com/host/0B4lG_fvmX5NZRkMtcjgzT2k5QTg/filestrackersinfo.png](https://8d7d8faefd7e24e8562f235c97f55f248c7636d1.googledrive.com/host/0B4lG_fvmX5NZRkMtcjgzT2k5QTg/filestrackersinfo.png)
+
+---
+
+## License: ##
+**bittorrent-tracker-editor** is released under [MIT License](http://www.opensource.org/licenses/MIT)
 
 ---
 
