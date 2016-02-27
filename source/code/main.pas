@@ -257,7 +257,7 @@ const
     //    'udp://open.demonii.com:1337/announce'
     );
   //program name and version (http://semver.org/)
-  FORM_CAPTION = 'Bittorrent tracker editor (1.32.0-RC.3)';
+  FORM_CAPTION = 'Bittorrent tracker editor (1.32.0-RC.4)';
   TORRENT_FILES_CONTENTS_FORM_CAPTION =
     'Show all the files inside the torrents. (Use right mouse for popup menu.)';
 
