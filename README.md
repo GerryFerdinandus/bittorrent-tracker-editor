@@ -38,6 +38,15 @@ There is no backup function in this software. Used it at your own risk. Bittorre
 ---
 
 ## Software version ##
+
+### 1.32 beta ###
+  * ADD:  Add more options for updating the torrent tracker list. ([Issue 8](https://github.com/GerryFerdinandus/bittorrent-tracker-editor/issues/8))
+  * ADD:  Add trackers but keep the original unique trackers list instact. ([Issue 12](https://github.com/GerryFerdinandus/bittorrent-tracker-editor/issues/12))
+  * FIX:  Trackers with https ([Issue 9](https://github.com/GerryFerdinandus/bittorrent-tracker-editor/issues/9))
+  * FIX:  Read torrent file with string size langer that 1MB ([Issue 10](https://github.com/GerryFerdinandus/bittorrent-tracker-editor/issues/10))
+  * FIX:  Give user a warning when torrent file is read only file. ([Issue 14](https://github.com/GerryFerdinandus/bittorrent-tracker-editor/issues/14))
+  * FIX:  Give user a warning when torrent file update failed. ([Issue 15](https://github.com/GerryFerdinandus/bittorrent-tracker-editor/issues/15))
+
 ### 1.31 ###
   * Add: Edit comment in data/info grid column.
   * FIX:  ([Issue 6](https://github.com/GerryFerdinandus/bittorrent-tracker-editor/issues/6))
