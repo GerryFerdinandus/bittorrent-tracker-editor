@@ -75,13 +75,13 @@ There is no backup function in this software. Used it at your own risk. Bittorre
 
 ---
 
-![https://8d7d8faefd7e24e8562f235c97f55f248c7636d1.googledrive.com/host/0B4lG_fvmX5NZRkMtcjgzT2k5QTg/trackereditor.png](https://8d7d8faefd7e24e8562f235c97f55f248c7636d1.googledrive.com/host/0B4lG_fvmX5NZRkMtcjgzT2k5QTg/trackereditor.png)
+![](pictures/trackereditor.png?raw=true "Trackers List")
 
 This screen shot show the program, after a folder is selected with 97 torrent files inside. The normal procedure is to deselect the trackers that no longer working. Optionally add your one trackers. And press the 'Update torrent'
 
 ---
 
-![https://8d7d8faefd7e24e8562f235c97f55f248c7636d1.googledrive.com/host/0B4lG_fvmX5NZRkMtcjgzT2k5QTg/filestrackersinfo.png](https://8d7d8faefd7e24e8562f235c97f55f248c7636d1.googledrive.com/host/0B4lG_fvmX5NZRkMtcjgzT2k5QTg/filestrackersinfo.png)
+![](pictures/filestrackersinfo.png?raw=true "Files/Trackers/Info")
 
 ---
 
