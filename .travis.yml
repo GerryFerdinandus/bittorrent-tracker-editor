@@ -2,7 +2,8 @@
 # License: MIT
 
 sudo: required
-dist: trusty
+#dist: trusty
+#trusty does not work in this configuration
 
 os:
   - linux
