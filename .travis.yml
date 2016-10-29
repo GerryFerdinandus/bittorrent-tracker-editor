@@ -1,7 +1,8 @@
 # Part of `travis-lazarus` (https://github.com/nielsAD/travis-lazarus)
 # License: MIT
 
-sudo: true
+sudo: required
+dist: trusty
 
 os:
   - linux
