@@ -35,7 +35,7 @@ use UTF8 in the program.
 interface
 
 uses
-  Classes, SysUtils, FileUtil, Forms, Controls, Graphics, Dialogs, StdCtrls,
+  Classes, SysUtils, Forms, Controls, Graphics, Dialogs, StdCtrls,
   ExtCtrls, CheckLst, DecodeTorrent, LCLType, ActnList, Menus, ComCtrls,
   Grids, controlergridtorrentdata;
 
@@ -246,7 +246,7 @@ var
 
 implementation
 
-uses LCLIntf, lazutf8;
+uses LCLIntf, lazutf8, LazFileUtils;
 
 const
   RECOMENDED_TRACKERS: array[0..2] of UTF8String =
@@ -1055,7 +1055,7 @@ end;
 
 function TFormTrackerModify.CopyUserInputNewTrackersToList: boolean;
 var
-  TrackerStr: UTF8String;
+  TrackerStrLoop, TrackerStr: UTF8String;
 begin
   {
    Called after 'update torrent' is selected.
@@ -1063,9 +1063,9 @@ begin
   }
   FTrackerAddedByUserList.Clear;
 
-  for TrackerStr in MemoNewTrackers.Lines do
+  for TrackerStrLoop in MemoNewTrackers.Lines do
   begin
-    TrackerStr := UTF8trim(TrackerStr);
+    TrackerStr := UTF8trim(TrackerStrLoop);
 
     //Skip empty line
     if TrackerStr = '' then
@@ -1813,7 +1813,8 @@ end;
 procedure TFormTrackerModify.ViewUpdateOneTorrentFileDecoded;
 var
   RowIndex, CountFiles: integer;
-  TorrentFileNameStr, TrackerStr, DateTimeStr, PrivateStr: UTF8String;
+  TorrentFileNameStr, TrackerStr, PrivateStr: UTF8String;
+  DateTimeStr: String;
   TreeNodeTorrent, TreeNodeFiles, TreeNodeTrackers, TreeNodeInfo: TTreeNode;
 begin
   //Called after loading torrent file.

@@ -16,7 +16,7 @@ object FormTrackerModify: TFormTrackerModify
   OnDropFiles = FormDropFiles
   OnShow = FormShow
   Position = poScreenCenter
-  LCLVersion = '1.4.4.0'
+  LCLVersion = '1.6.0.4'
   object PageControl: TPageControl
     Left = 0
     Height = 587

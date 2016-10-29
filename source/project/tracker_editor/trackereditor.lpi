@@ -37,7 +37,7 @@
         <PackageName Value="LCL"/>
       </Item1>
     </RequiredPackages>
-    <Units Count="65">
+    <Units Count="67">
       <Unit0>
         <Filename Value="trackereditor.lpr"/>
         <IsPartOfProject Value="True"/>
@@ -211,9 +211,10 @@
       <Unit26>
         <Filename Value="C:\lazarus\components\lazutils\fileutil.pas"/>
         <UnitName Value="FileUtil"/>
-        <TopLine Value="151"/>
-        <CursorPos X="10" Y="189"/>
-        <UsageCount Value="9"/>
+        <EditorIndex Value="2"/>
+        <CursorPos X="116" Y="76"/>
+        <UsageCount Value="10"/>
+        <Loaded Value="True"/>
       </Unit26>
       <Unit27>
         <Filename Value="C:\lazarus\fpc\2.6.2\source\rtl\inc\ustringh.inc"/>
@@ -434,11 +435,11 @@
       <Unit61>
         <Filename Value="..\..\code\bencode.pas"/>
         <IsPartOfProject Value="True"/>
-        <EditorIndex Value="-1"/>
-        <WindowIndex Value="-1"/>
-        <TopLine Value="-1"/>
-        <CursorPos X="-1" Y="-1"/>
+        <UnitName Value="BEncode"/>
+        <EditorIndex Value="4"/>
+        <CursorPos X="42" Y="35"/>
         <UsageCount Value="20"/>
+        <Loaded Value="True"/>
       </Unit61>
       <Unit62>
         <Filename Value="..\..\code\controlergridtorrentdata.pas"/>
@@ -452,11 +453,12 @@
       <Unit63>
         <Filename Value="..\..\code\decodetorrent.pas"/>
         <IsPartOfProject Value="True"/>
-        <EditorIndex Value="-1"/>
-        <WindowIndex Value="-1"/>
-        <TopLine Value="-1"/>
-        <CursorPos X="-1" Y="-1"/>
+        <UnitName Value="DecodeTorrent"/>
+        <EditorIndex Value="3"/>
+        <TopLine Value="591"/>
+        <CursorPos X="48" Y="628"/>
         <UsageCount Value="20"/>
+        <Loaded Value="True"/>
       </Unit63>
       <Unit64>
         <Filename Value="..\..\code\main.pas"/>
@@ -464,11 +466,28 @@
         <ComponentName Value="FormTrackerModify"/>
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Form"/>
-        <IsVisibleTab Value="True"/>
+        <TopLine Value="63"/>
+        <CursorPos X="82" Y="140"/>
         <UsageCount Value="20"/>
         <Loaded Value="True"/>
         <LoadedDesigner Value="True"/>
       </Unit64>
+      <Unit65>
+        <Filename Value="C:\lazarus\components\lazutils\lazfileutils.pas"/>
+        <UnitName Value="LazFileUtils"/>
+        <EditorIndex Value="1"/>
+        <UsageCount Value="10"/>
+        <Loaded Value="True"/>
+      </Unit65>
+      <Unit66>
+        <Filename Value="C:\lazarus\fpc\3.0.0\source\rtl\inc\systemh.inc"/>
+        <IsVisibleTab Value="True"/>
+        <EditorIndex Value="5"/>
+        <TopLine Value="387"/>
+        <CursorPos X="3" Y="429"/>
+        <UsageCount Value="10"/>
+        <Loaded Value="True"/>
+      </Unit66>
     </Units>
   </ProjectOptions>
   <CompilerOptions>
