@@ -1,6 +1,9 @@
 # Part of `travis-lazarus` (https://github.com/nielsAD/travis-lazarus)
 # License: MIT
 
+# Suppress the warning with the online Travis WebLint
+language: generic
+
 sudo: required
 #dist: trusty
 #trusty does not work in this configuration
@@ -47,3 +50,5 @@ deploy:
     tags: true 
     repo: GerryFerdinandus/bittorrent-tracker-editor
 
+git:
+  depth: 1
