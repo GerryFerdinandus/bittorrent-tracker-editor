@@ -14,8 +14,9 @@ Executable file is created in the 'enduser' directory.
 
 -------- Linux Ubuntu 14.04
 sudo apt-get update
-sudo apt-get install lazarus -y
-cd source/project/tracker_editor/
-lazbuild trackereditor.lpi
+sudo apt-get install git lazarus -y
+cd ~
+git clone --recursive https://github.com/GerryFerdinandus/bittorrent-tracker-editor.git
+lazbuild bittorrent-tracker-editor/source/project/tracker_editor/trackereditor.lpi
 
 Executable file is created in the 'enduser' directory.
