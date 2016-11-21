@@ -5,7 +5,7 @@
 language: generic
 
 sudo: required
-#dist: trusty
+dist: precise
 #trusty does not work in this configuration
 
 os:
@@ -18,12 +18,12 @@ env:
     - WINEPREFIX=~/.winelaz
     - DISPLAY=:99.0
   matrix:	#For linux and mac osx build
-    - LAZ_VER=1.6
+    - LAZ_VER=1.6.2
 
 matrix:		#For windows build with linux wine. Use the same lazarus version as linux/mac build.
   include:
     - os: linux
-      env: LAZ_VER=1.6  LAZ_ENV=wine WINEARCH=win32 LAZ_OPT="--os=win32 --cpu=i386"
+      env: LAZ_VER=1.6.2  LAZ_ENV=wine WINEARCH=win32 LAZ_OPT="--os=win32 --cpu=i386"
 
 before_install:
     # Start virtual display server
