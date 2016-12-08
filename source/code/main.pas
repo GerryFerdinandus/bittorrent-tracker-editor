@@ -774,13 +774,17 @@ begin
   //update the torrent via console mode if there is a parameter detected.
   if ParamCount > 0 then
   begin
-    FConcoleMode := True;
+    //there must be 2 command line items for console mode
+    FConcoleMode := ParamCount = 2;
 
-    //Create the log file. The old one will be overwritten
-    AssignFile(FLogFile, ExtractFilePath(Application.ExeName) + LOG_FILE_NAME);
-    ReWrite(FLogFile);
+    if FConcoleMode then
+    begin
+      //Create the log file. The old one will be overwritten
+      AssignFile(FLogFile, ExtractFilePath(Application.ExeName) + LOG_FILE_NAME);
+      ReWrite(FLogFile);
+    end;
 
-    //Get the console parameters.
+    //Get the startup command lime parameters.
     ConsoleModeDecodeParameter(FileNameOrDirStr);
 
     //If FLogStringList empty then there is no error.
@@ -798,8 +802,13 @@ begin
           CheckedOnOffAllTrackers(True);
           //Some tracker must be removed. Console and windows mode.
           UpdateViewRemoveTracker;
-          //update torrent
-          UpdateTorrent;
+
+          if FConcoleMode then
+          begin
+            //update torrent
+            UpdateTorrent;
+          end;
+
         end;
       end
       else //a torrent file is selected?
@@ -810,16 +819,25 @@ begin
           try
             //Convert Filenames to stringlist format.
             StringList.Add(FileNameOrDirStr);
-            AddTorrentFileList(StringList);
 
-            //Show all the tracker inside the torrent files.
-            ShowTrackerInsideFileList;
-            //Mark all trackers as selected
-            CheckedOnOffAllTrackers(True);
-            //Some tracker must be removed. Console and windows mode.
-            UpdateViewRemoveTracker;
-            //update torrent
-            UpdateTorrent;
+            //Extract all the trackers inside the torrent file
+            if AddTorrentFileList(StringList) then
+            begin
+              //Show all the tracker inside the torrent files.
+              ShowTrackerInsideFileList;
+              //Mark all trackers as selected
+              CheckedOnOffAllTrackers(True);
+              //Some tracker must be removed. Console and windows mode.
+              UpdateViewRemoveTracker;
+
+              if FConcoleMode then
+              begin
+                //update torrent
+                UpdateTorrent;
+              end;
+
+            end;
+
           finally
             StringList.Free;
           end;
@@ -831,12 +849,16 @@ begin
       end;
     end;
 
-    //Write to log file. And close the file.
-    WriteLn(FLogFile, FLogStringList.Text);
-    CloseFile(FLogFile);
+    if FConcoleMode then
+    begin
+      //Write to log file. And close the file.
+      WriteLn(FLogFile, FLogStringList.Text);
+      CloseFile(FLogFile);
 
-    //Shutdown the console program
-    Application.terminate;
+      //Shutdown the console program
+      Application.terminate;
+    end;
+
   end
   else
   begin //the program

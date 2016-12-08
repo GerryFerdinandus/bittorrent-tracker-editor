@@ -7,8 +7,8 @@ These '.txt' files must be place in the same directory as the program.
 
 Console mode:
 Start program with a parameter to torrent file or dir
-trackereditor.exe "C:\dir\torrent\file.torrent"
-trackereditor.exe "C:\dir\torrent"
+trackereditor.exe "C:\dir\torrent\file.torrent" -U4
+trackereditor.exe "C:\dir\torrent" -U4
 What tracker will be added/removed depend the content of the add_trackers.txt and remove_trackers.txt files.
 
 --------------------
@@ -64,7 +64,7 @@ no new tracker + remove some or all tracker inside torrent.
 --------------------
 
 Updated torrent file trackers list order with '-Ux' parameter.
-This is optional parameter. The default setting is -U4. The same as previous software version.
+This is a mandatory parameter.
 
 trackereditor.exe "C:\dir\torrent" -U0
 
