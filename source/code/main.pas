@@ -1000,7 +1000,10 @@ begin
   //Called when user add torrent files
   //False if something is wrong with decoding torrent.
   Result := FDecodePresentTorrent.DecodeTorrent(FileName);
-  ViewUpdateOneTorrentFileDecoded;
+  if Result then
+  begin
+    ViewUpdateOneTorrentFileDecoded;
+  end;
 end;
 
 procedure TFormTrackerModify.UpdateTorrentTrackerList;
