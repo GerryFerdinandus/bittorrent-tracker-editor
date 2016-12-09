@@ -8,22 +8,22 @@ sudo: required
 dist: precise
 #trusty does not work in this configuration
 
-os:
-  - linux
-  - osx
-
 env:
   global:
     - LPIEDITORPATH=source/project/tracker_editor
     - WINEPREFIX=~/.winelaz
     - DISPLAY=:99.0
-  matrix:	#For linux and mac osx build
-    - LAZ_VER=1.6.2
 
-matrix:		#For windows build with linux wine. Use the same lazarus version as linux/mac build.
+# For windows build (win32) use linux wine.
+matrix:
   include:
     - os: linux
       env: LAZ_VER=1.6.2  LAZ_ENV=wine WINEARCH=win32 LAZ_OPT="--os=win32 --cpu=i386"
+    - os: linux
+      env: LAZ_VER=1.6
+    - os: osx
+      env: LAZ_VER=1.6.2
+
 
 before_install:
     # Start virtual display server
@@ -50,5 +50,3 @@ deploy:
     tags: true 
     repo: GerryFerdinandus/bittorrent-tracker-editor
 
-git:
-  depth: 1
