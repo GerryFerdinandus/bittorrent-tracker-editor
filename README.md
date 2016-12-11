@@ -1,11 +1,11 @@
 **bittorrent-tracker-editor** will add/remove bittorrent tracker from the torrent file(s).
-This software works on Windows XP SP3, Windows 7+, Mac OS X and Linux.
+This software works on Windows XP SP3, Windows 7+, macOS and Linux.
 
 ---
 
 ## Code Status: ##
 [![Build Status](https://travis-ci.org/GerryFerdinandus/bittorrent-tracker-editor.svg?branch=master)](https://travis-ci.org/GerryFerdinandus/bittorrent-tracker-editor)
-for Windows, Mac OS X and Linux build.
+for Windows, macOS and Linux build.
 
 ---
 
@@ -33,7 +33,7 @@ There is no backup function in this software. Used it at your own risk. Bittorre
 ---
 
 ## Downloads: ##
-  * [From GitHub: Executable file for Windows, Mac OS X and Linux.](https://github.com/GerryFerdinandus/bittorrent-tracker-editor/releases)
+  * [From GitHub: Executable file for Windows, macOS and Linux.](https://github.com/GerryFerdinandus/bittorrent-tracker-editor/releases)
 
 ---
 
