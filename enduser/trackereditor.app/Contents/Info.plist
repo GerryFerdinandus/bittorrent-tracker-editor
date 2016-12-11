@@ -39,6 +39,8 @@
       </array>
     </dict>
   </array>
+  <key>CFBundleIconFile</key>
+  <string>iconfile</string>
   <key>NSHighResolutionCapable</key>
   <true/>
 </dict>
