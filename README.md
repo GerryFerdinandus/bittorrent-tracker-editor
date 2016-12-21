@@ -34,12 +34,13 @@ There is no backup function in this software. Used it at your own risk. Bittorre
 
 ## Downloads: ##
   * [From GitHub: Executable file for Windows, macOS and Linux.](https://github.com/GerryFerdinandus/bittorrent-tracker-editor/releases)
+  * [From GitHub: Trackers list (from GitHub user: ngosang )](https://github.com/ngosang/trackerslist)
 
 ---
 
 ## Software version ##
 
-### 1.32 beta ###
+### 1.32.0.RC.4 ###
   * ADD:  Add more options for updating the torrent tracker list. ([Issue 8](https://github.com/GerryFerdinandus/bittorrent-tracker-editor/issues/8))
   * ADD:  Add trackers but keep the original unique trackers list instact. ([Issue 12](https://github.com/GerryFerdinandus/bittorrent-tracker-editor/issues/12))
   * FIX:  Trackers with https ([Issue 9](https://github.com/GerryFerdinandus/bittorrent-tracker-editor/issues/9))
@@ -77,7 +78,7 @@ There is no backup function in this software. Used it at your own risk. Bittorre
 
 ![](pictures/trackereditor.png?raw=true "Trackers List")
 
-This screen shot show the program, after a folder is selected with 97 torrent files inside. The normal procedure is to deselect the trackers that no longer working. Optionally add your one trackers. And press the 'Update torrent'
+This screen shot show the program, after a folder is selected with 97 torrent files inside. The normal procedure is to deselect the trackers that no longer working. Optionally add your own trackers. And press the 'Update torrent'
 
 ---
 
