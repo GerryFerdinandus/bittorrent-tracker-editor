@@ -201,6 +201,7 @@ type
     FTreeNodeRoot: TTreeNode;
     FControlerGridTorrentData: TControlerGridTorrentData;
 
+    procedure SanatizeTrackerList(StringList:TStringList);
     procedure RemoveTrackersFromList(RemoveList, UpdatedList: TStringList);
     procedure UpdateTorrent;
     procedure AddButIngnoreDuplicates(StringList: TStringList; const Str: UTF8String);
@@ -1391,6 +1392,9 @@ begin
   except
     FFilePresentBanByUserList := False;
   end;
+
+  SanatizeTrackerList(FTrackerBanByUserList);
+
 end;
 
 
@@ -1471,6 +1475,7 @@ begin
   TrackerFileList := TStringList.Create;
   try
     TrackerFileList.LoadFromFile(FileName);
+    SanatizeTrackerList(TrackerFileList);
     MemoNewTrackers.Text := UTF8Trim(TrackerFileList.Text);
     Result := True;
   except
@@ -2037,6 +2042,40 @@ begin
 
 end;
 
+procedure TFormTrackerModify.SanatizeTrackerList(StringList: TStringList);
+var
+  TrackerStr: UTF8String;
+  i: integer;
+  PositionSpace: PtrInt;
+begin
+  //remove all empty space and comment after the URL
+
+  if StringList.Count > 0 then
+  begin
+    for i := 0 to StringList.Count - 1 do
+    begin
+      //process every line one by one
+      TrackerStr := StringList[i];
+
+      //remove empty spaces at the begin/end of line
+      TrackerStr := UTF8Trim(TrackerStr);
+
+      //find the first 'space' found in line
+      PositionSpace := UTF8Pos(' ', TrackerStr);
+      if PositionSpace > 0 then
+      begin
+        // There is a 'space' found
+        // Remove everything after this 'space'
+        TrackerStr := UTF8LeftStr(TrackerStr, PositionSpace - 1);
+      end;
+
+      //write the modified string back
+      StringList[i] := TrackerStr;
+    end;
+  end;
+
+
+end;
 
 
 end.
