@@ -5,8 +5,7 @@
 language: generic
 
 sudo: required
-dist: precise
-#trusty does not work in this configuration
+dist: trusty
 
 env:
   global:
@@ -20,14 +19,14 @@ matrix:
     - os: linux
       env: LAZ_VER=1.6.2  LAZ_ENV=wine WINEARCH=win32 LAZ_OPT="--os=win32 --cpu=i386"
     - os: linux
-      env: LAZ_VER=1.6
+      env: LAZ_VER=1.6.2
     - os: osx
       env: LAZ_VER=1.6.2
 
 
 before_install:
     # Start virtual display server
-  - sh -e /etc/init.d/xvfb start || true
+  - Xvfb $DISPLAY &
 
 install:
     # Install prerequisites (fpc/lazarus/wine/qemu)
