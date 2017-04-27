@@ -35,6 +35,7 @@ There is no backup function in this software. Used it at your own risk. Bittorre
 ## Downloads: ##
   * [From GitHub: Executable file for Windows, macOS and Linux.](https://github.com/GerryFerdinandus/bittorrent-tracker-editor/releases)
   * [From GitHub: Trackers list (from GitHub user: ngosang )](https://github.com/ngosang/trackerslist)
+  * [From newtrackon.com: Trackers list (from GitHub user: CorralPeltzer )](https://newtrackon.com)
 
 ---
 
