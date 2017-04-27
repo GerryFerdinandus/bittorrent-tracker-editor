@@ -1075,8 +1075,9 @@ end;
 function TFormTrackerModify.ValidTrackerURL(const TrackerURL: UTF8String): boolean;
 begin
   //TrackerURL should be cleanup with UTF8trim()
-  Result := (Pos('http://', TrackerURL) = 1) or (Pos('https://', TrackerURL) = 1) or
-    (Pos('udp://', TrackerURL) = 1);
+  Result := (Pos('http://', TrackerURL) = 1) or (Pos('https://', TrackerURL) = 1)
+  or (Pos('ws://', TrackerURL) = 1) or (Pos('wss://', TrackerURL) = 1)
+  or (Pos('udp://', TrackerURL) = 1);
 end;
 
 function TFormTrackerModify.CopyUserInputNewTrackersToList: boolean;
