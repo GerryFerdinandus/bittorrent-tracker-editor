@@ -76,7 +76,11 @@ type
     // Console parameter: -U6
     // Append new trackers list AFTER, the original trackers list inside the torrent file.
     // Keep original tracker list unchanged and remove nothing.
-    tloAppendNewAfterAndKeepOriginalIntactAndRemoveNothing
+    tloAppendNewAfterAndKeepOriginalIntactAndRemoveNothing,
+
+    // Console parameter: -U7
+    // Randomize the trackers list.
+    tloRandomize
 
     );
 
@@ -97,6 +101,7 @@ type
     MenuFileTorrentFolder: TMenuItem;
     MenuFileOpenTrackerList: TMenuItem;
     MenuHelpReportingIssue: TMenuItem;
+    MenuUpdateRandomize: TMenuItem;
     MenuUpdateTorrentAddBeforeKeepOriginalInstactAndRemoveNothing: TMenuItem;
     MenuUpdateTorrentAddAfterKeepOriginalInstactAndRemoveNothing: TMenuItem;
     MenuUpdateTorrentAddBeforeRemoveOriginal: TMenuItem;
@@ -144,6 +149,7 @@ type
     procedure MenuFileOpenTrackerListClick(Sender: TObject);
     procedure MenuHelpReportingIssueClick(Sender: TObject);
     procedure MenuHelpVisitWebsiteClick(Sender: TObject);
+    procedure MenuUpdateRandomizeClick(Sender: TObject);
 
     //Popup menu in treeview show all/hide all/ individual items selection.
     procedure MenuItemTorrentFilesTreeShowAllClick(Sender: TObject);
@@ -201,6 +207,7 @@ type
     FTreeNodeRoot: TTreeNode;
     FControlerGridTorrentData: TControlerGridTorrentData;
 
+    procedure RandomizeTrackerList(StringList: TStringList);
     procedure SanatizeTrackerList(StringList:TStringList);
     procedure RemoveTrackersFromList(RemoveList, UpdatedList: TStringList);
     procedure UpdateTorrent;
@@ -385,6 +392,13 @@ procedure TFormTrackerModify.MenuHelpVisitWebsiteClick(Sender: TObject);
 begin
   //There is no help file in this progam. Show user main web site.
   OpenURL('https://github.com/GerryFerdinandus/bittorrent-tracker-editor');
+end;
+
+procedure TFormTrackerModify.MenuUpdateRandomizeClick(Sender: TObject);
+begin
+  //User can select to randomize the tracker list
+  FTrackerListOrderForUpdatedTorrent := tloRandomize;
+  UpdateTorrent;
 end;
 
 procedure TFormTrackerModify.MenuItemTorrentFilesTreeHideAllClick(Sender: TObject);
@@ -655,7 +669,8 @@ begin
       tloInsertNewBeforeAndKeepOriginalIntact,
       tloAppendNewAfterAndKeepNewIntact,
       tloAppendNewAfterAndKeepOriginalIntact,
-      tloSort:
+      tloSort,
+      tloRandomize:
       begin
         //Via popup show user how many trackers are inside the torrent after update.
         PopUpMenuStr := 'All torrent file(s) have now ' + IntToStr(CountTrackers) +
@@ -949,6 +964,7 @@ begin
         4: FTrackerListOrderForUpdatedTorrent := tloSort;
         5: FTrackerListOrderForUpdatedTorrent := tloInsertNewBeforeAndKeepOriginalIntactAndRemoveNothing;
         6: FTrackerListOrderForUpdatedTorrent := tloAppendNewAfterAndKeepOriginalIntactAndRemoveNothing;
+        7: FTrackerListOrderForUpdatedTorrent := tloRandomize;
         else
         begin
           //the number is out of range.
@@ -1291,6 +1307,19 @@ begin
         //Nothing should be removed
         FTrackerManualyDeselectedByUserList.Clear;
       end;
+
+     tloRandomize:
+     begin
+       //Randomize
+
+       for TrackerStr in FTrackerAddedByUserList do
+         AddButIngnoreDuplicates(FTrackerFinalList, TrackerStr);
+
+       for TrackerStr in FTrackerFromInsideTorrentFilesList do
+         AddButIngnoreDuplicates(FTrackerFinalList, TrackerStr);
+
+       RandomizeTrackerList(FTrackerFinalList);
+     end;
 
 
       else
@@ -2078,5 +2107,20 @@ begin
 
 end;
 
+
+procedure TFormTrackerModify.RandomizeTrackerList(StringList: TStringList);
+var
+  i: integer;
+begin
+//The order of the string list must be randomize
+  if StringList.Count > 1 then
+  begin
+    Randomize;
+    for i := 0 to StringList.Count - 1 do
+    begin
+      StringList.Exchange(i, Random(StringList.Count));
+    end;
+  end;
+end;
 
 end.

@@ -95,3 +95,5 @@ Console parameter: -U6
 	Append new trackers list AFTER, the original trackers list inside the torrent file.
 	Keep original tracker list unchanged and remove nothing.
 
+Console parameter: -U7
+	Randomize the trackers list.
