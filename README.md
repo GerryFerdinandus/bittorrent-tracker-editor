@@ -41,13 +41,17 @@ There is no backup function in this software. Used it at your own risk. Bittorre
 
 ## Software version ##
 
-### 1.32.0.RC.4 ###
+### 1.32.0.RC.5 ###
   * ADD:  Add more options for updating the torrent tracker list. ([Issue 8](https://github.com/GerryFerdinandus/bittorrent-tracker-editor/issues/8))
   * ADD:  Add trackers but keep the original unique trackers list instact. ([Issue 12](https://github.com/GerryFerdinandus/bittorrent-tracker-editor/issues/12))
+  * ADD:  Randomize tracker order for each torrent file. ([Issue 19](https://github.com/GerryFerdinandus/bittorrent-tracker-editor/issues/19))
   * FIX:  Trackers with https ([Issue 9](https://github.com/GerryFerdinandus/bittorrent-tracker-editor/issues/9))
   * FIX:  Read torrent file with string size langer that 1MB ([Issue 10](https://github.com/GerryFerdinandus/bittorrent-tracker-editor/issues/10))
   * FIX:  Give user a warning when torrent file is read only file. ([Issue 14](https://github.com/GerryFerdinandus/bittorrent-tracker-editor/issues/14))
   * FIX:  Give user a warning when torrent file update failed. ([Issue 15](https://github.com/GerryFerdinandus/bittorrent-tracker-editor/issues/15))
+  * FIX:  Can not be opened by dragging a file. ([Issue 17](https://github.com/GerryFerdinandus/bittorrent-tracker-editor/issues/17))
+  * FIX:  Need sanitize URL tracker. ([Issue 18](https://github.com/GerryFerdinandus/bittorrent-tracker-editor/issues/18))
+  * FIX:  WebSocket ws:// and wss:// should be accepted as input. ([Issue 20](https://github.com/GerryFerdinandus/bittorrent-tracker-editor/issues/20))
 
 ### 1.31 ###
   * Add: Edit comment in data/info grid column.
