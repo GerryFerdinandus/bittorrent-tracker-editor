@@ -39,8 +39,12 @@ There is no backup function in this software. Used it at your own risk. Bittorre
 
 ---
 
-## Software version ##
+## Software latest release: ##
+[![GitHub Latest release](https://img.shields.io/github/release/GerryFerdinandus/bittorrent-tracker-editor/all.svg)](https://github.com/GerryFerdinandus/bittorrent-tracker-editor/releases)
 
+---
+
+## Software history: ##
 ### 1.32.0 ###
   * ADD:  Add more options for updating the torrent tracker list. ([Issue 8](https://github.com/GerryFerdinandus/bittorrent-tracker-editor/issues/8))
   * ADD:  Add trackers but keep the original unique trackers list instact. ([Issue 12](https://github.com/GerryFerdinandus/bittorrent-tracker-editor/issues/12))
