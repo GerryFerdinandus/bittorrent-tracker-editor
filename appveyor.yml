@@ -1,0 +1,18 @@
+version: '{branch}-{build}'
+image: Visual Studio 2017
+init:
+- cmd: >-
+    echo %LAZARUS_URL%
+
+    appveyor DownloadFile %LAZARUS_URL% -FileName "c:\lazarus.exe"
+environment:
+  LAZARUS_URL: '"http://mirrors.iwi.me/lazarus/releases/Lazarus Windows 32 bits/Lazarus 1.6.2/lazarus-1.6.2-fpc-3.0.0-win32.exe"'
+install:
+- cmd: c:\lazarus.exe /VERYSILENT /DIR="c:\lazarus"
+build_script:
+- cmd: >-
+    c:\lazarus\lazbuild C:\projects\bittorrent-tracker-editor\source\project\tracker_editor\trackereditor.lpi
+
+    c:\lazarus\lazbuild C:\projects\bittorrent-tracker-editor\source\project\unit_test\tracker_editor_test.lpi
+test_script:
+- cmd: C:\projects\bittorrent-tracker-editor\enduser\test_trackereditor.exe -a --format=plain
