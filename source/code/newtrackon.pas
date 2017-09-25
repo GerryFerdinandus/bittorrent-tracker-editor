@@ -1,7 +1,3 @@
-{ MIT licence
-Copyright (c) Gerry Ferdinandus
-}
-
 unit newtrackon;
 
 {
@@ -20,32 +16,41 @@ type
 
   { TNewTrackon }
 
+  //All the type of tracker list.
+  TNewTrackon_List = (
+    ntl_URL_All,//< Download from internet
+    ntl_URL_Live,//< Download from internet
+    ntl_URL_Stable,//< Download from internet
+    ntl_URL_UDP,//< Download from internet
+    ntl_URL_HTTP,//< Download from internet
+    ntl_CREATE_DEAD//< ntl_CREATE_DEAD is NOT download but created by comparing betwean tracker list
+    );
+
   TNewTrackon = class
   private
-    FTrackerList_All, FTrackerList_Live, FTrackerList_Stable,
-    FTrackerList_Dead: TStringList;
+    FTRackerList: array [TNewTrackon_List] of TStringList;
 
+    procedure DownloadTracker(NewTrackon_List: TNewTrackon_List);
     procedure CreateTrackerList_Dead;
-
-    //need to move to miscellaneous.pas
-    procedure RemoveTrackersFromList(RemoveList, UpdatedList: TStringList);
-    procedure SanatizeTrackerList(StringList: TStringList);
 
   public
     // all known trackers, dead or alive
-    property TrackerList_All: TStringList read FTrackerList_All;
+    property TrackerList_All: TStringList read FTRackerList[ntl_URL_All];
 
     // currently active and responding trackers.
-    property TrackerList_Live: TStringList read FTrackerList_Live;
+    property TrackerList_Live: TStringList read FTrackerList[ntl_URL_Live];
 
     // trackers that have an uptime of equal or more than 95%.
-    property TrackerList_Stable: TStringList read FTrackerList_Stable;
+    property TrackerList_Stable: TStringList read FTrackerList[ntl_URL_Stable];
+
+    // stable UDP trackers.
+    property TrackerList_Udp: TStringList read FTrackerList[ntl_URL_UDP];
+
+    // stable HTTP/HTTPS trackers.
+    property TrackerList_Http: TStringList read FTrackerList[ntl_URL_UDP];
 
     // trackers that no longer present in 'live' list
-    property TrackerList_Dead: TStringList read FTrackerList_Dead;
-
-
-
+    property TrackerList_Dead: TStringList read FTrackerList[ntl_CREATE_DEAD];
 
     //Download all the trackers via API
     function DownloadTrackers: boolean;
@@ -59,92 +64,51 @@ type
 
 implementation
 
-uses fphttpclient, LazUTF8;
+uses fphttpclient, LazUTF8, torrent_miscellaneous;
 
 const
-  URL_ALL: string = 'https://newtrackon.com/api/all';
-  URL_LIVE: string = 'https://newtrackon.com/api/live';
-  URL_STABLE: string = 'https://newtrackon.com/api/stable';
+  URL: array [TNewTrackon_List] of string =
+    (//Warning: the URL strings must be in the same order as TNewTrackon_List
+    'https://newtrackon.com/api/all',
+    'https://newtrackon.com/api/live',
+    'https://newtrackon.com/api/stable',
+    'https://newtrackon.com/api/udp',
+    'https://newtrackon.com/api/http',
+    ''//there is no dead tracker list api
+    );
 
 { TNewTrackon }
-
-
-
-procedure TNewTrackon.RemoveTrackersFromList(RemoveList, UpdatedList: TStringList);
-var
-  TrackerStr: string;
-  i: integer;
-begin
-  //Remove the trackers that we do not want in the list
-  for TrackerStr in RemoveList do
-  begin
-    //Find the tracker and remove it from the list.
-    i := UpdatedList.IndexOf(UTF8Trim(TrackerStr));
-    if i >= 0 then
-      UpdatedList.Delete(i);
-  end;
-end;
-
-procedure TNewTrackon.SanatizeTrackerList(StringList: TStringList);
-var
-  TrackerStr: UTF8String;
-  i: integer;
-  PositionSpace: PtrInt;
-begin
-  //remove all empty space and comment after the URL
-
-  if StringList.Count > 0 then
-  begin
-    for i := 0 to StringList.Count - 1 do
-    begin
-      //process every line one by one
-      TrackerStr := StringList[i];
-
-      //remove empty spaces at the begin/end of line
-      TrackerStr := UTF8Trim(TrackerStr);
-
-      //find the first 'space' found in line
-      PositionSpace := UTF8Pos(' ', TrackerStr);
-      if PositionSpace > 0 then
-      begin
-        // There is a 'space' found
-        // Remove everything after this 'space'
-        TrackerStr := UTF8LeftStr(TrackerStr, PositionSpace - 1);
-      end;
-
-      //write the modified string back
-      StringList[i] := TrackerStr;
-    end;
-  end;
-
-end;
-
 
 procedure TNewTrackon.CreateTrackerList_Dead;
 begin
   //FTrackerList_Dead = FTrackerList_All - FTrackerList_Live;
-  FTrackerList_Dead.Assign(FTrackerList_All);
-  RemoveTrackersFromList(FTrackerList_Live, FTrackerList_Dead);
+  TrackerList_Dead.Assign(TrackerList_All);
+  RemoveTrackersFromList(TrackerList_Live, TrackerList_Dead);
+end;
+
+procedure TNewTrackon.DownloadTracker(NewTrackon_List: TNewTrackon_List);
+begin
+  if NewTrackon_List = ntl_CREATE_DEAD then
+    Exit; //there is no Dead tracker list to be downloaded
+
+  //download via URL and put the data in the TrackerList
+  FTRackerList[NewTrackon_List].DelimitedText :=
+    TFPCustomHTTPClient.SimpleGet(URL[NewTrackon_List]);
+
+  //Clean up the tracker list
+  SanatizeTrackerList(FTRackerList[NewTrackon_List]);
 end;
 
 function TNewTrackon.DownloadTrackers: boolean;
 var
-  str: UTF8String;
+  i: TNewTrackon_List;
 begin
   try
-    //fill all the list one by one
-    str := TFPCustomHTTPClient.SimpleGet(URL_ALL);
-    FTrackerList_All.DelimitedText := str;
-
-    str := TFPCustomHTTPClient.SimpleGet(URL_LIVE);
-    FTrackerList_Live.DelimitedText := str;
-
-    str := TFPCustomHTTPClient.SimpleGet(URL_STABLE);
-    FTrackerList_Stable.DelimitedText := str;
-
-    SanatizeTrackerList(FTrackerList_All);
-    SanatizeTrackerList(FTrackerList_Live);
-    SanatizeTrackerList(FTrackerList_Stable);
+    //download all the list one by one
+    for i in TNewTrackon_List do
+    begin
+      DownloadTracker(i);
+    end;
 
     CreateTrackerList_Dead;
 
@@ -156,27 +120,26 @@ begin
 end;
 
 constructor TNewTrackon.Create;
+var
+  i: TNewTrackon_List;
 begin
-
-  FTrackerList_All := TStringList.Create;
-  FTrackerList_Live := TStringList.Create;
-  FTrackerList_Stable := TStringList.Create;
-  FTrackerList_Dead := TStringList.Create;
-
-
-  FTrackerList_All.Duplicates := dupIgnore;
-  FTrackerList_Live.Duplicates := dupIgnore;
-  FTrackerList_Stable.Duplicates := dupIgnore;
-  FTrackerList_Dead.Duplicates := dupIgnore;
-
+  //Create all the TStringList
+  for i in TNewTrackon_List do
+  begin
+    FTrackerList[i] := TStringList.Create;
+    FTrackerList[i].Duplicates := dupIgnore;
+  end;
 end;
 
 destructor TNewTrackon.Destroy;
+var
+  i: TNewTrackon_List;
 begin
-  FTrackerList_All.Free;
-  FTrackerList_Live.Free;
-  FTrackerList_Stable.Free;
-  FTrackerList_Dead.Free;
+  //Release all the TStringList
+  for i in TNewTrackon_List do
+  begin
+    FTrackerList[i].Free;
+  end;
 
   inherited Destroy;
 end;
