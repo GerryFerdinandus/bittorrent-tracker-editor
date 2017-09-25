@@ -3,9 +3,16 @@ This software works on Windows XP SP3, Windows 7+, macOS and Linux.
 
 ---
 
+## Software latest release: ##
+[![GitHub Latest release](https://img.shields.io/github/release/GerryFerdinandus/bittorrent-tracker-editor/all.svg)](https://github.com/GerryFerdinandus/bittorrent-tracker-editor/releases)
+
+---
+
 ## Code Status: ##
-[![Build Status](https://travis-ci.org/GerryFerdinandus/bittorrent-tracker-editor.svg?branch=master)](https://travis-ci.org/GerryFerdinandus/bittorrent-tracker-editor)
-for Windows, macOS and Linux build.
+Continuous integration|Status| Build operating system
+------------|---------|---------
+Travis-CI   |[![Build Status](https://travis-ci.org/GerryFerdinandus/bittorrent-tracker-editor.svg?branch=master)](https://travis-ci.org/GerryFerdinandus/bittorrent-tracker-editor)        |Linux, macOS and Windows (via Wine)
+AppVeyor      |[![Build status](https://ci.appveyor.com/api/projects/status/yq8u0hptl006my57/branch/master?svg=true)](https://ci.appveyor.com/project/GerryFerdinandus/bittorrent-tracker-editor/branch/master) | Windows Server
 
 ---
 
@@ -36,11 +43,6 @@ There is no backup function in this software. Used it at your own risk. Bittorre
   * [From GitHub: Executable file for Windows, macOS and Linux.](https://github.com/GerryFerdinandus/bittorrent-tracker-editor/releases)
   * [From GitHub: Trackers list (from GitHub user: ngosang )](https://github.com/ngosang/trackerslist)
   * [From newtrackon.com: Trackers list (from GitHub user: CorralPeltzer )](https://newtrackon.com)
-
----
-
-## Software latest release: ##
-[![GitHub Latest release](https://img.shields.io/github/release/GerryFerdinandus/bittorrent-tracker-editor/all.svg)](https://github.com/GerryFerdinandus/bittorrent-tracker-editor/releases)
 
 ---
 
