@@ -36,7 +36,7 @@
         <PackageName Value="FCL"/>
       </Item2>
     </RequiredPackages>
-    <Units Count="3">
+    <Units Count="8">
       <Unit0>
         <Filename Value="tracker_editor_test.lpr"/>
         <IsPartOfProject Value="True"/>
@@ -49,6 +49,26 @@
         <Filename Value="..\..\code\newtrackon.pas"/>
         <IsPartOfProject Value="True"/>
       </Unit2>
+      <Unit3>
+        <Filename Value="..\..\test\test_start_up_parameter.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit3>
+      <Unit4>
+        <Filename Value="..\..\code\torrent_miscellaneous.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit4>
+      <Unit5>
+        <Filename Value="..\..\test\test_miscellaneous.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit5>
+      <Unit6>
+        <Filename Value="..\..\code\ngosang_trackerslist.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit6>
+      <Unit7>
+        <Filename Value="..\..\test\test_ngosang_trackers_list.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit7>
     </Units>
   </ProjectOptions>
   <CompilerOptions>
