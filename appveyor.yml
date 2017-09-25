@@ -8,7 +8,10 @@ init:
 environment:
   LAZARUS_URL: '"http://mirrors.iwi.me/lazarus/releases/Lazarus Windows 32 bits/Lazarus 1.6.2/lazarus-1.6.2-fpc-3.0.0-win32.exe"'
 install:
-- cmd: c:\lazarus.exe /VERYSILENT /DIR="c:\lazarus"
+- cmd: >-
+    git submodule update --init --recursive
+
+    c:\lazarus.exe /VERYSILENT /DIR="c:\lazarus"
 build_script:
 - cmd: >-
     c:\lazarus\lazbuild C:\projects\bittorrent-tracker-editor\source\project\tracker_editor\trackereditor.lpi
