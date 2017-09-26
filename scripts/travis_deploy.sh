@@ -15,7 +15,7 @@ then
 
   #windows
   export RELEASE_ZIP_FILE="trackereditor_win32.zip"
-  zip -j $RELEASE_ZIP_FILE enduser/*.txt enduser/trackereditor.exe libeay32.dll ssleay32.dll
+  zip -j $RELEASE_ZIP_FILE enduser/*.txt enduser/trackereditor.exe enduser/libeay32.dll enduser/ssleay32.dll
 
   else
 
