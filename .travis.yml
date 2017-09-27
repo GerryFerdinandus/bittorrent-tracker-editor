@@ -23,7 +23,7 @@ matrix:
       env: LAZ_VER=1.6.2
     - os: osx
       env: LAZ_VER=1.6.2
-      osx_image: xcode8.3
+      osx_image: xcode9
 
 
 before_install:
@@ -35,10 +35,10 @@ install:
   - ./travis-lazarus/.travis.install.py
 
 # install openSSL on macOS
-  - if [ "$TRAVIS_OS_NAME" = "osx" ]; then brew update; fi
-  - if [ "$TRAVIS_OS_NAME" = "osx" ]; then brew install openssl; fi
+#   - if [ "$TRAVIS_OS_NAME" = "osx" ]; then brew update; fi
+#   - if [ "$TRAVIS_OS_NAME" = "osx" ]; then brew install openssl; fi
 #  - if [ "$TRAVIS_OS_NAME" = "osx" ]; then sudo brew link openssl --force; fi
-  - if [ "$TRAVIS_OS_NAME" = "osx" ]; then openssl version; fi
+#   - if [ "$TRAVIS_OS_NAME" = "osx" ]; then openssl version; fi
 
 script:
 # Build trackereditor project
