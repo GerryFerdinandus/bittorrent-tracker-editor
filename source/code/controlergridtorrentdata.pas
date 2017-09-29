@@ -193,7 +193,7 @@ begin
   FStringGridTorrentData.OnColRowMoved := @StringGridTorrentDataColRowMoved;
 
   //The view and the controler part must have the same column count.
-  Assert(FStringGridTorrentData.Columns.Count <> COLUMN_COUNT, 'Wrong column count');
+  Assert(FStringGridTorrentData.Columns.Count = COLUMN_COUNT, 'Wrong column count');
 
   //Track the column
   AddColumn(FTorrentFile, 0);
