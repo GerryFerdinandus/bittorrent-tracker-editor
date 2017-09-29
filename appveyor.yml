@@ -14,8 +14,8 @@ install:
     c:\lazarus.exe /VERYSILENT /DIR="c:\lazarus"
 build_script:
 - cmd: >-
-    c:\lazarus\lazbuild C:\projects\bittorrent-tracker-editor\source\project\tracker_editor\trackereditor.lpi
+    c:\lazarus\lazbuild --build-mode=Debug C:\projects\bittorrent-tracker-editor\source\project\tracker_editor\trackereditor.lpi
 
-    c:\lazarus\lazbuild C:\projects\bittorrent-tracker-editor\source\project\unit_test\tracker_editor_test.lpi
+    c:\lazarus\lazbuild --build-mode=Debug C:\projects\bittorrent-tracker-editor\source\project\unit_test\tracker_editor_test.lpi
 test_script:
 - cmd: C:\projects\bittorrent-tracker-editor\enduser\test_trackereditor.exe -a --format=plain
