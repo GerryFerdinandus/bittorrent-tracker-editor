@@ -167,7 +167,7 @@ end;
 
 procedure CreateCopyTVerifyTrackerResult(
   const VerifyTrackerResult_Original: TVerifyTrackerResult;
-  var VerifyTrackerResult_copy: TVerifyTrackerResult);
+  out VerifyTrackerResult_copy: TVerifyTrackerResult);
 begin
   //create working copy
   VerifyTrackerResult_copy.TrackerAdded := TStringList.Create;
