@@ -34,10 +34,11 @@ begin
   Check(FngosangTrackerList.TrackerList_All_HTTP.Count > 0,
     'TrackerList_All_HTTP should never be empty');
 
+{ //HTTPS is not popular. it may be empty
   Check(
     FngosangTrackerList.TrackerList_All_HTTPS.Count > 0,
     'TrackerList_All_HTTPS should never be empty');
-
+}
   Check(
     FngosangTrackerList.TrackerList_All_IP.Count > 0,
     'TrackerList_All_IP should never be empty');
