@@ -47,6 +47,10 @@ There is no backup function in this software. Used it at your own risk. Bittorre
 ---
 
 ## Software history: ##
+
+### 1.33.0.beta.1 ###
+  * ADD:  Verify the working status of public trackers. ([Issue 21](https://github.com/GerryFerdinandus/bittorrent-tracker-editor/issues/21))
+
 ### 1.32.0 ###
   * ADD:  Add more options for updating the torrent tracker list. ([Issue 8](https://github.com/GerryFerdinandus/bittorrent-tracker-editor/issues/8))
   * ADD:  Add trackers but keep the original unique trackers list instact. ([Issue 12](https://github.com/GerryFerdinandus/bittorrent-tracker-editor/issues/12))
