@@ -1,7 +1,7 @@
 object FormTrackerModify: TFormTrackerModify
-  Left = 510
+  Left = 1348
   Height = 607
-  Top = 224
+  Top = 462
   Width = 1179
   AllowDropFiles = True
   Caption = 'Bittorrent Tracker Editor'
@@ -72,15 +72,20 @@ object FormTrackerModify: TFormTrackerModify
           Constraints.MinHeight = 100
           ParentBidiMode = False
           TabOrder = 1
-          object CheckListBoxTrackersList: TCheckListBox
+          object StringGridTrackerOnline: TStringGrid
             Left = 0
             Height = 335
             Top = 0
             Width = 1165
             Align = alClient
-            Constraints.MinHeight = 50
-            ItemHeight = 0
+            AlternateColor = clWhite
+            ColCount = 0
+            FixedCols = 0
+            FixedRows = 0
+            Options = [goFixedVertLine, goFixedHorzLine, goVertLine, goHorzLine, goRangeSelect, goEditing, goSmoothScroll]
+            RowCount = 0
             TabOrder = 0
+            TitleFont.Height = -11
           end
         end
         object Splitter1: TSplitter
@@ -288,6 +293,26 @@ object FormTrackerModify: TFormTrackerModify
         Caption = '&Delete all the present trackers'
         OnClick = MenuTrackersKeepOrDeleteAllTrackersClick
       end
+      object MenuTrackersSeperator1: TMenuItem
+        Caption = '-'
+      end
+      object MenuTrackersDeleteUnstableTrackers: TMenuItem
+        Caption = 'Delete UNSTABLE trackers'
+        OnClick = MenuTrackersDeleteTrackersWithStatusClick
+      end
+      object MenuTrackersDeleteDeadTrackers: TMenuItem
+        Tag = 1
+        Caption = 'Delete DEAD trackers'
+        OnClick = MenuTrackersDeleteTrackersWithStatusClick
+      end
+      object MenuTrackersDeleteUnknownTrackers: TMenuItem
+        Tag = 2
+        Caption = 'Delete UNKNOWN trackers'
+        OnClick = MenuTrackersDeleteTrackersWithStatusClick
+      end
+      object MenuTrackersSeperator2: TMenuItem
+        Caption = '-'
+      end
       object MenuTrackersAllTorrentArePublic: TMenuItem
         Tag = 1
         Caption = 'All torrent are &public'
@@ -338,6 +363,17 @@ object FormTrackerModify: TFormTrackerModify
       object MenuUpdateRandomize: TMenuItem
         Caption = '&Randomize the trackers list.'
         OnClick = MenuUpdateRandomizeClick
+      end
+    end
+    object MenuOnlineCheck: TMenuItem
+      Caption = 'Online Check'
+      object MenuItemOnlineCheckDownloadNewTrackon: TMenuItem
+        Caption = 'Check Status Trackers (From newTrackon)'
+        OnClick = MenuItemOnlineCheckDownloadNewTrackonClick
+      end
+      object MenuItemOnlineCheckAppendStableTrackers: TMenuItem
+        Caption = 'Append Stable Trackers (From newTrackon)'
+        OnClick = MenuItemOnlineCheckAppendStableTrackersClick
       end
     end
     object MenuHelp: TMenuItem

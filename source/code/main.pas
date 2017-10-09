@@ -1,27 +1,10 @@
 { MIT licence
-Copyright (c) Gerry Ferdinandus
-
-Permission is hereby granted, free of charge, to any person obtaining a copy of this software 
-and associated documentation files (the "Software"), to deal in the Software without restriction, 
-including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, 
-and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, 
-subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all copies or substantial portions 
-of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED 
-TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL 
-THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF 
-CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
-DEALINGS IN THE SOFTWARE.
+  Copyright (c) Gerry Ferdinandus
 }
 
 unit main;
 
 {
-
-
 Unicode:
 variable 'Utf8string' is the same as 'string'
 UTF8String          = type ansistring;
@@ -37,7 +20,7 @@ interface
 uses
   Classes, SysUtils, Forms, Controls, Graphics, Dialogs, StdCtrls,
   ExtCtrls, CheckLst, DecodeTorrent, LCLType, ActnList, Menus, ComCtrls,
-  Grids, controlergridtorrentdata, torrent_miscellaneous;
+  Grids, controlergridtorrentdata, torrent_miscellaneous, controler_trackerlist_online;
 
 type
 
@@ -46,7 +29,6 @@ type
 
   TFormTrackerModify = class(TForm)
     CheckListBoxPublicPrivateTorrent: TCheckListBox;
-    CheckListBoxTrackersList: TCheckListBox;
     GroupBoxTorrentContents: TGroupBox;
     GroupBoxPublicPrivateTorrent: TGroupBox;
     GroupBoxNewTracker: TGroupBox;
@@ -57,6 +39,14 @@ type
     MenuFileTorrentFolder: TMenuItem;
     MenuFileOpenTrackerList: TMenuItem;
     MenuHelpReportingIssue: TMenuItem;
+    MenuItemOnlineCheckAppendStableTrackers: TMenuItem;
+    MenuTrackersDeleteDeadTrackers: TMenuItem;
+    MenuTrackersDeleteUnstableTrackers: TMenuItem;
+    MenuTrackersDeleteUnknownTrackers: TMenuItem;
+    MenuTrackersSeperator2: TMenuItem;
+    MenuTrackersSeperator1: TMenuItem;
+    MenuItemOnlineCheckDownloadNewTrackon: TMenuItem;
+    MenuOnlineCheck: TMenuItem;
     MenuUpdateRandomize: TMenuItem;
     MenuUpdateTorrentAddBeforeKeepOriginalInstactAndRemoveNothing: TMenuItem;
     MenuUpdateTorrentAddAfterKeepOriginalInstactAndRemoveNothing: TMenuItem;
@@ -88,6 +78,7 @@ type
     PopupMenuTorrentFilesContent: TPopupMenu;
     SelectDirectoryDialog1: TSelectDirectoryDialog;
     Splitter1: TSplitter;
+    StringGridTrackerOnline: TStringGrid;
     StringGridTorrentData: TStringGrid;
     TabSheetTorrentsContents: TTabSheet;
     TabSheetTorrentData: TTabSheet;
@@ -102,10 +93,8 @@ type
 
     //At start of the program the form will be show/hide
     procedure FormShow(Sender: TObject);
-    procedure MenuFileOpenTrackerListClick(Sender: TObject);
     procedure MenuHelpReportingIssueClick(Sender: TObject);
     procedure MenuHelpVisitWebsiteClick(Sender: TObject);
-    procedure MenuUpdateRandomizeClick(Sender: TObject);
 
     //Popup menu in treeview show all/hide all/ individual items selection.
     procedure MenuItemTorrentFilesTreeShowAllClick(Sender: TObject);
@@ -115,12 +104,12 @@ type
     //Select via menu torrent file or directory
     procedure MenuOpenTorrentFileClick(Sender: TObject);
     procedure MenuFileTorrentFolderClick(Sender: TObject);
+    procedure MenuFileOpenTrackerListClick(Sender: TObject);
 
     //Menu trackers
     procedure MenuTrackersAllTorrentArePublicPrivateClick(Sender: TObject);
     procedure MenuTrackersKeepOrDeleteAllTrackersClick(Sender: TObject);
-    procedure MenuUpdateTorrentAddAfterKeepOriginalInstactAndRemoveNothingClick(
-      Sender: TObject);
+    procedure MenuTrackersDeleteTrackersWithStatusClick(Sender: TObject);
 
     //Menu update torrent
     procedure MenuUpdateTorrentAddAfterRemoveNewClick(Sender: TObject);
@@ -130,11 +119,21 @@ type
     procedure MenuUpdateTorrentAddBeforeRemoveNewClick(Sender: TObject);
     procedure MenuUpdateTorrentAddBeforeRemoveOriginalClick(Sender: TObject);
     procedure MenuUpdateTorrentSortClick(Sender: TObject);
+    procedure MenuUpdateTorrentAddAfterKeepOriginalInstactAndRemoveNothingClick(
+      Sender: TObject);
+    procedure MenuUpdateRandomizeClick(Sender: TObject);
+
+    //Menu online check
+    procedure MenuItemOnlineCheckAppendStableTrackersClick(Sender: TObject);
+    procedure MenuItemOnlineCheckDownloadNewTrackonClick(Sender: TObject);
 
   private
     { private declarations }
 
     FTrackerList: TTrackerList;
+    FControlerTrackerListOnline: TControlerTrackerListOnline;
+    FDownloadStatus: boolean;
+
 
     // is the present torrent file being process
     FDecodePresentTorrent: TDecodeTorrent;
@@ -190,7 +189,7 @@ var
 
 implementation
 
-uses LCLIntf, lazutf8, LazFileUtils;
+uses LCLIntf, lazutf8, LazFileUtils, trackerlist_online;
 
 const
   RECOMENDED_TRACKERS: array[0..2] of UTF8String =
@@ -275,6 +274,12 @@ begin
   //Decoding class for torrent.
   FDecodePresentTorrent := TDecodeTorrent.Create;
 
+  //Create view for trackerURL with checkbox
+  FControlerTrackerListOnline :=
+    TControlerTrackerListOnline.Create(StringGridTrackerOnline,
+    FTrackerList.TrackerFromInsideTorrentFilesList);
+
+
   //start the program at mimimum visual size. (this is optional)
   Width := Constraints.MinWidth;
   Height := Constraints.MinHeight;
@@ -284,6 +289,8 @@ begin
 
   //Load the unwanted trackers list.
   LoadTrackersTextFileRemoveTrackers;
+
+
 
   //Check is program is started as console
   ConsoleMode;
@@ -307,6 +314,7 @@ begin
   FTrackerList.TorrentFileNameList.Free;
   FControlerGridTorrentData.Free;
   FTrackerList.TrackerManualyDeselectedByUserList.Free;
+  FControlerTrackerListOnline.Free;
 end;
 
 procedure TFormTrackerModify.MenuFileTorrentFolderClick(Sender: TObject);
@@ -328,6 +336,92 @@ procedure TFormTrackerModify.MenuHelpVisitWebsiteClick(Sender: TObject);
 begin
   //There is no help file in this progam. Show user main web site.
   OpenURL('https://github.com/GerryFerdinandus/bittorrent-tracker-editor');
+end;
+
+procedure TFormTrackerModify.MenuItemOnlineCheckAppendStableTrackersClick(
+  Sender: TObject);
+var
+  tracker: UTF8String;
+begin
+  //User want to use the downloaded tracker list.
+
+  //check if tracker is already downloaded
+  if not FDownloadStatus then
+  begin
+    //Download it now.
+    MenuItemOnlineCheckDownloadNewTrackonClick(nil);
+  end;
+
+  //Append all the trackers to MemoNewTrackers
+  MemoNewTrackers.Lines.BeginUpdate;
+  for Tracker in FControlerTrackerListOnline.StableTrackers do
+  begin
+    MemoNewTrackers.Lines.Add(tracker);
+  end;
+  MemoNewTrackers.Lines.EndUpdate;
+
+  //Check for error in tracker list
+  if not CopyUserInputNewTrackersToList then
+  begin
+    MemoNewTrackers.Lines.Clear;
+  end;
+end;
+
+procedure TFormTrackerModify.MenuItemOnlineCheckDownloadNewTrackonClick(
+  Sender: TObject);
+begin
+  try
+    screen.Cursor := crHourGlass;
+    FDownloadStatus := FControlerTrackerListOnline.DownloadTrackers;
+  finally
+    screen.Cursor := crDefault;
+  end;
+
+  if not FDownloadStatus then
+  begin
+    //something is wrong with downloading
+    Application.MessageBox(
+      PChar('Can not downloading the trackers from internet'),
+      '', MB_ICONINFORMATION + MB_OK);
+  end;
+end;
+
+procedure TFormTrackerModify.MenuTrackersDeleteTrackersWithStatusClick(
+  Sender: TObject);
+
+  procedure UncheckTrackers(Value: TTrackerListOnlineStatus);
+  var
+    i: integer;
+  begin
+    if FControlerTrackerListOnline.Count > 0 then
+    begin
+      for i := 0 to FControlerTrackerListOnline.Count - 1 do
+      begin
+        if FControlerTrackerListOnline.TrackerStatus(i) = Value then
+        begin
+          FControlerTrackerListOnline.Checked[i] := False;
+        end;
+      end;
+    end;
+  end;
+
+begin
+  //check if tracker is already downloaded
+  if not FDownloadStatus then
+  begin
+    MenuItemOnlineCheckDownloadNewTrackonClick(nil);
+  end;
+
+  //0 = Unstable
+  //1 = Dead
+  //2 = Unknown
+  case TMenuItem(Sender).Tag of
+    0: UncheckTrackers(tos_live_but_unstable);
+    1: UncheckTrackers(tos_dead);
+    2: UncheckTrackers(tos_unknown);
+    else
+      Assert(True, 'Unknown Menu item selection')
+  end;
 end;
 
 procedure TFormTrackerModify.MenuUpdateRandomizeClick(Sender: TObject);
@@ -836,10 +930,11 @@ begin
   begin
 
     //uncheck tracker that are listed in FTrackerList.TrackerBanByUserList
-    i := CheckListBoxTrackersList.Items.IndexOf(UTF8Trim(TrackerStr));
+    //the FTrackerList.TrackerFromInsideTorrentFilesList is use in the view
+    i := FTrackerList.TrackerFromInsideTorrentFilesList.IndexOf(UTF8Trim(TrackerStr));
     if i >= 0 then //Found it.
     begin
-      CheckListBoxTrackersList.Checked[i] := False;
+      FControlerTrackerListOnline.Checked[i] := False;
     end;
 
     //remove tracker from user memo text that are listed in FTrackerList.TrackerBanByUserList
@@ -883,20 +978,9 @@ begin
 end;
 
 procedure TFormTrackerModify.ShowTrackerInsideFileList;
-var
-  TrackerStr: UTF8String;
 begin
   //Called after torrent is being loaded.
-
-  CheckListBoxTrackersList.Items.BeginUpdate;
-  //remove the previeus list
-  CheckListBoxTrackersList.Clear;
-  //Add new items to the list.
-  for TrackerStr in FTrackerList.TrackerFromInsideTorrentFilesList do
-  begin
-    CheckListBoxTrackersList.Items.Add(TrackerStr);
-  end;
-  CheckListBoxTrackersList.Items.EndUpdate;
+  FControlerTrackerListOnline.UpdateView;
 end;
 
 
@@ -905,11 +989,11 @@ var
   i: integer;
 begin
   //Set all the trackers checkbox ON or OFF
-  if CheckListBoxTrackersList.Count > 0 then
+  if FControlerTrackerListOnline.Count > 0 then
   begin
-    for i := 0 to CheckListBoxTrackersList.Count - 1 do
+    for i := 0 to FControlerTrackerListOnline.Count - 1 do
     begin
-      CheckListBoxTrackersList.Checked[i] := Value;
+      FControlerTrackerListOnline.Checked[i] := Value;
     end;
   end;
 end;
@@ -971,33 +1055,36 @@ var
   i: integer;
 begin
   //Collect data what the user want to keep
-  //Copy items from CheckListBoxTrackersList to FTrackerList.TrackerFromInsideTorrentFilesList
-  //Copy items from CheckListBoxTrackersList to FTrackerList.TrackerManualyDeselectedByUserList
+  //Copy items from FControlerTrackerListOnline to FTrackerList.TrackerFromInsideTorrentFilesList
+  //Copy items from FControlerTrackerListOnline to FTrackerList.TrackerManualyDeselectedByUserList
 
   FTrackerList.TrackerFromInsideTorrentFilesList.Clear;
   FTrackerList.TrackerManualyDeselectedByUserList.Clear;
 
-  if CheckListBoxTrackersList.Count > 0 then
+  if FControlerTrackerListOnline.Count > 0 then
   begin
-    for i := 0 to CheckListBoxTrackersList.Count - 1 do
+    for i := 0 to FControlerTrackerListOnline.Count - 1 do
     begin
 
-      if CheckListBoxTrackersList.Checked[i] then
+      if FControlerTrackerListOnline.Checked[i] then
       begin
         //Selected by user
         AddButIngnoreDuplicates(FTrackerList.TrackerFromInsideTorrentFilesList,
-          CheckListBoxTrackersList.Items[i]);
+          FControlerTrackerListOnline.TrackerURL(i)
+          );
       end
       else
       begin
         //Delected by user
         AddButIngnoreDuplicates(
           FTrackerList.TrackerManualyDeselectedByUserList,
-          CheckListBoxTrackersList.Items[i]);
+          FControlerTrackerListOnline.TrackerURL(i)
+          );
       end;
 
     end;
   end;
+
 end;
 
 procedure TFormTrackerModify.LoadTrackersTextFileAddTrackers;
@@ -1197,6 +1284,7 @@ begin
   FTrackerList.TrackerListOrderForUpdatedTorrent := tloSort;
   UpdateTorrent;
 end;
+
 
 
 function TFormTrackerModify.LoadTorrentViaDir(const Dir: UTF8String): boolean;

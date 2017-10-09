@@ -29,6 +29,7 @@ type
   TNewTrackon = class
   private
     FTRackerList: array [TNewTrackon_List] of TStringList;
+    FDownloadStatus: boolean;
 
     procedure DownloadTracker(NewTrackon_List: TNewTrackon_List);
     procedure CreateTrackerList_Dead;
@@ -92,6 +93,7 @@ begin
     Exit; //there is no Dead tracker list to be downloaded
 
   //download via URL and put the data in the TrackerList
+  //will create exception if something is wrong
   FTRackerList[NewTrackon_List].DelimitedText :=
     TFPCustomHTTPClient.SimpleGet(URL[NewTrackon_List]);
 
@@ -107,16 +109,18 @@ begin
     //download all the list one by one
     for i in TNewTrackon_List do
     begin
-      DownloadTracker(i);
+      DownloadTracker(i);//< may create exception
     end;
 
     CreateTrackerList_Dead;
 
-    Result := True;
+    FDownloadStatus := True;
   except
     //No OpenSSL or web server is down
-    Result := False;
+    FDownloadStatus := False;
   end;
+
+  Result := FDownloadStatus;
 end;
 
 constructor TNewTrackon.Create;
