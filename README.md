@@ -36,6 +36,7 @@ There is no backup function in this software. Used it at your own risk. Bittorre
   * Preset add/remove tracker via add\_trackers.txt and remove\_trackers.txt files when present in the same folder as the executable file.
   * Optional start as console program. (See readme.txt inside download)
   * Show torrent files content.
+  * Download stable trackers from newTrackon.
 
 ---
 
@@ -64,27 +65,27 @@ There is no backup function in this software. Used it at your own risk. Bittorre
   * FIX:  WebSocket ws:// and wss:// should be accepted as input. ([Issue 20](https://github.com/GerryFerdinandus/bittorrent-tracker-editor/issues/20))
 
 ### 1.31 ###
-  * Add: Edit comment in data/info grid column.
+  * ADD: Edit comment in data/info grid column.
   * FIX:  ([Issue 6](https://github.com/GerryFerdinandus/bittorrent-tracker-editor/issues/6))
 
 ### 1.30 ###
-  * Add: Tab page Files/trackers/info
-  * Add: Optional start as console program. (See readme.txt inside download)
-  * Add: remove\_trackers.txt will remove specific trackers form torrent.
-  * Add: export\_trackers.txt is created after updating the torrent.
-  * Add: drag and drop of trackers file (with '.txt' file extension)
+  * ADD: Tab page Files/trackers/info
+  * ADD: Optional start as console program. (See readme.txt inside download)
+  * ADD: remove\_trackers.txt will remove specific trackers form torrent.
+  * ADD: export\_trackers.txt is created after updating the torrent.
+  * ADD: drag and drop of trackers file (with '.txt' file extension)
   * FIX:  ([Issue 4](https://github.com/GerryFerdinandus/bittorrent-tracker-editor/issues/4)) + ([Issue 5](https://github.com/GerryFerdinandus/bittorrent-tracker-editor/issues/5))
 
 ### 1.21 ###
   * FIX: Support for Unicode in filename. (Chinese etc.)
 
 ### 1.20 ###
-  * Add: Tab page torrent info/data.
-  * Add: Drag & Drop torrent files or a folder with torrent files inside.
+  * ADD: Tab page torrent info/data.
+  * ADD: Drag & Drop torrent files or a folder with torrent files inside.
 
 ### 1.10 ###
-  * Add: Tab page for public/private flag. ([Issue 1](https://github.com/GerryFerdinandus/bittorrent-tracker-editor/issues/1))
-  * Add: Load tracker list from file via menu or at start-up, when file add\_trackers.txt is present in the same folder as the executable file.
+  * ADD: Tab page for public/private flag. ([Issue 1](https://github.com/GerryFerdinandus/bittorrent-tracker-editor/issues/1))
+  * ADD: Load tracker list from file via menu or at start-up, when file add\_trackers.txt is present in the same folder as the executable file.
 
 ### 1.00 ###
   * First release
@@ -93,7 +94,7 @@ There is no backup function in this software. Used it at your own risk. Bittorre
 
 ![](pictures/trackereditor.png?raw=true "Trackers List")
 
-This screen shot show the program, after a folder is selected with 97 torrent files inside. The normal procedure is to deselect the trackers that no longer working. Optionally add your own trackers. And press the 'Update torrent'
+This screen shot show the program, after a folder is selected with torrent files inside. The normal procedure is to deselect the trackers that no longer working. Optionally add your own trackers. And select the 'Update torrent' menu.
 
 ---
 
