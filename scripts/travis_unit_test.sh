@@ -11,9 +11,10 @@ then
   if [ "$LAZ_ENV" = "wine" ]
   then
 
-  #windows
-  # does not work.
+  #windows via 'Wine' does not work.
   #wine enduser/test_trackereditor.exe -a --format=plain
+  echo There is no unit test for wine windows.
+  echo unit test is run via AppVeyor
 
   else
 
@@ -27,6 +28,6 @@ then
   #macOS
   # does not work.
   #enduser/test_trackereditor -a --format=plain
-
+  echo There is no unit test for macOS.
 
 fi
