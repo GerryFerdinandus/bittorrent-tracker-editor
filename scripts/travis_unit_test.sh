@@ -15,16 +15,10 @@ then
   # does not work.
   #wine enduser/test_trackereditor.exe -a --format=plain
 
-  # Will exit with status of last command.
-  exit
-
   else
 
   #linux
   enduser/test_trackereditor -a --format=plain
-
-  # Will exit with status of last command.
-  exit
 
   fi
 
@@ -34,7 +28,5 @@ then
   # does not work.
   #enduser/test_trackereditor -a --format=plain
 
-  # Will exit with status of last command.
-  exit
 
 fi
