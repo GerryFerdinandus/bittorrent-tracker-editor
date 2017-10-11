@@ -34,15 +34,6 @@ install:
 # Install prerequisites (fpc/lazarus/wine/qemu)
   - ./travis-lazarus/.travis.install.py
 
-# Install valgrind in linux only
-#  - if [ "$TRAVIS_OS_NAME" = "linux" ]; then sudo apt-get install valgrind -y; fi
-
-# install openSSL on macOS
-#   - if [ "$TRAVIS_OS_NAME" = "osx" ]; then brew update; fi
-#   - if [ "$TRAVIS_OS_NAME" = "osx" ]; then brew install openssl; fi
-#  - if [ "$TRAVIS_OS_NAME" = "osx" ]; then sudo brew link openssl --force; fi
-#   - if [ "$TRAVIS_OS_NAME" = "osx" ]; then openssl version; fi
-
 script:
 # Build trackereditor project (Debug mode)
   - lazbuild --build-mode=Debug $LAZ_OPT $LPI_EDITOR_PATH/trackereditor.lpi
