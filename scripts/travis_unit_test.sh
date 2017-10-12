@@ -31,3 +31,10 @@ then
   echo There is no unit test for macOS.
 
 fi
+
+#Remove all the extra file created by test
+rm enduser/console_log.txt
+rm enduser/export_trackers.txt
+
+#Undo all changes made by testing.
+git reset --hard
