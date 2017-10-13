@@ -173,7 +173,6 @@ type
     function DecodeTorrentFile(const FileName: UTF8String): boolean;
     procedure UpdateTrackerInsideFileList;
     procedure UpdateTorrentTrackerList;
-    //procedure CombineFiveTrackerListToOne(TrackerListOrder: TTrackerListOrder);
     procedure ShowTrackerInsideFileList;
 
     procedure CheckedOnOffAllTrackers(Value: boolean);
@@ -598,6 +597,11 @@ begin
 
     //initial value is false, will be set to true if read only files are found
     SomeFilesAreReadOnly := False;
+
+    if FTrackerList.TrackerListOrderForUpdatedTorrent = tloRandomize then
+    begin
+      Randomize;
+    end;
 
     //process all the files one by one.
     //FTrackerList.TorrentFileNameList is not sorted it is still in sync with CheckListBoxPublicPrivateTorrent

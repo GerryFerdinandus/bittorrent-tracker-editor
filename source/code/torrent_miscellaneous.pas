@@ -183,7 +183,6 @@ begin
   //The order of the string list must be randomize
   if StringList.Count > 1 then
   begin
-    Randomize;
     for i := 0 to StringList.Count - 1 do
     begin
       StringList.Exchange(i, Random(StringList.Count));
