@@ -166,7 +166,7 @@ type
     procedure UpdateViewRemoveTracker;
 
 
-    procedure ReloadAllTorrentAndRefreshView;
+    function ReloadAllTorrentAndRefreshView: boolean;
     function AddTorrentFileList(TorrentFileNameStringList: TStringList): boolean;
     function ReadAddTrackerFileFromUser(const FileName: UTF8String): boolean;
     function LoadTorrentViaDir(const Dir: UTF8String): boolean;
@@ -516,7 +516,7 @@ procedure TFormTrackerModify.UpdateTorrent;
 var
   Reply, BoxStyle, i, CountTrackers: integer;
   PopUpMenuStr: string;
-  SomeFilesCannotBeWriten, SomeFilesAreReadOnly: boolean;
+  SomeFilesCannotBeWriten, SomeFilesAreReadOnly, AllFilesAreReadBackCorrectly: boolean;
 
 begin
   //Update all the torrent files.
@@ -656,12 +656,14 @@ begin
       //update the torrent public/private flag
       if CheckListBoxPublicPrivateTorrent.Checked[i] then
       begin
+        //Create a public torrent
         //if private torrent then make it public torrent by removing the private flag.
         if FDecodePresentTorrent.PrivateTorrent then
           FDecodePresentTorrent.RemovePrivateTorrentFlag;
       end
       else
       begin
+        //Create a private torrent
         FDecodePresentTorrent.AddPrivateTorrentFlag;
       end;
 
@@ -680,7 +682,7 @@ begin
     SaveTrackerFinalListToFile;
 
     //Show/reload the just updated torrent files.
-    ReloadAllTorrentAndRefreshView;
+    AllFilesAreReadBackCorrectly := ReloadAllTorrentAndRefreshView;
 
     //make sure cursor is default again
   finally
@@ -725,6 +727,16 @@ begin
       end;
 
     end;//case
+
+
+    //Check if there are some error that need to be notify to the end user.
+
+    if not AllFilesAreReadBackCorrectly then
+    begin
+      //add warning if torrent files can not be read back again
+      PopUpMenuStr := PopUpMenuStr +
+        ' WARNING: Some torrent files can not be read back again after updating.';
+    end;
 
     if SomeFilesAreReadOnly then
     begin
@@ -965,6 +977,7 @@ begin
   Result := FDecodePresentTorrent.DecodeTorrent(FileName);
   if Result then
   begin
+    //visual update this one torrent file.
     ViewUpdateOneTorrentFileDecoded;
   end;
 end;
@@ -1495,7 +1508,7 @@ begin
 end;
 
 
-procedure TFormTrackerModify.ReloadAllTorrentAndRefreshView;
+function TFormTrackerModify.ReloadAllTorrentAndRefreshView: boolean;
 var
   TorrentFileStr: UTF8String;
 begin
@@ -1505,6 +1518,9 @@ begin
   And show that everything is updated and OK
 }
 
+  //will be set to False if error occure
+  Result := True;
+
   ViewUpdateBegin;
   //Copy all the trackers in inside the torrent files to FTrackerList.TrackerFromInsideTorrentFilesList
   FTrackerList.TrackerFromInsideTorrentFilesList.Clear;
@@ -1513,6 +1529,11 @@ begin
     if DecodeTorrentFile(TorrentFileStr) then
     begin
       UpdateTorrentTrackerList;
+    end
+    else
+    begin
+      //some files can not be read/decoded
+      Result := False;
     end;
   end;
 
