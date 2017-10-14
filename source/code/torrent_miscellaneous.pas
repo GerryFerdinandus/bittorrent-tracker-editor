@@ -111,7 +111,7 @@ function ConsoleModeDecodeParameter(out FileNameOrDirStr: UTF8String;
 function DecodeConsoleUpdateParameter(const ConsoleUpdateParameter: UTF8String;
   var TrackerList: TTrackerList): boolean;
 
-
+function TrackerURLWithAnnounce(const TrackerURL: UTF8String): boolean;
 
 const
   VALID_TRACKERS_URL: array[0..4] of UTF8String =
@@ -687,10 +687,12 @@ begin
   end;
 end;
 
-
-
-
-
-
+function TrackerURLWithAnnounce(const TrackerURL: UTF8String): boolean;
+const
+  ANNOUNCE_STRING: string = '/announce';
+begin
+  //TrackerURL must end with ANNOUNCE_STRING
+  Result := RightStr(TrackerURL, length(ANNOUNCE_STRING)) = ANNOUNCE_STRING;
+end;
 
 end.
