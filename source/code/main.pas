@@ -1017,13 +1017,16 @@ end;
 
 function TFormTrackerModify.CopyUserInputNewTrackersToList: boolean;
 var
-  TrackerStrLoop, TrackerStr: UTF8String;
+  TrackerStrLoop, TrackerStr, ErrorStr: UTF8String;
 begin
   {
    Called after 'update torrent' is selected.
    All the user entery from Memo text field will be add to FTrackerList.TrackerAddedByUserList.
   }
   FTrackerList.TrackerAddedByUserList.Clear;
+
+  //Will set to false when error is detected
+  Result := True;
 
   for TrackerStrLoop in MemoNewTrackers.Lines do
   begin
@@ -1033,36 +1036,48 @@ begin
     if TrackerStr = '' then
       continue;
 
+    //All the tracker must end with '/announce'
+    Result := TrackerURLWithAnnounce(TrackerStr);
+    if not Result then
+    begin
+      ErrorStr := 'ERROR: Tracker URL must end with /announce';
+      //do not continue the for loop
+      break;
+    end;
+
     //All the tracker must begin with 'http(s)://' or 'udp://'
-    if ValidTrackerURL(TrackerStr) then
+    Result := ValidTrackerURL(TrackerStr);
+    if Result then
     begin
       AddButIngnoreDuplicates(FTrackerList.TrackerAddedByUserList, TrackerStr);
     end
     else
     begin
-      //There is error. Show the error and do not continue.
-      if FConcoleMode then
-      begin
-        FTrackerList.LogStringList.Add(
-          'ERROR: Tracker URL must begin with http:// or udp://');
-      end
-      else
-      begin
-        //Show error
-        Application.MessageBox(PChar(@TrackerStr[1]),
-          'Error: Tracker URL must begin with http(s):// or udp://', MB_ICONERROR);
-      end;
-      //do not continue with error.
-      Result := False;
-      exit;
+      ErrorStr := 'ERROR: Tracker URL must begin with http:// or udp://';
+      //do not continue the for loop
+      break;
     end;
 
+  end;//for loop
+
+  if Result then
+  begin
+    //Show the torrent list we have just created.
+    MemoNewTrackers.Text := FTrackerList.TrackerAddedByUserList.Text;
+  end
+  else
+  begin
+    //There is error. Show the error.
+    if FConcoleMode then
+    begin
+      FTrackerList.LogStringList.Add(ErrorStr);
+    end
+    else
+    begin
+      //Show error
+      Application.MessageBox(PChar(@TrackerStr[1]), PChar(@ErrorStr[1]), MB_ICONERROR);
+    end;
   end;
-
-  Result := True; //no error
-
-  //Show the torrent list we have just created.
-  MemoNewTrackers.Text := FTrackerList.TrackerAddedByUserList.Text;
 
 end;
 
