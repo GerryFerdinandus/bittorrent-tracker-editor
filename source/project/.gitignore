@@ -1,0 +1,6 @@
+# ignore link resource file
+link.res
+
+# ignore windows bat file
+*.bat
+
