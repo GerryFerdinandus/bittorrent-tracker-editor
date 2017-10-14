@@ -6,6 +6,11 @@
 #----------- check for Windows, Linux and macOS build
 if [ "$TRAVIS_OS_NAME" = "linux" ]
 then
+  # show Linux OS version
+  uname -a
+
+  #show openSSL version
+  openssl version
 
   #wine = windows
   if [ "$LAZ_ENV" = "wine" ]
@@ -25,6 +30,12 @@ then
 
 elif [ "$TRAVIS_OS_NAME" = "osx" ]
 then
+  # show macOS version
+  sw_vers
+
+  #show openSSL version
+  openssl version
+
   #macOS
   # does not work.
   #enduser/test_trackereditor -a --format=plain
