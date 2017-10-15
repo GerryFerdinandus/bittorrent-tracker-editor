@@ -270,16 +270,20 @@ begin
   Width := Constraints.MinWidth;
   Height := Constraints.MinHeight;
 
+  //there must be one command line or more for a console mode.
+  FConcoleMode := ParamCount > 0;
+
   //Show the default trackers
   LoadTrackersTextFileAddTrackers;
 
   //Load the unwanted trackers list.
   LoadTrackersTextFileRemoveTrackers;
 
-
-
-  //Check is program is started as console
-  ConsoleMode;
+  //Start program in console mode
+  if FConcoleMode then
+  begin
+    ConsoleMode;
+  end;
 
   //Update some captions
   Caption := FORM_CAPTION;
@@ -683,9 +687,15 @@ begin
   begin
     //When succesfull the log file shows, 3 lines,
     //     OK + Count torrent files  + Count Trackers
-    FTrackerList.LogStringList.Add('OK');
-    FTrackerList.LogStringList.Add(IntToStr(FTrackerList.TorrentFileNameList.Count));
-    FTrackerList.LogStringList.Add(IntToStr(CountTrackers));
+
+    //if there is already a items inside there there must be something wrong.
+    //Do not add 'OK'
+    if FTrackerList.LogStringList.Count = 0 then
+    begin
+      FTrackerList.LogStringList.Add(CONSOLE_SUCCESS_STATUS);
+      FTrackerList.LogStringList.Add(IntToStr(FTrackerList.TorrentFileNameList.Count));
+      FTrackerList.LogStringList.Add(IntToStr(CountTrackers));
+    end;
   end
   else
   begin
@@ -782,123 +792,104 @@ procedure TFormTrackerModify.ConsoleMode;
 var
   FileNameOrDirStr: UTF8String;
   StringList: TStringList;
+  MustExitWithErrorCode: boolean;
 begin
-  //The first parameter[1] is path to file or dir.
-  //if program is started with two parameter then in must be a console mode.
+  // There are two options
+  //-
+  // One parameter only
+  //    This is the first tracker-editor version with only 'sort' trackers list.
+  //    The first parameter[1] is path to file or dir.
+  //-
+  // Two parameter version
+  //    This is later version where there is more selection about the tracker list.
 
-  //update the torrent via console mode if there is a parameter detected.
-  if ParamCount > 0 then
-  begin
-    //there must be 2 command line items for console mode
-    FConcoleMode := ParamCount = 2;
+  //Will be set to True when error occure.
+  MustExitWithErrorCode := False;
 
-    try
-      if FConcoleMode then
+  try
+    //Create the log file. The old one will be overwritten
+    AssignFile(FLogFile, ExtractFilePath(Application.ExeName) + FILE_NAME_CONSOLE_LOG);
+    ReWrite(FLogFile);
+
+    //Get the startup command lime parameters.
+    if ConsoleModeDecodeParameter(FileNameOrDirStr, FTrackerList) then
+    begin
+      //There is no error. Proceed with reading the torrent files
+
+      if ExtractFileExt(FileNameOrDirStr) = '' then
+      begin //There is no file extention. It must be a folder.
+        if LoadTorrentViaDir(FileNameOrDirStr) then
+        begin
+          //Show all the tracker inside the torrent files.
+          ShowTrackerInsideFileList;
+          //Mark all trackers as selected
+          CheckedOnOffAllTrackers(True);
+          //Some tracker must be removed. Console and windows mode.
+          UpdateViewRemoveTracker;
+          //update torrent
+          UpdateTorrent;
+        end;
+      end
+      else //a single torrent file is selected?
       begin
-        //Create the log file. The old one will be overwritten
-        AssignFile(FLogFile, ExtractFilePath(Application.ExeName) + LOG_FILE_NAME);
-        ReWrite(FLogFile);
-      end;
+        if ExtractFileExt(FileNameOrDirStr) = '.torrent' then
+        begin
+          StringList := TStringList.Create;
+          try
+            //Convert Filenames to stringlist format.
+            StringList.Add(FileNameOrDirStr);
 
-      //Get the startup command lime parameters.
-      //ConsoleModeDecodeParameter(FileNameOrDirStr, FTrackerList);
-
-      //If FTrackerList.LogStringList empty then there is no error.
-      //    if FTrackerList.LogStringList.Text = '' then
-      if ConsoleModeDecodeParameter(FileNameOrDirStr, FTrackerList) then
-      begin
-        //There is no error. Proceed with reading the torrent files
-
-        if ExtractFileExt(FileNameOrDirStr) = '' then
-        begin //There is no file extention. It must be a folder.
-          if LoadTorrentViaDir(FileNameOrDirStr) then
-          begin
-            //Show all the tracker inside the torrent files.
-            ShowTrackerInsideFileList;
-            //Mark all trackers as selected
-            CheckedOnOffAllTrackers(True);
-            //Some tracker must be removed. Console and windows mode.
-            UpdateViewRemoveTracker;
-
-            if FConcoleMode then
+            //Extract all the trackers inside the torrent file
+            if AddTorrentFileList(StringList) then
             begin
+              //Show all the tracker inside the torrent files.
+              ShowTrackerInsideFileList;
+              //Mark all trackers as selected
+              CheckedOnOffAllTrackers(True);
+              //Some tracker must be removed. Console and windows mode.
+              UpdateViewRemoveTracker;
               //update torrent
               UpdateTorrent;
             end;
 
+          finally
+            StringList.Free;
           end;
         end
-        else //a torrent file is selected?
-        begin
-          if ExtractFileExt(FileNameOrDirStr) = '.torrent' then
-          begin
-            StringList := TStringList.Create;
-            try
-              //Convert Filenames to stringlist format.
-              StringList.Add(FileNameOrDirStr);
-
-              //Extract all the trackers inside the torrent file
-              if AddTorrentFileList(StringList) then
-              begin
-                //Show all the tracker inside the torrent files.
-                ShowTrackerInsideFileList;
-                //Mark all trackers as selected
-                CheckedOnOffAllTrackers(True);
-                //Some tracker must be removed. Console and windows mode.
-                UpdateViewRemoveTracker;
-
-                if FConcoleMode then
-                begin
-                  //update torrent
-                  UpdateTorrent;
-                end;
-
-              end;
-
-            finally
-              StringList.Free;
-            end;
-          end
-          else
-          begin //Error. this is not a torrent file
-            FTrackerList.LogStringList.Add('ERROR: No torrent file selected.');
-          end;
+        else
+        begin //Error. this is not a torrent file
+          FTrackerList.LogStringList.Add('ERROR: No torrent file selected.');
         end;
       end;
-
-      if FConcoleMode then
-      begin
-        //Write to log file. And close the file.
-        WriteLn(FLogFile, FTrackerList.LogStringList.Text);
-        CloseFile(FLogFile);
-
-        //Shutdown the console program
-        Application.terminate;
-      end;
-
-
-    except
-      if FConcoleMode then
-      begin
-        //Shutdown the console program.
-        //This is needed or else the program will keep running forever.
-        //exit with error code
-        System.ExitCode := 1;
-        Application.terminate;
-      end
-      else
-      begin
-        //show to the end user that something is wrong
-        raise;
-      end;
-
     end;
-  end
-  else
-  begin //the program
-    FConcoleMode := False;
+
+    //Write to log file. And close the file.
+    WriteLn(FLogFile, FTrackerList.LogStringList.Text);
+    CloseFile(FLogFile);
+
+    //check if log data is success full
+    //if (no data) or (not CONSOLE_SUCCESS_STATUS) then error
+    MustExitWithErrorCode := FTrackerList.LogStringList.Count = 0;
+    if not MustExitWithErrorCode then
+    begin
+      MustExitWithErrorCode := FTrackerList.LogStringList[0] <> CONSOLE_SUCCESS_STATUS;
+    end;
+
+  except
+    //Shutdown the console program.
+    //This is needed or else the program will keep running forever.
+    //exit with error code
+    MustExitWithErrorCode := True;
   end;
 
+  if MustExitWithErrorCode then
+  begin
+    //exit with error code
+    System.ExitCode := 1;
+  end;
+
+  //Always shutdown the program when in console mode.
+  Application.terminate;
 end;
 
 
