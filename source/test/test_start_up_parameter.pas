@@ -92,10 +92,6 @@ const
   PROGRAME_TO_BE_TESTED_NAME = 'trackereditor';
   TORRENT_FOLDER = 'test_torrent';
   END_USER_FOLDER = 'enduser';
-  FILE_NAME_CONSOLE_LOG = 'console_log.txt';
-  FILE_NAME_EXPORT_TRACKERS = 'export_trackers.txt';
-  FILE_NAME_ADD_TRACKERS = 'add_trackers.txt';
-  FILE_NAME_REMOVE_TRACKERS = 'remove_trackers.txt';
 
 procedure TTestStartUpParameter.Test_Paramater_U0;
 begin
@@ -227,7 +223,7 @@ begin
 
   //write a some trackers to add. This
   FVerifyTrackerResult.TrackerAdded.Clear;
-  FVerifyTrackerResult.TrackerAdded.Add('udp://1.test');
+  FVerifyTrackerResult.TrackerAdded.Add('udp://1.test/announce');
 
   //Add one torrent that later will be removed
   if FNewTrackon.TrackerList_Dead.Count > 0 then
@@ -241,7 +237,7 @@ begin
     FVerifyTrackerResult.TrackerAdded.Add(FNewTrackon.TrackerList_Live[0]);
   end;
 
-  FVerifyTrackerResult.TrackerAdded.Add('udp://2.test');
+  FVerifyTrackerResult.TrackerAdded.Add('udp://2.test/announce');
   FVerifyTrackerResult.TrackerAdded.SaveToFile(FFullPathToEndUser +
     FILE_NAME_ADD_TRACKERS);
 
