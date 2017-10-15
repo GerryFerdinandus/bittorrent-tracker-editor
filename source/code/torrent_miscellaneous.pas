@@ -124,6 +124,21 @@ const
     );
 
 
+  //'add trackers' text file must be place in the same directory as the program.
+  FILE_NAME_ADD_TRACKERS: string = 'add_trackers.txt';
+
+  //'remove trackers' text file must be place in the same directory as the program.
+  FILE_NAME_REMOVE_TRACKERS: string = 'remove_trackers.txt';
+
+  //'export trackers' text file wil be created in the same directory as the program.
+  FILE_NAME_EXPORT_TRACKERS: string = 'export_trackers.txt';
+
+  //'log' text file will be saved in the same directory as the program
+  // only in the console mode.
+  FILE_NAME_CONSOLE_LOG: string = 'console_log.txt';
+
+  CONSOLE_SUCCESS_STATUS: string = 'OK';
+
 implementation
 
 uses LazUTF8, LazFileUtils;

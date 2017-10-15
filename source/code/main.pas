@@ -197,27 +197,15 @@ const
     'udp://tracker.leechers-paradise.org:6969/announce',
     'udp://tracker.opentrackr.org:1337/announce'
     );
+
   //program name and version (http://semver.org/)
   FORM_CAPTION = 'Bittorrent tracker editor (1.33.0.beta.1)';
+
   TORRENT_FILES_CONTENTS_FORM_CAPTION =
     'Show all the files inside the torrents. (Use right mouse for popup menu.)';
 
   GROUPBOX_PRESENT_TRACKERS_CAPTION =
     'Present trackers in all torrent files. Select the one that you want to keep. And added to all torrent files.';
-
-
-  //'add trackers' text file must be place in the same directory as the program.
-  ADD_TRACKERS_FILE_NAME = 'add_trackers.txt';
-
-  //'remove trackers' text file must be place in the same directory as the program.
-  REMOVE_TRACKERS_FILE_NAME = 'remove_trackers.txt';
-
-  //'export trackers' text file wil be created in the same directory as the program.
-  EXPORT_TRACKERS_FILE_NAME = 'export_trackers.txt';
-
-  //'log' text file will be saved in the same directory as the program
-  // only in the console mode.
-  LOG_FILE_NAME = 'console_log.txt';
 
 {$R *.lfm}
 
@@ -775,7 +763,7 @@ var
 begin
   //Create the tracker text file. The old one will be overwritten
   AssignFile(FTrackerFile, ExtractFilePath(Application.ExeName) +
-    EXPORT_TRACKERS_FILE_NAME);
+    FILE_NAME_EXPORT_TRACKERS);
   ReWrite(FTrackerFile);
   for TrackerStr in FTrackerList.TrackerFinalList do
   begin
@@ -1126,7 +1114,7 @@ begin
 
   //if no file is found the use the default tracker list.
   if not ReadAddTrackerFileFromUser(ExtractFilePath(Application.ExeName) +
-    ADD_TRACKERS_FILE_NAME) then
+    FILE_NAME_ADD_TRACKERS) then
   begin
     MemoNewTrackers.Lines.BeginUpdate;
     for i := low(RECOMENDED_TRACKERS) to high(RECOMENDED_TRACKERS) do
@@ -1147,7 +1135,7 @@ procedure TFormTrackerModify.LoadTrackersTextFileRemoveTrackers;
 var
   filename: UTF8String;
 begin
-  filename := ExtractFilePath(Application.ExeName) + REMOVE_TRACKERS_FILE_NAME;
+  filename := ExtractFilePath(Application.ExeName) + FILE_NAME_REMOVE_TRACKERS;
   try
     FFilePresentBanByUserList := FileExistsUTF8(fileName);
     if FFilePresentBanByUserList then
