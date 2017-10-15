@@ -70,6 +70,7 @@ type
     procedure TearDown; override;
   published
     procedure Test_Create_Empty_DHT_torrent;
+    procedure Test_Tracker_UserInput_Without_Announce_Exit_Code;
     procedure Test_Create_Simple_Filled_torrent;
     procedure Test_Create_Filled_And_Empty_Torrent_All_Mode;
 
@@ -297,14 +298,51 @@ begin
 end;
 
 procedure TTestStartUpParameter.Test_Create_Empty_DHT_torrent;
+var
+  TrackerListOrder: TTrackerListOrder;
 begin
-  CreateEmptyTorrent(tloInsertNewBeforeAndKeepNewIntact);
-  TestEmptyTorrentResult;
+  //Test if all the tracker update mode is working
+  for TrackerListOrder in TTrackerListOrder do
+  begin
+    CreateEmptyTorrent(TrackerListOrder);
+    TestEmptyTorrentResult;
+    //check the exit code
+    CheckEquals(0, FExitCode);
+  end;
+end;
+
+procedure TTestStartUpParameter.Test_Tracker_UserInput_Without_Announce_Exit_Code;
+var
+  TrackerListOrder: TTrackerListOrder;
+begin
+  //Test if all the tracker update mode is working
+  for TrackerListOrder in TTrackerListOrder do
+  begin
+
+    //add a wrong tracker without /announce
+    FVerifyTrackerResult.TrackerAdded.Clear;
+    FVerifyTrackerResult.TrackerAdded.Add('udp://test.com');
+
+    FVerifyTrackerResult.TrackerAdded.SaveToFile(FFullPathToEndUser +
+      FILE_NAME_ADD_TRACKERS);
+
+    //Generate the command line parameter
+    TestParameter(TrackerListOrder);
+
+    //call the tracker editor exe file
+    CallExecutableFile;
+
+    //check the exit code. Must be an error
+    CheckNotEquals(0, FExitCode);
+  end;
 end;
 
 procedure TTestStartUpParameter.Test_Create_Simple_Filled_torrent;
 begin
   CreateFilledTorrent(tloInsertNewBeforeAndKeepNewIntact);
+
+  //check the exit code
+  CheckEquals(0, FExitCode);
 end;
 
 procedure TTestStartUpParameter.Test_Create_Filled_And_Empty_Torrent_All_Mode;
@@ -324,8 +362,14 @@ begin
       continue;
 
     CreateEmptyTorrent(TrackerListOrder);
+    //check the exit code
+    CheckEquals(0, FExitCode);
+
     TestEmptyTorrentResult;
+
     CreateFilledTorrent(TrackerListOrder);
+    //check the exit code
+    CheckEquals(0, FExitCode);
   end;
 end;
 
