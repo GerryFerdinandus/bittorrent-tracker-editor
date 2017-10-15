@@ -38,6 +38,11 @@ uses
   test_miscellaneous;
 
 type
+  TConsoleLogData = record
+    StatusOK: boolean;
+    TorrentFilesCount: integer;
+    TrackersCount: integer;
+  end;
 
   { TTestStartUpParameter }
 
@@ -53,7 +58,9 @@ type
     FVerifyTrackerResult: TVerifyTrackerResult;
     FExitCode: integer;
     FCommandLine: string;
+    FConsoleLogData: TConsoleLogData;
 
+    function ReadConsoleLogFile: boolean;
     procedure TestParameter(TrackerListOrder: TTrackerListOrder);
     procedure DownloadPreTestTrackerList;
     procedure LoadTrackerListAddAndRemoved;
@@ -69,10 +76,8 @@ type
     procedure SetUp; override;
     procedure TearDown; override;
   published
-    procedure Test_Create_Empty_DHT_torrent;
     procedure Test_Tracker_UserInput_Without_Announce_Exit_Code;
-    procedure Test_Create_Simple_Filled_torrent;
-    procedure Test_Create_Filled_And_Empty_Torrent_All_Mode;
+    procedure Test_Create_Empty_Torrent_And_Then_Filled_It_All_Mode;
 
     procedure Test_Paramater_U0;
     procedure Test_Paramater_U1;
@@ -93,6 +98,9 @@ const
   PROGRAME_TO_BE_TESTED_NAME = 'trackereditor';
   TORRENT_FOLDER = 'test_torrent';
   END_USER_FOLDER = 'enduser';
+
+  //there are 3 test torrent files in 'test_torrent' folder.
+  TEST_TORRENT_FILES_COUNT = 3;
 
 procedure TTestStartUpParameter.Test_Paramater_U0;
 begin
@@ -295,21 +303,14 @@ begin
 
   //check the exit code
   CheckEquals(0, FExitCode);
+
+  //Check the logdata status
+  Check(ReadConsoleLogFile, 'Log data is not present');
+  Check(FConsoleLogData.StatusOK);
+  Check(FConsoleLogData.TrackersCount > 0);
+  Check(FConsoleLogData.TorrentFilesCount = TEST_TORRENT_FILES_COUNT);
 end;
 
-procedure TTestStartUpParameter.Test_Create_Empty_DHT_torrent;
-var
-  TrackerListOrder: TTrackerListOrder;
-begin
-  //Test if all the tracker update mode is working
-  for TrackerListOrder in TTrackerListOrder do
-  begin
-    CreateEmptyTorrent(TrackerListOrder);
-    TestEmptyTorrentResult;
-    //check the exit code
-    CheckEquals(0, FExitCode);
-  end;
-end;
 
 procedure TTestStartUpParameter.Test_Tracker_UserInput_Without_Announce_Exit_Code;
 var
@@ -334,42 +335,72 @@ begin
 
     //check the exit code. Must be an error
     CheckNotEquals(0, FExitCode);
+
+    //Check the logdata status
+    Check(ReadConsoleLogFile, 'Log data is not present');
+    //the result must be false
+    CheckFalse(FConsoleLogData.StatusOK);
   end;
 end;
 
-procedure TTestStartUpParameter.Test_Create_Simple_Filled_torrent;
-begin
-  CreateFilledTorrent(tloInsertNewBeforeAndKeepNewIntact);
 
-  //check the exit code
-  CheckEquals(0, FExitCode);
-end;
-
-procedure TTestStartUpParameter.Test_Create_Filled_And_Empty_Torrent_All_Mode;
+procedure TTestStartUpParameter.Test_Create_Empty_Torrent_And_Then_Filled_It_All_Mode;
 var
   TrackerListOrder: TTrackerListOrder;
 begin
   //Test if all the mode that support empty torrent creation
+  //Empty torrent -> filled torrent -> empty torrent
+
   for TrackerListOrder in TTrackerListOrder do
   begin
 
-    //todo: Is this by design that empty torrent is here rejected?
+    //It is by design that it can not create a empty torrent
+    //The 'KeepOriginalIntactAndRemoveNothing' prevent it from deleting the torrent
+    //must skip the test for this one
     if TrackerListOrder = tloInsertNewBeforeAndKeepOriginalIntactAndRemoveNothing then
       continue;
 
-    //todo: Is this by design that empty torrent is here rejected?
+    //It is by design that it can not create a empty torrent
+    //The 'KeepOriginalIntactAndRemoveNothing' prevent it from deleting the torrent
+    //must skip the test for this one
     if TrackerListOrder = tloAppendNewAfterAndKeepOriginalIntactAndRemoveNothing then
       continue;
 
+    //Create empty the torrent
     CreateEmptyTorrent(TrackerListOrder);
     //check the exit code
     CheckEquals(0, FExitCode);
 
     TestEmptyTorrentResult;
+    //Check the logdata status
+    Check(ReadConsoleLogFile, 'Log data is not present');
+    Check(FConsoleLogData.StatusOK);
+    Check(FConsoleLogData.TrackersCount = 0);
+    Check(FConsoleLogData.TorrentFilesCount = TEST_TORRENT_FILES_COUNT);
 
+    //fill the empty torrent with data
     CreateFilledTorrent(TrackerListOrder);
     //check the exit code
     CheckEquals(0, FExitCode);
+
+    //Check the logdata status
+    Check(ReadConsoleLogFile, 'Log data is not present');
+    Check(FConsoleLogData.StatusOK);
+    Check(FConsoleLogData.TrackersCount > 0);
+    Check(FConsoleLogData.TorrentFilesCount = TEST_TORRENT_FILES_COUNT);
+
+    //Create empty the torrent again
+    CreateEmptyTorrent(TrackerListOrder);
+    //check the exit code
+    CheckEquals(0, FExitCode);
+
+    TestEmptyTorrentResult;
+    //Check the log data status
+    Check(ReadConsoleLogFile, 'Log data is not present');
+    Check(FConsoleLogData.StatusOK);
+    Check(FConsoleLogData.TrackersCount = 0);
+    Check(FConsoleLogData.TorrentFilesCount = TEST_TORRENT_FILES_COUNT);
+
   end;
 end;
 
@@ -418,6 +449,12 @@ begin
   FNewTrackon.Free;
 end;
 
+function TTestStartUpParameter.ReadConsoleLogFile: boolean;
+begin
+  Result := LoadConsoleLog(FFullPathToEndUser + FILE_NAME_CONSOLE_LOG,
+    FConsoleLogData.StatusOK, FConsoleLogData.TorrentFilesCount,
+    FConsoleLogData.TrackersCount);
+end;
 
 initialization
 
