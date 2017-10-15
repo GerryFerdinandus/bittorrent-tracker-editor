@@ -5,7 +5,7 @@ unit test_miscellaneous;
 interface
 
 uses
-  Classes, SysUtils, torrent_miscellaneous, ngosang_trackerslist;
+  Classes, SysUtils, torrent_miscellaneous;
 
 type
   TVerifyTrackerResult = record
@@ -19,6 +19,9 @@ type
     ErrorString: string;
   end;
 
+
+function LoadConsoleLog(const FileNameWithPath: string; out StatusOK: boolean;
+  out TorrentFilesCount: integer; out TrackersCount: integer): boolean;
 
 function GetProjectRootFolderWithPathDelimiter: string;
 
@@ -559,6 +562,56 @@ begin
     end;
 
   end;
+end;
+
+function LoadConsoleLog(const FileNameWithPath: string; out StatusOK: boolean;
+  out TorrentFilesCount: integer; out TrackersCount: integer): boolean;
+var
+  ConsoleStringlist: TStringList;
+begin
+{
+ console_log.txt is only created in console mode.
+ Show the in console mode the success/failure of the torrent update.
+ First line status: 'OK' or 'ERROR: xxxxxxx' xxxxxxx = error description
+ Second line files count: '1'
+ Third line tracker count: 23
+ Second and third line info are only valid if the first line is 'OK'
+}
+
+  //Result = true if file can be readed as expected.
+  // with 2 lines of values if first line is 'OK'
+
+  ConsoleStringlist := TStringList.Create;
+  try
+    ConsoleStringlist.LoadFromFile(FileNameWithPath);
+
+    Result := ConsoleStringlist.Count > 0;
+    if Result then
+    begin
+      StatusOK := ConsoleStringlist[0] = CONSOLE_SUCCESS_STATUS;
+    end;
+
+    if StatusOK then
+    begin
+      //The totall lines in the file must be 3
+      Result := ConsoleStringlist.Count >= 3;
+      if Result then
+      begin
+        Result := TryStrToInt(ConsoleStringlist[1], TorrentFilesCount);
+      end;
+
+      //read only if the TorrentFilesCount is successful
+      if Result then
+      begin
+        Result := TryStrToInt(ConsoleStringlist[2], TrackersCount);
+      end;
+    end;
+
+  except
+    Result := False;
+  end;
+
+  ConsoleStringlist.Free;
 end;
 
 end.
