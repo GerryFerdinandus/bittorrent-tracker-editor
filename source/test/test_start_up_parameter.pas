@@ -270,7 +270,11 @@ end;
 
 procedure TTestStartUpParameter.DownloadNewTrackonTrackers;
 begin
-  Check(FNewTrackon.DownloadTrackers, 'Download Newtrackon failed');
+  //download only one time
+  if FNewTrackon.TrackerList_All.Count = 0 then
+  begin
+    Check(FNewTrackon.DownloadTrackers, 'Download Newtrackon failed');
+  end;
 end;
 
 procedure TTestStartUpParameter.Test_Paramater_Ux(TrackerListOrder: TTrackerListOrder);
