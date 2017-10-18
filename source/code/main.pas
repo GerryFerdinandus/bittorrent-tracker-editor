@@ -150,6 +150,7 @@ type
     FTreeNodeRoot: TTreeNode;
     FControlerGridTorrentData: TControlerGridTorrentData;
 
+    function TrackerWithURLAndAnnounce(const TrackerURL: UTF8String): boolean;
     procedure UpdateTorrent;
     procedure ShowHourGlassCursor(HourGlass: boolean);
     procedure ViewUpdateBegin(ClearView: boolean = True);
@@ -263,8 +264,7 @@ begin
   //Create view for trackerURL with checkbox
   FControlerTrackerListOnline :=
     TControlerTrackerListOnline.Create(StringGridTrackerOnline,
-    FTrackerList.TrackerFromInsideTorrentFilesList);
-
+    FTrackerList.TrackerFromInsideTorrentFilesList, @TrackerWithURLAndAnnounce);
 
   //start the program at mimimum visual size. (this is optional)
   Width := Constraints.MinWidth;
@@ -374,6 +374,12 @@ begin
       PChar('Can not downloading the trackers from internet'),
       '', MB_ICONINFORMATION + MB_OK);
   end;
+end;
+
+function TFormTrackerModify.TrackerWithURLAndAnnounce(
+  const TrackerURL: UTF8String): boolean;
+begin
+  Result := ValidTrackerURL(TrackerURL) and TrackerURLWithAnnounce(TrackerURL);
 end;
 
 procedure TFormTrackerModify.MenuTrackersDeleteTrackersWithStatusClick(
@@ -822,8 +828,6 @@ begin
         begin
           //Show all the tracker inside the torrent files.
           ShowTrackerInsideFileList;
-          //Mark all trackers as selected
-          CheckedOnOffAllTrackers(True);
           //Some tracker must be removed. Console and windows mode.
           UpdateViewRemoveTracker;
           //update torrent
@@ -844,8 +848,6 @@ begin
             begin
               //Show all the tracker inside the torrent files.
               ShowTrackerInsideFileList;
-              //Mark all trackers as selected
-              CheckedOnOffAllTrackers(True);
               //Some tracker must be removed. Console and windows mode.
               UpdateViewRemoveTracker;
               //update torrent
@@ -1730,8 +1732,6 @@ begin
 
   //Show all the tracker inside the torrent files.
   ShowTrackerInsideFileList;
-  //Mark all trackers as selected
-  CheckedOnOffAllTrackers(True);
   //Some tracker must be removed. Console and windows mode.
   UpdateViewRemoveTracker;
 

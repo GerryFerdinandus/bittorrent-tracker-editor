@@ -12,6 +12,8 @@ uses
 
 type
 
+  TDefaultChecked = function(const TrackerURL: UTF8String): Boolean of object;
+
   { TControlerTrackerListOnline }
 
   TControlerTrackerListOnline = class
@@ -20,6 +22,7 @@ type
     FNewTrackon: TNewTrackon;
     FTrackerListOnline: TTrackerListOnline;
     FTrackerList: TStringList;
+    FDefaultChecked: TDefaultChecked;
 
     //The collumn must be in this design order.
     FSelect,               //< 0
@@ -33,7 +36,6 @@ type
     procedure AppendRow(Checked: boolean; Status: TTrackerListOnlineStatus;
       const TrackerURL: UTF8String);
   public
-
     property Checked[index: integer]: boolean read GetChecked write SetChecked;
     function TrackerURL(index: integer): string;
     function TrackerStatus(index: integer): TTrackerListOnlineStatus;
@@ -45,7 +47,7 @@ type
 
     function DownloadTrackers: boolean;
 
-    constructor Create(StringGridTorrentURL: TStringGrid; TrackerList: TStringList);
+    constructor Create(StringGridTorrentURL: TStringGrid; TrackerList: TStringList; DefaultChecked: TDefaultChecked);
     destructor Destroy; override;
   end;
 
@@ -65,10 +67,11 @@ begin
 end;
 
 constructor TControlerTrackerListOnline.Create(StringGridTorrentURL: TStringGrid;
-  TrackerList: TStringList);
+  TrackerList: TStringList; DefaultChecked: TDefaultChecked);
 begin
 
   FTrackerList := TrackerList;
+  FDefaultChecked := DefaultChecked;
 
   FStringGridTorrentURL := StringGridTorrentURL;
   FStringGridTorrentURL.RowCount := 1;
@@ -165,20 +168,16 @@ end;
 procedure TControlerTrackerListOnline.UpdateView;
 var
   tracker: string;
-  DeafultChecked: boolean;
 begin
   //Clear all the previeus data in the view
   FStringGridTorrentURL.RowCount := FStringGridTorrentURL.FixedRows;
-
-  //the default status is is put all the checkox to true. => keep all trackers
-  DeafultChecked := True;
 
   FStringGridTorrentURL.BeginUpdate;
 
   //Show the TrackerList list in string grid view
   for tracker in FTrackerList do
   begin
-    AppendRow(DeafultChecked, FTrackerListOnline.TrackerStatus(tracker), tracker);
+    AppendRow(FDefaultChecked(tracker), FTrackerListOnline.TrackerStatus(tracker), tracker);
   end;
 
   //make sure all text are fit inside the columns
