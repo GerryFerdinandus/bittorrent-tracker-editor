@@ -1,5 +1,7 @@
 ------ Version 1.33
 ADD: Verify the working status of public trackers. (Issue 21)
+ADD: Wrong tracker URL format from torrent files should be unselected by default (Issue 22)
+ADD: Upload trackers to newTrackon (Issue 23)
 
 ------ Version 1.32
 ADD: Add more options for updating the torrent tracker list. (Issue 8)
