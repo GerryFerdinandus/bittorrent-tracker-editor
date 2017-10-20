@@ -12,7 +12,7 @@ uses
 
 type
 
-  TDefaultChecked = function(const TrackerURL: UTF8String): Boolean of object;
+  TDefaultChecked = function(const TrackerURL: UTF8String): boolean of object;
 
   { TControlerTrackerListOnline }
 
@@ -45,9 +45,14 @@ type
     //must be called if the tracker list is updated
     procedure UpdateView;
 
-    function DownloadTrackers: boolean;
+    function DownloadTrackers_All_Live_Stable: boolean;
 
-    constructor Create(StringGridTorrentURL: TStringGrid; TrackerList: TStringList; DefaultChecked: TDefaultChecked);
+    //Submit tracker to newTrackon via http POST
+    function SubmitTrackers(TrackerList: TStringList;
+      out TrackersSendCount: integer): boolean;
+
+    constructor Create(StringGridTorrentURL: TStringGrid; TrackerList: TStringList;
+      DefaultChecked: TDefaultChecked);
     destructor Destroy; override;
   end;
 
@@ -59,11 +64,17 @@ uses Graphics;
 { TControlerTrackerListOnline }
 
 
-function TControlerTrackerListOnline.DownloadTrackers: boolean;
+function TControlerTrackerListOnline.DownloadTrackers_All_Live_Stable: boolean;
 begin
-  Result := FNewTrackon.DownloadTrackers;
+  Result := FNewTrackon.Download_All_Live_Stable;
   UpdateView;
   ShowTrackerStatus(Result);
+end;
+
+function TControlerTrackerListOnline.SubmitTrackers(TrackerList: TStringList;
+  out TrackersSendCount: integer): boolean;
+begin
+  Result := FNewTrackon.SubmitTrackers(TrackerList, TrackersSendCount);
 end;
 
 constructor TControlerTrackerListOnline.Create(StringGridTorrentURL: TStringGrid;
@@ -177,7 +188,8 @@ begin
   //Show the TrackerList list in string grid view
   for tracker in FTrackerList do
   begin
-    AppendRow(FDefaultChecked(tracker), FTrackerListOnline.TrackerStatus(tracker), tracker);
+    AppendRow(FDefaultChecked(tracker), FTrackerListOnline.TrackerStatus(
+      tracker), tracker);
   end;
 
   //make sure all text are fit inside the columns

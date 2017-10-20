@@ -375,6 +375,10 @@ object FormTrackerModify: TFormTrackerModify
         Caption = 'Append Stable Trackers (From newTrackon)'
         OnClick = MenuItemOnlineCheckAppendStableTrackersClick
       end
+      object MenuItemOnlineCheckSubmitNewTrackon: TMenuItem
+        Caption = 'Upload trackers to newTrackon'
+        OnClick = MenuItemOnlineCheckSubmitNewTrackonClick
+      end
     end
     object MenuHelp: TMenuItem
       Caption = '&Help'

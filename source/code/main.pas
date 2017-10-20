@@ -39,6 +39,7 @@ type
     MenuFileTorrentFolder: TMenuItem;
     MenuFileOpenTrackerList: TMenuItem;
     MenuHelpReportingIssue: TMenuItem;
+    MenuItemOnlineCheckSubmitNewTrackon: TMenuItem;
     MenuItemOnlineCheckAppendStableTrackers: TMenuItem;
     MenuTrackersDeleteDeadTrackers: TMenuItem;
     MenuTrackersDeleteUnstableTrackers: TMenuItem;
@@ -95,6 +96,7 @@ type
     procedure FormShow(Sender: TObject);
     procedure MenuHelpReportingIssueClick(Sender: TObject);
     procedure MenuHelpVisitWebsiteClick(Sender: TObject);
+    procedure MenuItemOnlineCheckSubmitNewTrackonClick(Sender: TObject);
 
     //Popup menu in treeview show all/hide all/ individual items selection.
     procedure MenuItemTorrentFilesTreeShowAllClick(Sender: TObject);
@@ -328,6 +330,33 @@ begin
   OpenURL('https://github.com/GerryFerdinandus/bittorrent-tracker-editor');
 end;
 
+procedure TFormTrackerModify.MenuItemOnlineCheckSubmitNewTrackonClick(Sender: TObject);
+var
+  SendStatus: boolean;
+  TrackerSendCount: integer;
+  PopupStr: string;
+begin
+
+  SendStatus := FControlerTrackerListOnline.SubmitTrackers(
+    FTrackerList.TrackerFromInsideTorrentFilesList, TrackerSendCount);
+
+  if SendStatus then
+  begin
+    //Succesful upload
+    PopupStr := format('Successful upload of %d unique tracker URL',[TrackerSendCount]);
+    Application.MessageBox(
+      PChar(@PopupStr[1]),
+      '', MB_ICONINFORMATION + MB_OK);
+  end
+  else
+  begin
+    //something is wrong with uploading
+    Application.MessageBox(
+      PChar('Can not uploading the tracker list'),
+      '', MB_ICONINFORMATION + MB_OK);
+  end;
+end;
+
 procedure TFormTrackerModify.MenuItemOnlineCheckAppendStableTrackersClick(
   Sender: TObject);
 var
@@ -362,7 +391,7 @@ procedure TFormTrackerModify.MenuItemOnlineCheckDownloadNewTrackonClick(
 begin
   try
     screen.Cursor := crHourGlass;
-    FDownloadStatus := FControlerTrackerListOnline.DownloadTrackers;
+    FDownloadStatus := FControlerTrackerListOnline.DownloadTrackers_All_Live_Stable;
   finally
     screen.Cursor := crDefault;
   end;
