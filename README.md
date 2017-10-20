@@ -49,8 +49,12 @@ There is no backup function in this software. Used it at your own risk. Bittorre
 
 ## Software history: ##
 
+### 1.33.0.beta.2 ###
+  * ADD: Wrong tracker URL format from torrent files should be unselected by default ([Issue 22](https://github.com/GerryFerdinandus/bittorrent-tracker-editor/issues/22))
+  * ADD: Upload trackers to newTrackon ([Issue 23](https://github.com/GerryFerdinandus/bittorrent-tracker-editor/issues/23))
+
 ### 1.33.0.beta.1 ###
-  * ADD:  Verify the working status of public trackers. ([Issue 21](https://github.com/GerryFerdinandus/bittorrent-tracker-editor/issues/21))
+  * ADD:  Verify the working status of public trackers. (Data from newTrackon) ([Issue 21](https://github.com/GerryFerdinandus/bittorrent-tracker-editor/issues/21))
 
 ### 1.32.0 ###
   * ADD:  Add more options for updating the torrent tracker list. ([Issue 8](https://github.com/GerryFerdinandus/bittorrent-tracker-editor/issues/8))
@@ -66,7 +70,7 @@ There is no backup function in this software. Used it at your own risk. Bittorre
 
 ### 1.31 ###
   * ADD: Edit comment in data/info grid column.
-  * FIX:  ([Issue 6](https://github.com/GerryFerdinandus/bittorrent-tracker-editor/issues/6))
+  * FIX: The data/info column can be moved but it is not updated correctly when torrent is reloaded. ([Issue 6](https://github.com/GerryFerdinandus/bittorrent-tracker-editor/issues/6))
 
 ### 1.30 ###
   * ADD: Tab page Files/trackers/info
@@ -74,7 +78,8 @@ There is no backup function in this software. Used it at your own risk. Bittorre
   * ADD: remove\_trackers.txt will remove specific trackers form torrent.
   * ADD: export\_trackers.txt is created after updating the torrent.
   * ADD: drag and drop of trackers file (with '.txt' file extension)
-  * FIX:  ([Issue 4](https://github.com/GerryFerdinandus/bittorrent-tracker-editor/issues/4)) + ([Issue 5](https://github.com/GerryFerdinandus/bittorrent-tracker-editor/issues/5))
+  * FIX: Can not remove duplicate Tracker automatically ([Issue 4](https://github.com/GerryFerdinandus/bittorrent-tracker-editor/issues/4))
+  * FIX: Can't open some of .torrent files. ([Issue 5](https://github.com/GerryFerdinandus/bittorrent-tracker-editor/issues/5))
 
 ### 1.21 ###
   * FIX: Support for Unicode in filename. (Chinese etc.)
