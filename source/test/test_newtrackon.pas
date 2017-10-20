@@ -25,7 +25,7 @@ implementation
 
 procedure TTestNewTrackon.Test_DownloadAPI;
 begin
-  Check(FNewTrackon.DownloadTrackers, 'Download the newtrackon API');
+  Check(FNewTrackon.DownloadEverything, 'Download the newtrackon API');
 
   Check(FNewTrackon.TrackerList_All.Count > 0,
     'TrackerList_All should never be empty');
