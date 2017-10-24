@@ -71,12 +71,14 @@ type
     procedure CreateFilledTorrent(TrackerListOrder: TTrackerListOrder);
     procedure DownloadNewTrackonTrackers;
     procedure Test_Paramater_Ux(TrackerListOrder: TTrackerListOrder);
+    procedure Add_One_URL(TrackerListOrder: TTrackerListOrder;
+      const tracker_URL: string; TestMustBeSuccess: boolean);
 
   protected
     procedure SetUp; override;
     procedure TearDown; override;
   published
-    procedure Test_Tracker_UserInput_Without_Announce_Exit_Code;
+    procedure Test_Tracker_UserInput_All_Different_URL;
     procedure Test_Create_Empty_Torrent_And_Then_Filled_It_All_Mode;
 
     procedure Test_Paramater_U0;
@@ -315,35 +317,74 @@ begin
   Check(FConsoleLogData.TorrentFilesCount = TEST_TORRENT_FILES_COUNT);
 end;
 
+procedure TTestStartUpParameter.Add_One_URL(TrackerListOrder: TTrackerListOrder;
+  const tracker_URL: string; TestMustBeSuccess: boolean);
+begin
+  //add one tracker to the 'add_trackers'
+  FVerifyTrackerResult.TrackerAdded.Clear;
+  FVerifyTrackerResult.TrackerAdded.Add(tracker_URL);
 
-procedure TTestStartUpParameter.Test_Tracker_UserInput_Without_Announce_Exit_Code;
+  FVerifyTrackerResult.TrackerAdded.SaveToFile(FFullPathToEndUser +
+    FILE_NAME_ADD_TRACKERS);
+
+  //Generate the command line parameter
+  TestParameter(TrackerListOrder);
+
+  //call the tracker editor exe file
+  CallExecutableFile;
+
+  //Check the logdata status
+  Check(ReadConsoleLogFile, 'Log data is not present');
+
+
+  if TestMustBeSuccess then
+  begin
+    //check the exit code. Must be OK
+    CheckEquals(0, FExitCode, tracker_URL);
+
+    //the result must be True
+    CheckTrue(FConsoleLogData.StatusOK, tracker_URL);
+  end
+  else
+  begin
+    //check the exit code. Must be an error
+    CheckNotEquals(0, FExitCode, tracker_URL);
+
+    //the result must be false
+    CheckFalse(FConsoleLogData.StatusOK, tracker_URL);
+  end;
+
+end;
+
+
+procedure TTestStartUpParameter.Test_Tracker_UserInput_All_Different_URL;
 var
   TrackerListOrder: TTrackerListOrder;
+  TrackerURL: string;
+const
+  ANNOUNCE = '/announce';
 begin
   //Test if all the tracker update mode is working
   for TrackerListOrder in TTrackerListOrder do
   begin
+    TrackerURL := 'udp://test.com';
+    Add_One_URL(TrackerListOrder, TrackerURL, False);
+    Add_One_URL(TrackerListOrder, TrackerURL + ANNOUNCE, True);
 
-    //add a wrong tracker without /announce
-    FVerifyTrackerResult.TrackerAdded.Clear;
-    FVerifyTrackerResult.TrackerAdded.Add('udp://test.com');
+    TrackerURL := 'http://test.com';
+    Add_One_URL(TrackerListOrder, TrackerURL, False);
+    Add_One_URL(TrackerListOrder, TrackerURL + ANNOUNCE, True);
 
-    FVerifyTrackerResult.TrackerAdded.SaveToFile(FFullPathToEndUser +
-      FILE_NAME_ADD_TRACKERS);
+    TrackerURL := 'https://test.com';
+    Add_One_URL(TrackerListOrder, TrackerURL, False);
+    Add_One_URL(TrackerListOrder, TrackerURL + ANNOUNCE, True);
 
-    //Generate the command line parameter
-    TestParameter(TrackerListOrder);
+    //webtorrent does NOT have announce
+    TrackerURL := 'ws://test.com';
+    Add_One_URL(TrackerListOrder, TrackerURL, True);
 
-    //call the tracker editor exe file
-    CallExecutableFile;
-
-    //check the exit code. Must be an error
-    CheckNotEquals(0, FExitCode);
-
-    //Check the logdata status
-    Check(ReadConsoleLogFile, 'Log data is not present');
-    //the result must be false
-    CheckFalse(FConsoleLogData.StatusOK);
+    TrackerURL := 'wss://test.com';
+    Add_One_URL(TrackerListOrder, TrackerURL, True);
   end;
 end;
 
