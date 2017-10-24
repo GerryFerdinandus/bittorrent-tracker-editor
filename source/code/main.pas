@@ -344,7 +344,7 @@ begin
   if SendStatus then
   begin
     //Succesful upload
-    PopupStr := format('Successful upload of %d unique tracker URL',[TrackerSendCount]);
+    PopupStr := format('Successful upload of %d unique tracker URL', [TrackerSendCount]);
     Application.MessageBox(
       PChar(@PopupStr[1]),
       '', MB_ICONINFORMATION + MB_OK);
@@ -409,7 +409,15 @@ end;
 function TFormTrackerModify.TrackerWithURLAndAnnounce(
   const TrackerURL: UTF8String): boolean;
 begin
-  Result := ValidTrackerURL(TrackerURL) and TrackerURLWithAnnounce(TrackerURL);
+  Result := ValidTrackerURL(TrackerURL);
+  if Result then
+  begin
+    //Web Torrent does not have 'announce'
+    if not WebTorrentTrackerURL(TrackerURL) then
+    begin
+      Result := TrackerURLWithAnnounce(TrackerURL);
+    end;
+  end;
 end;
 
 procedure TFormTrackerModify.MenuTrackersDeleteTrackersWithStatusClick(
@@ -1047,24 +1055,30 @@ begin
     if TrackerStr = '' then
       continue;
 
-    //All the tracker must end with '/announce'
-    Result := TrackerURLWithAnnounce(TrackerStr);
-    if not Result then
+    Result := ValidTrackerURL(TrackerStr);
+    if Result then
     begin
-      ErrorStr := 'ERROR: Tracker URL must end with /announce';
-      //do not continue the for loop
-      break;
+      //Web Torrent does not have 'announce'
+      if not WebTorrentTrackerURL(TrackerStr) then
+      begin
+        Result := TrackerURLWithAnnounce(TrackerStr);
+        if not Result then
+        begin
+          ErrorStr := 'ERROR: Tracker URL must end with /announce';
+        end;
+      end;
+    end
+    else
+    begin
+      ErrorStr := 'ERROR: Tracker URL must begin with http:// or udp://';
     end;
 
-    //All the tracker must begin with 'http(s)://' or 'udp://'
-    Result := ValidTrackerURL(TrackerStr);
     if Result then
     begin
       AddButIngnoreDuplicates(FTrackerList.TrackerAddedByUserList, TrackerStr);
     end
     else
     begin
-      ErrorStr := 'ERROR: Tracker URL must begin with http:// or udp://';
       //do not continue the for loop
       break;
     end;
