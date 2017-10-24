@@ -102,6 +102,8 @@ function LoadTorrentViaDir(const Dir: UTF8String;
 
 function ValidTrackerURL(const TrackerURL: UTF8String): boolean;
 
+function WebTorrentTrackerURL(const TrackerURL: UTF8String): boolean;
+
 procedure CombineFiveTrackerListToOne(TrackerListOrder: TTrackerListOrder;
   var TrackerList: TTrackerList; PresentTorrentTrackerList: TStringList);
 
@@ -377,12 +379,14 @@ end;
 function ValidTrackerURL(const TrackerURL: UTF8String): boolean;
 begin
   //TrackerURL should be cleanup with UTF8trim()
-  Result := (Pos('http://', TrackerURL) = 1) or (Pos('https://', TrackerURL) = 1) or
-    (Pos('ws://', TrackerURL) = 1) or (Pos('wss://', TrackerURL) = 1) or
-    (Pos('udp://', TrackerURL) = 1);
+  Result := (Pos('udp://', TrackerURL) = 1) or (Pos('http://', TrackerURL) = 1) or
+    (Pos('https://', TrackerURL) = 1) or WebTorrentTrackerURL(TrackerURL);
 end;
 
-
+function WebTorrentTrackerURL(const TrackerURL: UTF8String): boolean;
+begin
+  Result := (Pos('ws://', TrackerURL) = 1) or (Pos('wss://', TrackerURL) = 1);
+end;
 
 procedure CombineFiveTrackerListToOne(TrackerListOrder: TTrackerListOrder;
   var TrackerList: TTrackerList; PresentTorrentTrackerList: TStringList);
