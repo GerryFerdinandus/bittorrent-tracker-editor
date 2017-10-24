@@ -194,11 +194,12 @@ implementation
 uses LCLIntf, lazutf8, LazFileUtils, trackerlist_online;
 
 const
-  RECOMENDED_TRACKERS: array[0..2] of UTF8String =
+  RECOMENDED_TRACKERS: array[0..3] of UTF8String =
     (
     'udp://tracker.coppersurfer.tk:6969/announce',
     'udp://tracker.leechers-paradise.org:6969/announce',
-    'udp://tracker.opentrackr.org:1337/announce'
+    'udp://tracker.opentrackr.org:1337/announce',
+    'wss://tracker.openwebtorrent.com'
     );
 
   //program name and version (http://semver.org/)
