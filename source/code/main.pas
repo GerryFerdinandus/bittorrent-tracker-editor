@@ -203,7 +203,7 @@ const
     );
 
   //program name and version (http://semver.org/)
-  FORM_CAPTION = 'Bittorrent tracker editor (1.33.0.beta.2)';
+  FORM_CAPTION = 'Bittorrent tracker editor (1.33.0.beta.3)';
 
   TORRENT_FILES_CONTENTS_FORM_CAPTION =
     'Show all the files inside the torrents. (Use right mouse for popup menu.)';
