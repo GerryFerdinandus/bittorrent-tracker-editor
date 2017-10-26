@@ -17,21 +17,21 @@ AppVeyor      |[![Build status](https://ci.appveyor.com/api/projects/status/yq8u
 ---
 
 ## Warning: ##
-There is no backup function in this software. Used it at your own risk. Bittorrent work fine without this program. You probably don't need this software.
+There is no backup function in this software. Use it at your own risk. Bittorrent works fine without this program. You probably don't need this software.
 
 ---
 
 ## Which program to use for add/remove bittorrent trackers? ##
   * **Edit one torrent file:** You can use http://torrenteditor.com/
-  * **Edit multiple torrent file:** Use this program. It is made for changing multiple torrent files.
+  * **Edit multiple torrent files:** Use this program. It is made for changing multiple torrent files.
 
 ---
 
 ## Features: ##
   * Select one torrent file or a folder with torrent files.
-  * Add one or more tracker at the same time.
-  * Remove one or more tracker at the same time.
-  * Remove all the tracker to create tracker less torrent. DHT torrent
+  * Add one or more trackers at the same time.
+  * Remove one or more trackers at the same time.
+  * Remove all the trackers to create trackerless torrent. DHT torrent
   * Change public/private flag. Warning: This will change the torrent info HASH.
   * Preset add/remove tracker via add\_trackers.txt and remove\_trackers.txt files when present in the same folder as the executable file.
   * Optional start as console program. (See readme.txt inside download)
@@ -58,10 +58,10 @@ There is no backup function in this software. Used it at your own risk. Bittorre
 
 ### 1.32.0 ###
   * ADD:  Add more options for updating the torrent tracker list. ([Issue 8](https://github.com/GerryFerdinandus/bittorrent-tracker-editor/issues/8))
-  * ADD:  Add trackers but keep the original unique trackers list instact. ([Issue 12](https://github.com/GerryFerdinandus/bittorrent-tracker-editor/issues/12))
+  * ADD:  Add trackers but keep the original unique trackers list intact. ([Issue 12](https://github.com/GerryFerdinandus/bittorrent-tracker-editor/issues/12))
   * ADD:  Randomize tracker order for each torrent file. ([Issue 19](https://github.com/GerryFerdinandus/bittorrent-tracker-editor/issues/19))
   * FIX:  Trackers with https ([Issue 9](https://github.com/GerryFerdinandus/bittorrent-tracker-editor/issues/9))
-  * FIX:  Read torrent file with string size langer that 1MB ([Issue 10](https://github.com/GerryFerdinandus/bittorrent-tracker-editor/issues/10))
+  * FIX:  Read torrent file with string size larger that 1MB ([Issue 10](https://github.com/GerryFerdinandus/bittorrent-tracker-editor/issues/10))
   * FIX:  Give user a warning when torrent file is read only file. ([Issue 14](https://github.com/GerryFerdinandus/bittorrent-tracker-editor/issues/14))
   * FIX:  Give user a warning when torrent file update failed. ([Issue 15](https://github.com/GerryFerdinandus/bittorrent-tracker-editor/issues/15))
   * FIX:  Can not be opened by dragging a file. ([Issue 17](https://github.com/GerryFerdinandus/bittorrent-tracker-editor/issues/17))
@@ -75,7 +75,7 @@ There is no backup function in this software. Used it at your own risk. Bittorre
 ### 1.30 ###
   * ADD: Tab page Files/trackers/info
   * ADD: Optional start as console program. (See readme.txt inside download)
-  * ADD: remove\_trackers.txt will remove specific trackers form torrent.
+  * ADD: remove\_trackers.txt will remove specific trackers from torrent.
   * ADD: export\_trackers.txt is created after updating the torrent.
   * ADD: drag and drop of trackers file (with '.txt' file extension)
   * FIX: Can not remove duplicate Tracker automatically ([Issue 4](https://github.com/GerryFerdinandus/bittorrent-tracker-editor/issues/4))
@@ -99,7 +99,7 @@ There is no backup function in this software. Used it at your own risk. Bittorre
 
 ![](pictures/trackereditor.png?raw=true "Trackers List")
 
-This screen shot show the program, after a folder is selected with torrent files inside. The normal procedure is to deselect the trackers that no longer working. Optionally add your own trackers. And select the 'Update torrent' menu.
+This screen shot show the program, after a folder is selected with torrent files inside. The normal procedure is to deselect the trackers that are no longer working. Optionally add your own trackers. And select the 'Update torrent' menu.
 
 ---
 
