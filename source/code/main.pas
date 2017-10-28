@@ -140,7 +140,7 @@ type
     // is the present torrent file being process
     FDecodePresentTorrent: TDecodeTorrent;
 
-    FConcoleMode, //user have start the program in console mode
+    FConsoleMode, //user have start the program in console mode
     FFilePresentBanByUserList//There is a file 'remove_trackers.txt' detected
     : boolean;
 
@@ -218,6 +218,11 @@ const
 procedure TFormTrackerModify.FormCreate(Sender: TObject);
 begin
 
+  //Update some captions
+  Caption := FORM_CAPTION;
+  GroupBoxTorrentContents.Caption := TORRENT_FILES_CONTENTS_FORM_CAPTION;
+  GroupBoxPresentTracker.Caption := GROUPBOX_PRESENT_TRACKERS_CAPTION;
+
   //Create controler for StringGridTorrentData
   FControlerGridTorrentData := TControlerGridTorrentData.Create(StringGridTorrentData);
 
@@ -260,7 +265,6 @@ begin
   //must NOT be sorted. Must keep the original order intact.
   FTrackerList.TrackerFinalList.Sorted := False;
 
-
   //Decoding class for torrent.
   FDecodePresentTorrent := TDecodeTorrent.Create;
 
@@ -273,8 +277,9 @@ begin
   Width := Constraints.MinWidth;
   Height := Constraints.MinHeight;
 
-  //there must be one command line or more for a console mode.
-  FConcoleMode := ParamCount > 0;
+  //there must be two command line or more for a console mode.
+  //one is for drag and drop via shortcut in windows mode.
+  FConsoleMode := ParamCount >= 2;
 
   //Show the default trackers
   LoadTrackersTextFileAddTrackers;
@@ -282,16 +287,14 @@ begin
   //Load the unwanted trackers list.
   LoadTrackersTextFileRemoveTrackers;
 
-  //Start program in console mode
-  if FConcoleMode then
+  //Start program in console mode ( >= 2)
+  //or in windows mode via shortcut with drag/drom ( = 1)
+  if ParamCount > 0 then
   begin
     ConsoleMode;
   end;
 
-  //Update some captions
-  Caption := FORM_CAPTION;
-  GroupBoxTorrentContents.Caption := TORRENT_FILES_CONTENTS_FORM_CAPTION;
-  GroupBoxPresentTracker.Caption := GROUPBOX_PRESENT_TRACKERS_CAPTION;
+
 
 end;
 
@@ -567,7 +570,7 @@ begin
 
   try
 
-    if not FConcoleMode then
+    if not FConsoleMode then
     begin
       //Warn user before updating the torrent
       BoxStyle := MB_ICONWARNING + MB_OKCANCEL;
@@ -584,7 +587,7 @@ begin
     //Must have some torrent selected
     if (FTrackerList.TorrentFileNameList.Count = 0) then
     begin
-      if FConcoleMode then
+      if FConsoleMode then
       begin
         FTrackerList.LogStringList.Add('ERROR: No torrent file selected');
       end
@@ -616,7 +619,7 @@ begin
     CountTrackers := FTrackerList.TrackerFinalList.Count;
 
     //In console mode we can ignore this warning
-    if not FConcoleMode and (CountTrackers = 0) then
+    if not FConsoleMode and (CountTrackers = 0) then
     begin //Torrent without a tracker is posible. But is this what the user realy want? a DHT torrent.
       BoxStyle := MB_ICONWARNING + MB_OKCANCEL;
       Reply := Application.MessageBox(
@@ -727,7 +730,7 @@ begin
   end;
 
 
-  if FConcoleMode then
+  if FConsoleMode then
   begin
     //When succesfull the log file shows, 3 lines,
     //     OK + Count torrent files  + Count Trackers
@@ -849,11 +852,15 @@ begin
 
   //Will be set to True when error occure.
   MustExitWithErrorCode := False;
+  ViewUpdateBegin;
 
   try
-    //Create the log file. The old one will be overwritten
-    AssignFile(FLogFile, ExtractFilePath(Application.ExeName) + FILE_NAME_CONSOLE_LOG);
-    ReWrite(FLogFile);
+    if FConsoleMode then
+    begin
+      //Create the log file. The old one will be overwritten
+      AssignFile(FLogFile, ExtractFilePath(Application.ExeName) + FILE_NAME_CONSOLE_LOG);
+      ReWrite(FLogFile);
+    end;
 
     //Get the startup command lime parameters.
     if ConsoleModeDecodeParameter(FileNameOrDirStr, FTrackerList) then
@@ -868,9 +875,19 @@ begin
           ShowTrackerInsideFileList;
           //Some tracker must be removed. Console and windows mode.
           UpdateViewRemoveTracker;
-          //update torrent
-          UpdateTorrent;
+
+          if FConsoleMode then
+          begin
+            //update torrent
+            UpdateTorrent;
+          end;
+
+        end
+        else
+        begin
+          //failed to load the torrent via folders
         end;
+
       end
       else //a single torrent file is selected?
       begin
@@ -888,9 +905,19 @@ begin
               ShowTrackerInsideFileList;
               //Some tracker must be removed. Console and windows mode.
               UpdateViewRemoveTracker;
-              //update torrent
-              UpdateTorrent;
+
+              if FConsoleMode then
+              begin
+                //update torrent
+                UpdateTorrent;
+              end;
+
+            end
+            else
+            begin
+              //failed to load one torrent
             end;
+
 
           finally
             StringList.Free;
@@ -898,22 +925,36 @@ begin
         end
         else
         begin //Error. this is not a torrent file
-          FTrackerList.LogStringList.Add('ERROR: No torrent file selected.');
+
+          if FConsoleMode then
+          begin
+            FTrackerList.LogStringList.Add('ERROR: No torrent file selected.');
+          end
+          else
+          begin
+
+          end;
+
+
         end;
       end;
     end;
 
-    //Write to log file. And close the file.
-    WriteLn(FLogFile, FTrackerList.LogStringList.Text);
-    CloseFile(FLogFile);
-
-    //check if log data is success full
-    //if (no data) or (not CONSOLE_SUCCESS_STATUS) then error
-    MustExitWithErrorCode := FTrackerList.LogStringList.Count = 0;
-    if not MustExitWithErrorCode then
+    if FConsoleMode then
     begin
-      MustExitWithErrorCode := FTrackerList.LogStringList[0] <> CONSOLE_SUCCESS_STATUS;
+      //Write to log file. And close the file.
+      WriteLn(FLogFile, FTrackerList.LogStringList.Text);
+      CloseFile(FLogFile);
+
+      //check if log data is success full
+      //if (no data) or (not CONSOLE_SUCCESS_STATUS) then error
+      MustExitWithErrorCode := FTrackerList.LogStringList.Count = 0;
+      if not MustExitWithErrorCode then
+      begin
+        MustExitWithErrorCode := FTrackerList.LogStringList[0] <> CONSOLE_SUCCESS_STATUS;
+      end;
     end;
+
 
   except
     //Shutdown the console program.
@@ -922,14 +963,19 @@ begin
     MustExitWithErrorCode := True;
   end;
 
+  ViewUpdateEnd;
+
   if MustExitWithErrorCode then
   begin
     //exit with error code
     System.ExitCode := 1;
   end;
 
-  //Always shutdown the program when in console mode.
-  Application.terminate;
+  if FConsoleMode then
+  begin
+    //Always shutdown the program when in console mode.
+    Application.terminate;
+  end;
 end;
 
 
@@ -1093,7 +1139,7 @@ begin
   else
   begin
     //There is error. Show the error.
-    if FConcoleMode then
+    if FConsoleMode then
     begin
       FTrackerList.LogStringList.Add(ErrorStr);
     end
@@ -1490,7 +1536,7 @@ end;
 procedure TFormTrackerModify.FormShow(Sender: TObject);
 begin
   //In console mode do not show the program.
-  if FConcoleMode then
+  if FConsoleMode then
     Visible := False;
 end;
 
@@ -1529,7 +1575,7 @@ begin
         //Cancel everything.
         FTrackerList.TorrentFileNameList.Clear;
         FTrackerList.TrackerFromInsideTorrentFilesList.Clear;
-        if FConcoleMode then
+        if FConsoleMode then
         begin
           FTrackerList.LogStringList.Add('Error: Can not read torrent. ' +
             TorrentFileNameStr);
