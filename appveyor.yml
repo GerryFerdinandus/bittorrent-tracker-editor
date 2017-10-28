@@ -6,7 +6,7 @@ init:
 
     appveyor DownloadFile %LAZARUS_URL% -FileName "c:\lazarus.exe"
 environment:
-  LAZARUS_URL: '"http://mirrors.iwi.me/lazarus/releases/Lazarus Windows 32 bits/Lazarus 1.6.2/lazarus-1.6.2-fpc-3.0.0-win32.exe"'
+  LAZARUS_URL: '"http://mirrors.iwi.me/lazarus/releases/Lazarus%20Windows%2032%20bits/Lazarus%201.8RC5/lazarus-1.8.0RC5-fpc-3.0.4-win32.exe"'
 install:
 - cmd: >-
     git submodule update --init --recursive
