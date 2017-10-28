@@ -152,6 +152,7 @@ type
     FTreeNodeRoot: TTreeNode;
     FControlerGridTorrentData: TControlerGridTorrentData;
 
+    procedure ShowUserErrorMessage(const ErrorText: string; const FormText: string = '');
     function TrackerWithURLAndAnnounce(const TrackerURL: UTF8String): boolean;
     procedure UpdateTorrent;
     procedure ShowHourGlassCursor(HourGlass: boolean);
@@ -294,8 +295,6 @@ begin
     ConsoleMode;
   end;
 
-
-
 end;
 
 procedure TFormTrackerModify.FormDestroy(Sender: TObject);
@@ -355,9 +354,7 @@ begin
   else
   begin
     //something is wrong with uploading
-    Application.MessageBox(
-      PChar('Can not uploading the tracker list'),
-      '', MB_ICONINFORMATION + MB_OK);
+    ShowUserErrorMessage('Can not uploading the tracker list');
   end;
 end;
 
@@ -403,9 +400,23 @@ begin
   if not FDownloadStatus then
   begin
     //something is wrong with downloading
-    Application.MessageBox(
-      PChar('Can not downloading the trackers from internet'),
-      '', MB_ICONINFORMATION + MB_OK);
+    ShowUserErrorMessage('Can not downloading the trackers from internet');
+  end;
+end;
+
+procedure TFormTrackerModify.ShowUserErrorMessage(const ErrorText: string;
+  const FormText: string);
+begin
+  if FConsoleMode then
+  begin
+    if FormText = '' then
+      FTrackerList.LogStringList.Add(ErrorText)
+    else
+      FTrackerList.LogStringList.Add(FormText + ' : ' + ErrorText);
+  end
+  else
+  begin
+    Application.MessageBox(PChar(@ErrorText[1]), PChar(@FormText[1]), MB_ICONERROR);
   end;
 end;
 
@@ -587,15 +598,7 @@ begin
     //Must have some torrent selected
     if (FTrackerList.TorrentFileNameList.Count = 0) then
     begin
-      if FConsoleMode then
-      begin
-        FTrackerList.LogStringList.Add('ERROR: No torrent file selected');
-      end
-      else
-      begin
-        Application.MessageBox('No torrent file selected',
-          '', MB_ICONERROR);
-      end;
+      ShowUserErrorMessage('ERROR: No torrent file selected');
       ShowHourGlassCursor(True);
       exit;
     end;
@@ -886,6 +889,7 @@ begin
         else
         begin
           //failed to load the torrent via folders
+          ShowUserErrorMessage('Can not load torrent via folder');
         end;
 
       end
@@ -916,8 +920,8 @@ begin
             else
             begin
               //failed to load one torrent
+              ShowUserErrorMessage('Can not load torrent file.');
             end;
-
 
           finally
             StringList.Free;
@@ -925,17 +929,7 @@ begin
         end
         else
         begin //Error. this is not a torrent file
-
-          if FConsoleMode then
-          begin
-            FTrackerList.LogStringList.Add('ERROR: No torrent file selected.');
-          end
-          else
-          begin
-
-          end;
-
-
+          ShowUserErrorMessage('ERROR: No torrent file selected.');
         end;
       end;
     end;
@@ -1139,17 +1133,8 @@ begin
   else
   begin
     //There is error. Show the error.
-    if FConsoleMode then
-    begin
-      FTrackerList.LogStringList.Add(ErrorStr);
-    end
-    else
-    begin
-      //Show error
-      Application.MessageBox(PChar(@TrackerStr[1]), PChar(@ErrorStr[1]), MB_ICONERROR);
-    end;
+    ShowUserErrorMessage(ErrorStr, TrackerStr);
   end;
-
 end;
 
 procedure TFormTrackerModify.UpdateTrackerInsideFileList;
@@ -1575,16 +1560,7 @@ begin
         //Cancel everything.
         FTrackerList.TorrentFileNameList.Clear;
         FTrackerList.TrackerFromInsideTorrentFilesList.Clear;
-        if FConsoleMode then
-        begin
-          FTrackerList.LogStringList.Add('Error: Can not read torrent. ' +
-            TorrentFileNameStr);
-        end
-        else
-        begin
-          Application.MessageBox(PChar(@TorrentFileNameStr[1]),
-            'Error: Can not read torrent.', MB_ICONERROR);
-        end;
+        ShowUserErrorMessage('Error: Can not read torrent.', TorrentFileNameStr);
         Result := False;
         exit;
       end;
