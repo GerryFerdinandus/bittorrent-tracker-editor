@@ -20,7 +20,8 @@ interface
 uses
   Classes, SysUtils, Forms, Controls, Graphics, Dialogs, StdCtrls,
   ExtCtrls, CheckLst, DecodeTorrent, LCLType, ActnList, Menus, ComCtrls,
-  Grids, controlergridtorrentdata, torrent_miscellaneous, controler_trackerlist_online;
+  Grids, controlergridtorrentdata, torrent_miscellaneous,
+  controler_trackerlist_online, controler_treeview_torrent_data;
 
 type
 
@@ -29,11 +30,11 @@ type
 
   TFormTrackerModify = class(TForm)
     CheckListBoxPublicPrivateTorrent: TCheckListBox;
-    GroupBoxTorrentContents: TGroupBox;
     GroupBoxPublicPrivateTorrent: TGroupBox;
     GroupBoxNewTracker: TGroupBox;
     GroupBoxPresentTracker: TGroupBox;
     MainMenu: TMainMenu;
+    MainMenu1: TMainMenu;
     MemoNewTrackers: TMemo;
     MenuFile: TMenuItem;
     MenuFileTorrentFolder: TMenuItem;
@@ -58,11 +59,6 @@ type
     MenuUpdateTorrentSort: TMenuItem;
     MenuUpdateTorrentAddAfter: TMenuItem;
     MenuUpdateTorrentAddBefore: TMenuItem;
-    MenuItemTorrentFilesTreeHideAll: TMenuItem;
-    MenuItemTorrentFilesTreeShowTrackers: TMenuItem;
-    MenuItemTorrentFilesTreeShowInfo: TMenuItem;
-    MenuItemTorrentFilesTreeShowAll: TMenuItem;
-    MenuItemTorrentFilesTreeShowFiles: TMenuItem;
     MenuTrackersAllTorrentArePrivate: TMenuItem;
     MenuTrackersAllTorrentArePublic: TMenuItem;
     MenuUpdateTorrent: TMenuItem;
@@ -76,7 +72,6 @@ type
     PageControl: TPageControl;
     PanelTopPublicTorrent: TPanel;
     PanelTop: TPanel;
-    PopupMenuTorrentFilesContent: TPopupMenu;
     SelectDirectoryDialog1: TSelectDirectoryDialog;
     Splitter1: TSplitter;
     StringGridTrackerOnline: TStringGrid;
@@ -85,7 +80,6 @@ type
     TabSheetTorrentData: TTabSheet;
     TabSheetTrackersList: TTabSheet;
     TabSheetPublicPrivateTorrent: TTabSheet;
-    TreeViewFileContents: TTreeView;
     procedure FormCreate(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
 
@@ -97,11 +91,6 @@ type
     procedure MenuHelpReportingIssueClick(Sender: TObject);
     procedure MenuHelpVisitWebsiteClick(Sender: TObject);
     procedure MenuItemOnlineCheckSubmitNewTrackonClick(Sender: TObject);
-
-    //Popup menu in treeview show all/hide all/ individual items selection.
-    procedure MenuItemTorrentFilesTreeShowAllClick(Sender: TObject);
-    procedure MenuItemTorrentFilesTreeHideAllClick(Sender: TObject);
-    procedure MenuItemTorrentFilesTreeShowOrHideItemClick(Sender: TObject);
 
     //Select via menu torrent file or directory
     procedure MenuOpenTorrentFileClick(Sender: TObject);
@@ -134,6 +123,7 @@ type
 
     FTrackerList: TTrackerList;
     FControlerTrackerListOnline: TControlerTrackerListOnline;
+    Fcontroler_treeview_torrent_data: Tcontroler_treeview_torrent_data;
     FDownloadStatus: boolean;
 
 
@@ -146,30 +136,21 @@ type
 
 
     FLogFile, FTrackerFile: TextFile;
-    FTotalFileInsideTorrent: integer;
-    FTotalFileSizeInsideTorrent: int64;
     FProcessTimeStart, FProcessTimeTotal: TDateTime;
-    FTreeNodeRoot: TTreeNode;
     FControlerGridTorrentData: TControlerGridTorrentData;
 
     procedure ShowUserErrorMessage(const ErrorText: string; const FormText: string = '');
     function TrackerWithURLAndAnnounce(const TrackerURL: UTF8String): boolean;
     procedure UpdateTorrent;
     procedure ShowHourGlassCursor(HourGlass: boolean);
-    procedure ViewUpdateBegin(ClearView: boolean = True);
+    procedure ViewUpdateBegin;
     procedure ViewUpdateOneTorrentFileDecoded;
     procedure ViewUpdateEnd;
     procedure ViewUpdateFormCaption;
     procedure ClearAllTorrentFilesNameAndTrackerInside;
-
-    procedure MenuItemTorrentFilesTreeSyncWithPopupMenu;
     procedure SaveTrackerFinalListToFile;
     procedure ConsoleMode;
-
-
     procedure UpdateViewRemoveTracker;
-
-
     function ReloadAllTorrentAndRefreshView: boolean;
     function AddTorrentFileList(TorrentFileNameStringList: TStringList): boolean;
     function ReadAddTrackerFileFromUser(const FileName: UTF8String): boolean;
@@ -206,9 +187,6 @@ const
   //program name and version (http://semver.org/)
   FORM_CAPTION = 'Bittorrent tracker editor (1.33.0.beta.3)';
 
-  TORRENT_FILES_CONTENTS_FORM_CAPTION =
-    'Show all the files inside the torrents. (Use right mouse for popup menu.)';
-
   GROUPBOX_PRESENT_TRACKERS_CAPTION =
     'Present trackers in all torrent files. Select the one that you want to keep. And added to all torrent files.';
 
@@ -221,7 +199,6 @@ begin
 
   //Update some captions
   Caption := FORM_CAPTION;
-  GroupBoxTorrentContents.Caption := TORRENT_FILES_CONTENTS_FORM_CAPTION;
   GroupBoxPresentTracker.Caption := GROUPBOX_PRESENT_TRACKERS_CAPTION;
 
   //Create controler for StringGridTorrentData
@@ -274,6 +251,10 @@ begin
     TControlerTrackerListOnline.Create(StringGridTrackerOnline,
     FTrackerList.TrackerFromInsideTorrentFilesList, @TrackerWithURLAndAnnounce);
 
+  //Create view for treeview data of all the torrent files
+  Fcontroler_treeview_torrent_data :=
+    Tcontroler_treeview_torrent_data.Create(TabSheetTorrentsContents);
+
   //start the program at mimimum visual size. (this is optional)
   Width := Constraints.MinWidth;
   Height := Constraints.MinHeight;
@@ -289,7 +270,7 @@ begin
   LoadTrackersTextFileRemoveTrackers;
 
   //Start program in console mode ( >= 2)
-  //or in windows mode via shortcut with drag/drom ( = 1)
+  //or in windows mode via shortcut with drag/drop ( = 1)
   if ParamCount > 0 then
   begin
     ConsoleMode;
@@ -477,89 +458,6 @@ begin
   //User can select to randomize the tracker list
   FTrackerList.TrackerListOrderForUpdatedTorrent := tloRandomize;
   UpdateTorrent;
-end;
-
-procedure TFormTrackerModify.MenuItemTorrentFilesTreeHideAllClick(Sender: TObject);
-var
-  i, CountTorrents: integer;
-begin
-  //Show only torrent file names
-
-  //user what to hide all the items.
-  //All the popup menu item must first be unchecked.
-  MenuItemTorrentFilesTreeShowInfo.Checked := False;
-  MenuItemTorrentFilesTreeShowFiles.Checked := False;
-  MenuItemTorrentFilesTreeShowTrackers.Checked := False;
-  //Update the TorrentFilesTree
-  //  MenuItemTorrentFilesTreeSyncWithPopupMenu;
-
-  if not assigned(FTreeNodeRoot) then
-    exit;
-
-  //how many torrent files are there.
-  CountTorrents := FTreeNodeRoot.Count;
-  if CountTorrents = 0 then
-    exit;
-
-  //Show the torrent files names only.
-  for i := 0 to CountTorrents - 1 do
-  begin
-    FTreeNodeRoot.Items[i].Collapse(True);
-  end;
-
-end;
-
-procedure TFormTrackerModify.MenuItemTorrentFilesTreeShowAllClick(Sender: TObject);
-begin
-  //show everything
-  if assigned(FTreeNodeRoot) then
-    FTreeNodeRoot.Expand(True);
-
-  //user what to see all the items.
-  //All the popup menu item must first be checked.
-  MenuItemTorrentFilesTreeShowInfo.Checked := True;
-  MenuItemTorrentFilesTreeShowFiles.Checked := True;
-  MenuItemTorrentFilesTreeShowTrackers.Checked := True;
-  //Update the TorrentFilesTree
-  //  MenuItemTorrentFilesTreeSyncWithPopupMenu;
-end;
-
-procedure TFormTrackerModify.MenuItemTorrentFilesTreeShowOrHideItemClick(
-  Sender: TObject);
-var
-  i, CountTorrents, itemsNr: integer;
-  ShowNode: boolean;
-begin
-  //Show or hide all the items below the torrent files.
-
-  //Get the top node.
-  if not assigned(FTreeNodeRoot) then
-    exit;
-
-  //how many torrent files are there.
-  CountTorrents := FTreeNodeRoot.Count;
-  if CountTorrents = 0 then
-    exit;
-
-  //The tag number define if it is for files, trackers or info items
-  itemsNr := TMenuItem(Sender).tag;
-
-  //Must show or hide the items
-  ShowNode := TMenuItem(Sender).Checked;
-
-  //process all the torrent files one by one.
-  for i := 0 to CountTorrents - 1 do
-  begin
-    if ShowNode then
-    begin
-      FTreeNodeRoot.Items[i].Expand(False); //Show the torrent name + child
-      FTreeNodeRoot.Items[i].Items[itemsNr].Expand(False); //expand child
-    end
-    else
-    begin
-      FTreeNodeRoot.Items[i].Items[itemsNr].Collapse(False);
-    end;
-  end;
 end;
 
 procedure TFormTrackerModify.UpdateTorrent;
@@ -807,13 +705,6 @@ begin
 
   end;
 
-end;
-
-procedure TFormTrackerModify.MenuItemTorrentFilesTreeSyncWithPopupMenu;
-begin
-  MenuItemTorrentFilesTreeShowOrHideItemClick(MenuItemTorrentFilesTreeShowTrackers);
-  MenuItemTorrentFilesTreeShowOrHideItemClick(MenuItemTorrentFilesTreeShowInfo);
-  MenuItemTorrentFilesTreeShowOrHideItemClick(MenuItemTorrentFilesTreeShowFiles);
 end;
 
 
@@ -1613,44 +1504,39 @@ begin
 end;
 
 
-procedure TFormTrackerModify.ViewUpdateBegin(ClearView: boolean);
+procedure TFormTrackerModify.ViewUpdateBegin;
 begin
   //Called before loading torrent file.
-  FTotalFileInsideTorrent := 0;
-  FTotalFileSizeInsideTorrent := 0;
+
+  Fcontroler_treeview_torrent_data.BeginUpdate;
 
   //Do not show being updating till finish updating data.
   StringGridTorrentData.BeginUpdate;
-  TreeViewFileContents.BeginUpdate;
   CheckListBoxPublicPrivateTorrent.Items.BeginUpdate;
 
-  if ClearView then
-  begin
-    //Clear all the user data 'View' elements. This will be filled with new data.
-    TreeViewFileContents.Items.Clear;
-    CheckListBoxPublicPrivateTorrent.Clear; //Use in update torrent!
-    StringGridTorrentData.Clear;
-    FControlerGridTorrentData.ClearAllImageIndex;
-    //RowCount is 0 after Clear. But must be 1 to make it work.
-    StringGridTorrentData.RowCount := 1;
-  end;
 
-  //root is 'Torrent Files'
-  FTreeNodeRoot := TreeViewFileContents.Items.Add(nil, 'Torrent Files');
+  //Clear all the user data 'View' elements. This will be filled with new data.
+  CheckListBoxPublicPrivateTorrent.Clear; //Use in update torrent!
+  StringGridTorrentData.Clear;
+  FControlerGridTorrentData.ClearAllImageIndex;
+  //RowCount is 0 after Clear. But must be 1 to make it work.
+  StringGridTorrentData.RowCount := 1;
 
 end;
 
 procedure TFormTrackerModify.ViewUpdateOneTorrentFileDecoded;
 var
-  RowIndex, CountFiles: integer;
-  TorrentFileNameStr, TrackerStr, PrivateStr: UTF8String;
+  RowIndex: integer;
+  TorrentFileNameStr, PrivateStr: UTF8String;
   DateTimeStr: string;
-  TreeNodeTorrent, TreeNodeFiles, TreeNodeTrackers, TreeNodeInfo: TTreeNode;
 begin
   //Called after loading torrent file.
-
+  //There are 3 tab pages that need to be filled with new one torrent file data.
 
   TorrentFileNameStr := ExtractFileName(FDecodePresentTorrent.FilenameTorrent);
+
+  //---------------------  Fill the Tree view with new torrent data
+  Fcontroler_treeview_torrent_data.AddOneTorrentFileDecoded(FDecodePresentTorrent);
 
   //---------------------   Add it to the checklist box Public/private torrent
   RowIndex := CheckListBoxPublicPrivateTorrent.Items.Add(TorrentFileNameStr);
@@ -1658,9 +1544,7 @@ begin
   CheckListBoxPublicPrivateTorrent.Checked[RowIndex] :=
     not FDecodePresentTorrent.PrivateTorrent;
 
-
   //---------------------  Fill the Grid Torrent Data/Info
-
   //date time in iso format
   if FDecodePresentTorrent.CreatedDate <> 0 then
     DateTimeToString(DateTimeStr, 'yyyy-MM-dd hh:nn:ss',
@@ -1693,76 +1577,7 @@ begin
   //All the string data are filed. Copy it now to the grid
   FControlerGridTorrentData.AppendRow;
 
-  //---------------------  Fill the treeview with torrent files
 
-  //Add the torrent file name + size of all the files combined.
-  TorrentFileNameStr := TorrentFileNameStr + '     SIZE: ' +
-    ByteSizeToBiggerSizeFormatStr(FDecodePresentTorrent.TotalFileSize) +
-    '  Files: ' + IntToStr(FDecodePresentTorrent.InfoFilesCount) +
-    '' + '  Tracker: ' + IntToStr(FDecodePresentTorrent.TrackerList.Count) + '';
-
-
-  TreeNodeTorrent := TreeViewFileContents.Items.AddChild(FTreeNodeRoot,
-    //FTrackerList.TorrentFileNameList[RowIndex]); //With directory path
-    TorrentFileNameStr);  //Without directory  path
-
-  TreeNodeFiles := TreeViewFileContents.Items.AddChild(TreeNodeTorrent, 'Files');
-  TreeNodeTrackers := TreeViewFileContents.Items.AddChild(TreeNodeTorrent,
-    'Trackers');
-  TreeNodeInfo := TreeViewFileContents.Items.AddChild(TreeNodeTorrent, 'Info');
-
-  //Show all the files inside the torrent
-  if FDecodePresentTorrent.InfoFilesCount > 0 then
-  begin
-    for CountFiles := 0 to FDecodePresentTorrent.InfoFilesCount - 1 do
-    begin
-      TreeViewFileContents.Items.AddChild(TreeNodeFiles,
-        FDecodePresentTorrent.InfoFilesNameIndex(CountFiles) +
-        '     SIZE: ' + ByteSizeToBiggerSizeFormatStr(
-        FDecodePresentTorrent.InfoFilesLengthIndex(CountFiles)));
-    end;
-  end;
-
-  //Show a how many files are there
-  TreeNodeFiles.Text := TreeNodeFiles.Text + ' (' + IntToStr(TreeNodeFiles.Count) + ')';
-
-  //Show all the trackers inside the torrent
-  for TrackerStr in FDecodePresentTorrent.TrackerList do
-  begin
-    TreeViewFileContents.Items.AddChild(TreeNodeTrackers, TrackerStr);
-  end;
-
-  //Show a how many trackers are there
-  TreeNodeTrackers.Text := TreeNodeTrackers.Text + ' (' +
-    IntToStr(TreeNodeTrackers.Count) + ')';
-
-
-  //Show all the info of torrent
-  TreeViewFileContents.Items.AddChild(TreeNodeInfo, 'Name: ' +
-    FDecodePresentTorrent.Name);
-  TreeViewFileContents.Items.AddChild(TreeNodeInfo, 'Comment: ' +
-    FDecodePresentTorrent.Comment);
-  TreeViewFileContents.Items.AddChild(TreeNodeInfo, 'Info Hash: ' +
-    FDecodePresentTorrent.InfoHash);
-  TreeViewFileContents.Items.AddChild(TreeNodeInfo, 'Created On: ' + DateTimeStr);
-  TreeViewFileContents.Items.AddChild(TreeNodeInfo, 'Created By: ' +
-    FDecodePresentTorrent.CreatedBy);
-  TreeViewFileContents.Items.AddChild(TreeNodeInfo, 'Piece Lenght: ' +
-    IntToStr(FDecodePresentTorrent.PieceLenght div 1024) + ' KiB');
-  if FDecodePresentTorrent.PrivateTorrent then
-  begin
-    TreeViewFileContents.Items.AddChild(TreeNodeInfo, 'Private: yes');
-  end
-  else
-  begin
-    TreeViewFileContents.Items.AddChild(TreeNodeInfo, 'Private: no');
-  end;
-
-  //All the files count inside the torrent must be added to FTotalFileInsideTorrent
-  Inc(FTotalFileInsideTorrent, FDecodePresentTorrent.InfoFilesCount);
-
-  //The file size of all files inside the torrent must be added to FTotalFileSizeInsideTorrent
-  Inc(FTotalFileSizeInsideTorrent, FDecodePresentTorrent.TotalFileSize);
 
 end;
 
@@ -1770,37 +1585,22 @@ end;
 
 procedure TFormTrackerModify.ViewUpdateEnd;
 begin
-
-  //Called after loading torrent file
-  //Sync the popup menu with show/hide items.
-  MenuItemTorrentFilesTreeSyncWithPopupMenu;
-
+  //Called after finish all torrent file loading.
 
   //Show what we have updated.
-  TreeViewFileContents.EndUpdate;
+  Fcontroler_treeview_torrent_data.EndUpdate;
   StringGridTorrentData.EndUpdate;
   CheckListBoxPublicPrivateTorrent.Items.EndUpdate;
-
-
-  //Show the size of all the files inside the torrent
-  //http://en.wikipedia.org/wiki/Gigabyte
-  GroupBoxTorrentContents.Caption :=
-    TORRENT_FILES_CONTENTS_FORM_CAPTION + ' (Files count: ' +
-    IntToStr(FTotalFileInsideTorrent) + ') Files sizes: ' +
-    ByteSizeToBiggerSizeFormatStr(FTotalFileSizeInsideTorrent) + '';
 
 
   GroupBoxPresentTracker.Caption :=
     GROUPBOX_PRESENT_TRACKERS_CAPTION + ' (List count: ' +
     IntToStr(FTrackerList.TrackerFromInsideTorrentFilesList.Count) + ' )';
 
-
-
   //Show all the tracker inside the torrent files.
   ShowTrackerInsideFileList;
   //Some tracker must be removed. Console and windows mode.
   UpdateViewRemoveTracker;
-
 
   //Show user how many files are loaded
   ViewUpdateFormCaption;

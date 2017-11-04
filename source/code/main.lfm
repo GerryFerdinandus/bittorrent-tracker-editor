@@ -223,33 +223,6 @@ object FormTrackerModify: TFormTrackerModify
     end
     object TabSheetTorrentsContents: TTabSheet
       Caption = 'Files/Trackers/Info'
-      ClientHeight = 561
-      ClientWidth = 1171
-      object GroupBoxTorrentContents: TGroupBox
-        Left = 0
-        Height = 561
-        Top = 0
-        Width = 1171
-        Align = alClient
-        Caption = 'Show all the files inside the torrents'
-        ClientHeight = 543
-        ClientWidth = 1167
-        TabOrder = 0
-        object TreeViewFileContents: TTreeView
-          Left = 0
-          Height = 543
-          Top = 0
-          Width = 1167
-          Align = alClient
-          AutoExpand = True
-          DefaultItemHeight = 16
-          PopupMenu = PopupMenuTorrentFilesContent
-          ReadOnly = True
-          ShowRoot = False
-          TabOrder = 0
-          Options = [tvoAutoExpand, tvoAutoItemHeight, tvoHideSelection, tvoKeepCollapsedNodes, tvoReadOnly, tvoShowButtons, tvoShowLines, tvoToolTips, tvoThemedDraw]
-        end
-      end
     end
   end
   object SelectDirectoryDialog1: TSelectDirectoryDialog
@@ -392,37 +365,8 @@ object FormTrackerModify: TFormTrackerModify
       end
     end
   end
-  object PopupMenuTorrentFilesContent: TPopupMenu
-    left = 632
-    top = 152
-    object MenuItemTorrentFilesTreeShowAll: TMenuItem
-      Tag = -1
-      Caption = 'Show Everything'
-      OnClick = MenuItemTorrentFilesTreeShowAllClick
-    end
-    object MenuItemTorrentFilesTreeHideAll: TMenuItem
-      Caption = 'Hide All'
-      OnClick = MenuItemTorrentFilesTreeHideAllClick
-    end
-    object MenuItemTorrentFilesTreeShowFiles: TMenuItem
-      AutoCheck = True
-      Caption = 'Show All Files'
-      Checked = True
-      OnClick = MenuItemTorrentFilesTreeShowOrHideItemClick
-    end
-    object MenuItemTorrentFilesTreeShowTrackers: TMenuItem
-      Tag = 1
-      AutoCheck = True
-      Caption = 'Show All Trackers'
-      Checked = True
-      OnClick = MenuItemTorrentFilesTreeShowOrHideItemClick
-    end
-    object MenuItemTorrentFilesTreeShowInfo: TMenuItem
-      Tag = 2
-      AutoCheck = True
-      Caption = 'Show All Info'
-      Checked = True
-      OnClick = MenuItemTorrentFilesTreeShowOrHideItemClick
-    end
+  object MainMenu1: TMainMenu
+    left = 360
+    top = 12
   end
 end

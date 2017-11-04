@@ -8,7 +8,8 @@ uses
   {$ENDIF}{$ENDIF}
   Interfaces, // this includes the LCL widgetset
   Forms, main, bencode, decodetorrent, controlergridtorrentdata, 
-controler_trackerlist_online, trackerlist_online;
+controler_trackerlist_online, trackerlist_online, 
+controler_treeview_torrent_data;
 
 {$R *.res}
 
