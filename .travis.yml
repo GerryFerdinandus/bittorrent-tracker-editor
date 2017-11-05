@@ -12,11 +12,8 @@ env:
     - WINEPREFIX=~/.winelaz
     - DISPLAY=:99.0
 
-# For windows build (win32) use linux wine.
 matrix:
   include:
-    - os: linux
-      env: LAZ_VER=$PROJECT_LAZARUS_VERSION  LAZ_ENV=wine WINEARCH=win32 LAZ_OPT="--os=win32 --cpu=i386"
     - os: linux
       env: LAZ_VER=$PROJECT_LAZARUS_VERSION
     - os: osx
