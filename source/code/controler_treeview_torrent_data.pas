@@ -285,7 +285,6 @@ procedure Tcontroler_treeview_torrent_data.AddOneTorrentFileDecoded(
 var
   CountFiles: integer;
   TorrentFileNameStr, TrackerStr: UTF8String;
-  DateTimeStr: string;
   TreeNodeTorrent, TreeNodeFiles, TreeNodeTrackers, TreeNodeInfo: TTreeNode;
 
 begin
@@ -342,7 +341,8 @@ begin
     DecodeTorrent.Comment);
   FTreeViewFileContents.Items.AddChild(TreeNodeInfo, 'Info Hash: ' +
     DecodeTorrent.InfoHash);
-  FTreeViewFileContents.Items.AddChild(TreeNodeInfo, 'Created On: ' + DateTimeStr);
+  FTreeViewFileContents.Items.AddChild(TreeNodeInfo, 'Created On: ' +
+    DateTimeToStr(DecodeTorrent.CreatedDate));
   FTreeViewFileContents.Items.AddChild(TreeNodeInfo, 'Created By: ' +
     DecodeTorrent.CreatedBy);
   FTreeViewFileContents.Items.AddChild(TreeNodeInfo, 'Piece Lenght: ' +
