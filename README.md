@@ -11,7 +11,7 @@ This software works on Windows XP SP3, Windows 7+, macOS and Linux.
 ## Code Status: ##
 Continuous integration|Status| Build operating system
 ------------|---------|---------
-Travis-CI   |[![Build Status](https://travis-ci.org/GerryFerdinandus/bittorrent-tracker-editor.svg?branch=master)](https://travis-ci.org/GerryFerdinandus/bittorrent-tracker-editor)        |Linux, macOS and Windows (via Wine)
+Travis-CI   |[![Build Status](https://travis-ci.org/GerryFerdinandus/bittorrent-tracker-editor.svg?branch=master)](https://travis-ci.org/GerryFerdinandus/bittorrent-tracker-editor)        |Linux and macOS
 AppVeyor      |[![Build status](https://ci.appveyor.com/api/projects/status/yq8u0hptl006my57/branch/master?svg=true)](https://ci.appveyor.com/project/GerryFerdinandus/bittorrent-tracker-editor/branch/master) | Windows Server
 
 ---
