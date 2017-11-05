@@ -34,7 +34,6 @@ type
     GroupBoxNewTracker: TGroupBox;
     GroupBoxPresentTracker: TGroupBox;
     MainMenu: TMainMenu;
-    MainMenu1: TMainMenu;
     MemoNewTrackers: TMemo;
     MenuFile: TMenuItem;
     MenuFileTorrentFolder: TMenuItem;
@@ -320,9 +319,13 @@ var
   TrackerSendCount: integer;
   PopupStr: string;
 begin
-
-  SendStatus := FControlerTrackerListOnline.SubmitTrackers(
-    FTrackerList.TrackerFromInsideTorrentFilesList, TrackerSendCount);
+  try
+    screen.Cursor := crHourGlass;
+    SendStatus := FControlerTrackerListOnline.SubmitTrackers(
+      FTrackerList.TrackerFromInsideTorrentFilesList, TrackerSendCount);
+  finally
+    screen.Cursor := crDefault;
+  end;
 
   if SendStatus then
   begin
@@ -397,7 +400,10 @@ begin
   end
   else
   begin
-    Application.MessageBox(PChar(@ErrorText[1]), PChar(@FormText[1]), MB_ICONERROR);
+    if FormText = '' then
+      Application.MessageBox(PChar(@ErrorText[1]), '', MB_ICONERROR)
+    else
+      Application.MessageBox(PChar(@ErrorText[1]), PChar(@FormText[1]), MB_ICONERROR);
   end;
 end;
 

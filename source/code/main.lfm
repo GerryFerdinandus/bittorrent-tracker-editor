@@ -365,8 +365,4 @@ object FormTrackerModify: TFormTrackerModify
       end
     end
   end
-  object MainMenu1: TMainMenu
-    left = 360
-    top = 12
-  end
 end
