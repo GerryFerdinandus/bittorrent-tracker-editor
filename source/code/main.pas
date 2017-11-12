@@ -39,6 +39,8 @@ type
     MenuFileTorrentFolder: TMenuItem;
     MenuFileOpenTrackerList: TMenuItem;
     MenuHelpReportingIssue: TMenuItem;
+    MenuHelpSeperator1: TMenuItem;
+    MenuHelpVisitNewTrackon: TMenuItem;
     MenuItemOnlineCheckSubmitNewTrackon: TMenuItem;
     MenuItemOnlineCheckAppendStableTrackers: TMenuItem;
     MenuTrackersDeleteDeadTrackers: TMenuItem;
@@ -88,6 +90,7 @@ type
     //At start of the program the form will be show/hide
     procedure FormShow(Sender: TObject);
     procedure MenuHelpReportingIssueClick(Sender: TObject);
+    procedure MenuHelpVisitNewTrackonClick(Sender: TObject);
     procedure MenuHelpVisitWebsiteClick(Sender: TObject);
     procedure MenuItemOnlineCheckSubmitNewTrackonClick(Sender: TObject);
 
@@ -1181,6 +1184,13 @@ end;
 procedure TFormTrackerModify.MenuHelpReportingIssueClick(Sender: TObject);
 begin
   OpenURL('https://github.com/GerryFerdinandus/bittorrent-tracker-editor/issues');
+end;
+
+procedure TFormTrackerModify.MenuHelpVisitNewTrackonClick(Sender: TObject);
+begin
+  //newTrackon trackers is being used in this program.
+  //User should have direct link to the website for the status of the trackers.
+  OpenURL('https://newtrackon.com/');
 end;
 
 

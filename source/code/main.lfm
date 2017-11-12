@@ -356,12 +356,19 @@ object FormTrackerModify: TFormTrackerModify
     object MenuHelp: TMenuItem
       Caption = '&Help'
       object MenuHelpVisitWebsite: TMenuItem
-        Caption = '&Visit website'
+        Caption = '&Visit website tracker editor'
         OnClick = MenuHelpVisitWebsiteClick
       end
       object MenuHelpReportingIssue: TMenuItem
         Caption = '&Reporting Issue'
         OnClick = MenuHelpReportingIssueClick
+      end
+      object MenuHelpSeperator1: TMenuItem
+        Caption = '-'
+      end
+      object MenuHelpVisitNewTrackon: TMenuItem
+        Caption = '&Visit website newTrackon'
+        OnClick = MenuHelpVisitNewTrackonClick
       end
     end
   end
