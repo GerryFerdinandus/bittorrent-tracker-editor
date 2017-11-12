@@ -1,7 +1,7 @@
 object FormTrackerModify: TFormTrackerModify
-  Left = 1348
+  Left = 1398
   Height = 607
-  Top = 462
+  Top = 448
   Width = 1179
   AllowDropFiles = True
   Caption = 'Bittorrent Tracker Editor'
@@ -16,7 +16,7 @@ object FormTrackerModify: TFormTrackerModify
   OnDropFiles = FormDropFiles
   OnShow = FormShow
   Position = poScreenCenter
-  LCLVersion = '1.6.2.0'
+  LCLVersion = '1.8.0.5'
   object PageControl: TPageControl
     Left = 0
     Height = 587
@@ -302,39 +302,39 @@ object FormTrackerModify: TFormTrackerModify
       object MenuUpdateTorrentAddAfter: TMenuItem
         Caption = 'Insert new trackers list &BEFORE, the original trackers list inside the torrent file'
         object MenuUpdateTorrentAddBeforeRemoveOriginal: TMenuItem
-          Caption = 'And remove possible duplicated trackers from the ORIGINAL trackers list.'
+          Caption = 'And remove possible duplicated trackers from the ORIGINAL trackers list.(-U0)'
           OnClick = MenuUpdateTorrentAddBeforeRemoveOriginalClick
         end
         object MenuUpdateTorrentAddBeforeRemoveNew: TMenuItem
-          Caption = 'And remove possible duplicated trackers from the NEW trackers list.'
+          Caption = 'And remove possible duplicated trackers from the NEW trackers list.(-U1)'
           OnClick = MenuUpdateTorrentAddBeforeRemoveNewClick
         end
         object MenuUpdateTorrentAddBeforeKeepOriginalInstactAndRemoveNothing: TMenuItem
-          Caption = 'Keep original tracker list unchanged and remove nothing.'
+          Caption = 'Keep original tracker list unchanged and remove nothing.(-U5)'
           OnClick = MenuUpdateTorrentAddBeforeKeepOriginalInstactAndRemoveNothingClick
         end
       end
       object MenuUpdateTorrentAddBefore: TMenuItem
         Caption = 'Append new trackers list &AFTER, the original trackers list inside the torrent file.'
         object MenuUpdateTorrentAddAfterRemoveOriginal: TMenuItem
-          Caption = 'And remove possible duplicated trackers from the ORIGINAL trackers list.'
+          Caption = 'And remove possible duplicated trackers from the ORIGINAL trackers list.(-U2)'
           OnClick = MenuUpdateTorrentAddAfterRemoveOriginalClick
         end
         object MenuUpdateTorrentAddAfterRemoveNew: TMenuItem
-          Caption = 'And remove possible duplicated trackers from the NEW trackers list.'
+          Caption = 'And remove possible duplicated trackers from the NEW trackers list.(-U3)'
           OnClick = MenuUpdateTorrentAddAfterRemoveNewClick
         end
         object MenuUpdateTorrentAddAfterKeepOriginalInstactAndRemoveNothing: TMenuItem
-          Caption = 'Keep original tracker list unchanged and remove nothing.'
+          Caption = 'Keep original tracker list unchanged and remove nothing.(-U6)'
           OnClick = MenuUpdateTorrentAddAfterKeepOriginalInstactAndRemoveNothingClick
         end
       end
       object MenuUpdateTorrentSort: TMenuItem
-        Caption = '&Sort the trackers list by name.'
+        Caption = '&Sort the trackers list by name.(-U4)'
         OnClick = MenuUpdateTorrentSortClick
       end
       object MenuUpdateRandomize: TMenuItem
-        Caption = '&Randomize the trackers list.'
+        Caption = '&Randomize the trackers list.(-U8)'
         OnClick = MenuUpdateRandomizeClick
       end
     end
