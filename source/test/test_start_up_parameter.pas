@@ -363,6 +363,7 @@ var
   TrackerURL: string;
 const
   ANNOUNCE = '/announce';
+  ANNOUNCE_PHP = '/announce.php';
 begin
   //Test if all the tracker update mode is working
   for TrackerListOrder in TTrackerListOrder do
@@ -370,21 +371,26 @@ begin
     TrackerURL := 'udp://test.com';
     Add_One_URL(TrackerListOrder, TrackerURL, False);
     Add_One_URL(TrackerListOrder, TrackerURL + ANNOUNCE, True);
+    Add_One_URL(TrackerListOrder, TrackerURL + ANNOUNCE_PHP, True);
 
     TrackerURL := 'http://test.com';
     Add_One_URL(TrackerListOrder, TrackerURL, False);
     Add_One_URL(TrackerListOrder, TrackerURL + ANNOUNCE, True);
+    Add_One_URL(TrackerListOrder, TrackerURL + ANNOUNCE_PHP, True);
 
     TrackerURL := 'https://test.com';
     Add_One_URL(TrackerListOrder, TrackerURL, False);
     Add_One_URL(TrackerListOrder, TrackerURL + ANNOUNCE, True);
+    Add_One_URL(TrackerListOrder, TrackerURL + ANNOUNCE_PHP, True);
 
-    //webtorrent does NOT have announce
+    //webtorrent may have NOT announce
     TrackerURL := 'ws://test.com';
     Add_One_URL(TrackerListOrder, TrackerURL, True);
+    Add_One_URL(TrackerListOrder, TrackerURL + ANNOUNCE, True);
 
     TrackerURL := 'wss://test.com';
     Add_One_URL(TrackerListOrder, TrackerURL, True);
+    Add_One_URL(TrackerListOrder, TrackerURL + ANNOUNCE, True);
   end;
 end;
 

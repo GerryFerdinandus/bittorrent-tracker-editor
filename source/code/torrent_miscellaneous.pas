@@ -709,9 +709,11 @@ end;
 function TrackerURLWithAnnounce(const TrackerURL: UTF8String): boolean;
 const
   ANNOUNCE_STRING: string = '/announce';
+  ANNOUNCE_PHP_STRING: string = '/announce.php';
 begin
   //TrackerURL must end with ANNOUNCE_STRING
-  Result := RightStr(TrackerURL, length(ANNOUNCE_STRING)) = ANNOUNCE_STRING;
+  Result := (RightStr(TrackerURL, length(ANNOUNCE_STRING)) = ANNOUNCE_STRING) or
+    (RightStr(TrackerURL, length(ANNOUNCE_PHP_STRING)) = ANNOUNCE_PHP_STRING)
 end;
 
 end.

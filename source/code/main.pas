@@ -1004,13 +1004,13 @@ begin
         Result := TrackerURLWithAnnounce(TrackerStr);
         if not Result then
         begin
-          ErrorStr := 'ERROR: Tracker URL must end with /announce';
+          ErrorStr := 'ERROR: Tracker URL must end with /announce or /announce.php';
         end;
       end;
     end
     else
     begin
-      ErrorStr := 'ERROR: Tracker URL must begin with http:// or udp://';
+      ErrorStr := 'ERROR: Tracker URL must begin with http://, http:// or udp://';
     end;
 
     if Result then
