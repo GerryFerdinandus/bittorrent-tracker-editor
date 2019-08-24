@@ -16,7 +16,7 @@ object FormTrackerModify: TFormTrackerModify
   OnDropFiles = FormDropFiles
   OnShow = FormShow
   Position = poScreenCenter
-  LCLVersion = '1.8.0.5'
+  LCLVersion = '2.0.4.0'
   object PageControl: TPageControl
     Left = 0
     Height = 587
@@ -270,17 +270,17 @@ object FormTrackerModify: TFormTrackerModify
         Caption = '-'
       end
       object MenuTrackersDeleteUnstableTrackers: TMenuItem
-        Caption = 'Delete UNSTABLE trackers'
+        Caption = 'Delete UNSTABLE trackers (Data from newTrackon)'
         OnClick = MenuTrackersDeleteTrackersWithStatusClick
       end
       object MenuTrackersDeleteDeadTrackers: TMenuItem
         Tag = 1
-        Caption = 'Delete DEAD trackers'
+        Caption = 'Delete DEAD trackers (Data from newTrackon)'
         OnClick = MenuTrackersDeleteTrackersWithStatusClick
       end
       object MenuTrackersDeleteUnknownTrackers: TMenuItem
         Tag = 2
-        Caption = 'Delete UNKNOWN trackers'
+        Caption = 'Delete UNKNOWN trackers  (Data from newTrackon)'
         OnClick = MenuTrackersDeleteTrackersWithStatusClick
       end
       object MenuTrackersSeperator2: TMenuItem
@@ -353,6 +353,41 @@ object FormTrackerModify: TFormTrackerModify
         OnClick = MenuItemOnlineCheckSubmitNewTrackonClick
       end
     end
+    object MenuItem1: TMenuItem
+      Caption = 'ngosang/trackerslist'
+      object MenuItemNgosangAppendBest: TMenuItem
+        Caption = 'Append best'
+        OnClick = MenuItemNgosangAppendBestClick
+      end
+      object MenuItemNgosangAppendAll: TMenuItem
+        Caption = 'Append all'
+        OnClick = MenuItemNgosangAppendAllClick
+      end
+      object MenuItemNgosangAppendAllUdp: TMenuItem
+        Caption = 'Append all udp'
+        OnClick = MenuItemNgosangAppendAllUdpClick
+      end
+      object MenuItemNgosangAppendAllHttp: TMenuItem
+        Caption = 'Append all http'
+        OnClick = MenuItemNgosangAppendAllHttpClick
+      end
+      object MenuItemNgosangAppendAllHttps: TMenuItem
+        Caption = 'Append all https'
+        OnClick = MenuItemNgosangAppendAllHttpsClick
+      end
+      object MenuItemNgosangAppendAllWs: TMenuItem
+        Caption = 'Append all ws'
+        OnClick = MenuItemNgosangAppendAllWsClick
+      end
+      object MenuItemNgosangAppendAllBestIp: TMenuItem
+        Caption = 'Append best ip'
+        OnClick = MenuItemNgosangAppendAllBestIpClick
+      end
+      object MenuItemNgosangAppendAllIp: TMenuItem
+        Caption = 'Append all ip'
+        OnClick = MenuItemNgosangAppendAllIpClick
+      end
+    end
     object MenuHelp: TMenuItem
       Caption = '&Help'
       object MenuHelpVisitWebsite: TMenuItem
@@ -367,8 +402,12 @@ object FormTrackerModify: TFormTrackerModify
         Caption = '-'
       end
       object MenuHelpVisitNewTrackon: TMenuItem
-        Caption = '&Visit website newTrackon'
+        Caption = 'Visit website new&Trackon'
         OnClick = MenuHelpVisitNewTrackonClick
+      end
+      object MenuHelpVisitNgosang: TMenuItem
+        Caption = 'Visit website &ngosang (github)'
+        OnClick = MenuHelpVisitNgosangClick
       end
     end
   end

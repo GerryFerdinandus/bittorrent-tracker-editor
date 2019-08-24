@@ -23,8 +23,6 @@ implementation
 
 procedure TTestNgosangTrackersList.Test_DownloadAPI;
 begin
-  Check(FngosangTrackerList.DownloadTrackers, 'Download the ngosang API');
-
   Check(FngosangTrackerList.TrackerList_Blacklist.Count > 0,
     'TrackerList_Blacklist should never be empty');
 
@@ -46,6 +44,10 @@ begin
   Check(
     FngosangTrackerList.TrackerList_All_UDP.Count > 0,
     'TrackerList_All_UDP should never be empty');
+
+  Check(
+    FngosangTrackerList.TrackerList_All_WS.Count > 0,
+    'TrackerList_All_WS should never be empty');
 
   Check(
     FngosangTrackerList.TrackerList_Best.Count > 0,

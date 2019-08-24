@@ -24,6 +24,7 @@ type
     ntl_URL_All_HTTPS,//< Download from internet
     ntl_URL_All_IP,//< Download from internet
     ntl_URL_All_UDP,//< Download from internet
+    ntl_URL_All_WS,//< Download from internet
     ntl_URL_Best,//< Download from internet
     ntl_URL_Best_IP//< Download from internet
     );
@@ -33,29 +34,29 @@ type
   TngosangTrackerList = class
   private
     FTRackerList: array [Tngosang_List] of TStringList;
-
-    procedure DownloadTracker(ngosang_List: Tngosang_List);
-
+    function DownloadTracker(ngosang_List: Tngosang_List): TStringList;
   public
 
-    property TrackerList_Blacklist: TStringList read FTRackerList[ntl_URL_Blacklist];
+    property TrackerList_Blacklist: TStringList index ntl_URL_Blacklist
+      read DownloadTracker;
 
-    property TrackerList_All: TStringList read FTrackerList[ntl_URL_All];
+    property TrackerList_All: TStringList index ntl_URL_All read DownloadTracker;
 
-    property TrackerList_All_HTTP: TStringList read FTrackerList[ntl_URL_All_HTTP];
+    property TrackerList_All_HTTP: TStringList index ntl_URL_All_HTTP
+      read DownloadTracker;
 
-    property TrackerList_All_HTTPS: TStringList read FTrackerList[ntl_URL_All_HTTPS];
+    property TrackerList_All_HTTPS: TStringList index ntl_URL_All_HTTPS
+      read DownloadTracker;
 
-    property TrackerList_All_IP: TStringList read FTrackerList[ntl_URL_All_IP];
+    property TrackerList_All_IP: TStringList index ntl_URL_All_IP read DownloadTracker;
 
-    property TrackerList_All_UDP: TStringList read FTrackerList[ntl_URL_All_UDP];
+    property TrackerList_All_UDP: TStringList index ntl_URL_All_UDP read DownloadTracker;
 
-    property TrackerList_Best: TStringList read FTrackerList[ntl_URL_Best];
+    property TrackerList_All_WS: TStringList index ntl_URL_All_WS read DownloadTracker;
 
-    property TrackerList_Best_IP: TStringList read FTrackerList[ntl_URL_Best_IP];
+    property TrackerList_Best: TStringList index ntl_URL_Best read DownloadTracker;
 
-    //Download all the trackers via API
-    function DownloadTrackers: boolean;
+    property TrackerList_Best_IP: TStringList index ntl_URL_Best_IP read DownloadTracker;
 
     //create/destroy class object
     constructor Create;
@@ -75,38 +76,27 @@ const
     'https://raw.githubusercontent.com/ngosang/trackerslist/master/trackers_all_https.txt',
     'https://raw.githubusercontent.com/ngosang/trackerslist/master/trackers_all_ip.txt',
     'https://raw.githubusercontent.com/ngosang/trackerslist/master/trackers_all_udp.txt',
+    'https://raw.githubusercontent.com/ngosang/trackerslist/master/trackers_all_ws.txt',
     'https://raw.githubusercontent.com/ngosang/trackerslist/master/trackers_best.txt',
     'https://raw.githubusercontent.com/ngosang/trackerslist/master/trackers_best_ip.txt'
     );
 
 { TngosangTrackerList }
-procedure TngosangTrackerList.DownloadTracker(ngosang_List: Tngosang_List);
-begin
-  //download via URL and put the data in the TrackerList
-  FTRackerList[ngosang_List].DelimitedText :=
-    TFPCustomHTTPClient.SimpleGet(URL[ngosang_List]);
-
-  //Clean up the tracker list
-  SanatizeTrackerList(FTRackerList[ngosang_List]);
-end;
-
-
-function TngosangTrackerList.DownloadTrackers: boolean;
-var
-  i: Tngosang_List;
+function TngosangTrackerList.DownloadTracker(ngosang_List: Tngosang_List): TStringList;
 begin
   try
-    //download all the list one by one
-    for i in Tngosang_List do
-    begin
-      DownloadTracker(i);
-    end;
+    //download via URL and put the data in the TrackerList
+    FTRackerList[ngosang_List].DelimitedText :=
+      TFPCustomHTTPClient.SimpleGet(URL[ngosang_List]);
 
-    Result := True;
+    //Clean up the tracker list
+    SanatizeTrackerList(FTRackerList[ngosang_List]);
+
   except
     //No OpenSSL or web server is down
-    Result := False;
   end;
+
+  Result := FTrackerList[ngosang_List];
 end;
 
 constructor TngosangTrackerList.Create;
@@ -135,4 +125,3 @@ begin
 end;
 
 end.
-
