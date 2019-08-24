@@ -51,9 +51,10 @@ type
     FCreatedBy,             //4
     FComment,               //5
     FPrivateTorrent,        //6
-    FPieceLength,           //7
-    FTotaSize,              //8
-    FIndexOrder             //9
+    FInfoSource,             //7
+    FPieceLength,           //8
+    FTotaSize,              //9
+    FIndexOrder             //10
     : TGridColumn;
 
     FRowIsMovedNeedUpdate: boolean;
@@ -71,9 +72,10 @@ type
     CreatedBy,             //4
     Comment,               //5
     PrivateTorrent,        //6
-    PieceLength,           //7
-    TotaSize,              //8
-    IndexOrder             //9
+    InfoSource,            //7
+    PieceLength,           //8
+    TotaSize,              //9
+    IndexOrder             //10
     : UTF8String;
 
     procedure ClearAllImageIndex;
@@ -88,7 +90,7 @@ implementation
 
 { TControlerGridTorrentData }
 const
-  COLUMN_COUNT = 10;
+  COLUMN_COUNT = 11;
 
 procedure TControlerGridTorrentData.StringGridTorrentDataColRowMoved(Sender: TObject;
   IsColumn: boolean; sIndex, tIndex: integer);
@@ -156,6 +158,7 @@ begin
   WriteCell(FCreatedBy, CreatedBy);
   WriteCell(FComment, Comment);
   WriteCell(FPrivateTorrent, PrivateTorrent);
+  WriteCell(FInfoSource, InfoSource);
   WriteCell(FPieceLength, PieceLength);
   WriteCell(FTotaSize, TotaSize);
   WriteCell(FIndexOrder, IndexOrder);
@@ -203,9 +206,10 @@ begin
   AddColumn(FCreatedBy, 4);
   AddColumn(FComment, 5);
   AddColumn(FPrivateTorrent, 6);
-  AddColumn(FPieceLength, 7);
-  AddColumn(FTotaSize, 8);
-  AddColumn(FIndexOrder, 9);
+  AddColumn(FInfoSource, 7);
+  AddColumn(FPieceLength, 8);
+  AddColumn(FTotaSize, 9);
+  AddColumn(FIndexOrder, 10);
 
   //Fillin the tag value
   UpdateColumnTag;

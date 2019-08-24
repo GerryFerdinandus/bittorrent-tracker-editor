@@ -68,6 +68,7 @@ type
     FCreatedBy: utf8string;
     FCreatedDate: TDateTime;
     FComment: utf8string;
+    FInfoSource: utf8string;
     FName: utf8string;
     FPieceLenght: int64;
     FPrivateTorrent: boolean;
@@ -83,6 +84,7 @@ type
     function GetName: utf8string;
     function GetPieceLenght: int64;
     function GetPrivateTorrent: boolean;
+    function GetInfoSource: utf8string;
     procedure SetComment(const AValue: utf8string);
   public
     //All the trackers inside this torrent file
@@ -116,6 +118,11 @@ type
     property PrivateTorrent: boolean read FPrivateTorrent;
     procedure RemovePrivateTorrentFlag;
     procedure AddPrivateTorrentFlag;
+
+    //info.source
+    property InfoSource: utf8string read FInfoSource;
+    procedure InfoSourceRemove;
+    procedure InfoSourceAdd(const Value: utf8string);
 
     //info.files
     function InfoFilesCount: integer;
@@ -405,7 +412,7 @@ begin
     FName := GetName;
     FPieceLenght := GetPieceLenght;
     FPrivateTorrent := GetPrivateTorrent;
-
+    FInfoSource := GetInfoSource;
   except
   end;
 end;
@@ -441,9 +448,22 @@ begin
   end;
 end;
 
+function TDecodeTorrent.GetInfoSource: utf8string;
+var
+  TempBEncoded: TBEncoded;
+begin
+  Result := '';
+  try
+    {find 'source' }
+    TempBEncoded := FBEncoded_Info.ListData.FindElement('source');
+    if assigned(TempBEncoded) then
+      Result := TempBEncoded.StringData;
+  except
+  end;
+end;
+
 procedure TDecodeTorrent.SetComment(const AValue: utf8string);
 var
-  //  Encoded: TBEncoded;
   Data: TBEncodedData;
 begin
   if FComment = AValue then
@@ -477,7 +497,6 @@ begin
 
 end;
 
-
 {
 try
     Encoded := TBEncoded.Create;
@@ -499,7 +518,7 @@ begin
   except
   end;
   //read databack again
-  GetPrivateTorrent;
+  FPrivateTorrent := GetPrivateTorrent;
 end;
 
 procedure TDecodeTorrent.AddPrivateTorrentFlag;
@@ -519,7 +538,36 @@ begin//remove the old one and create a new one
   except
   end;
   //read databack again
-  GetPrivateTorrent;
+  FPrivateTorrent := GetPrivateTorrent;
+end;
+
+procedure TDecodeTorrent.InfoSourceRemove;
+begin
+  try
+    FBEncoded_Info.ListData.RemoveElement('source');
+  except
+  end;
+  //read databack again
+  FInfoSource := GetInfoSource;
+end;
+
+procedure TDecodeTorrent.InfoSourceAdd(const Value: utf8string);
+var
+  Encoded: TBEncoded;
+  Data: TBEncodedData;
+begin//remove the old one and create a new one
+  InfoSourceRemove;
+  try
+    Encoded := TBEncoded.Create;
+    Encoded.Format := befString;
+    Encoded.StringData := Value;
+    Data := TBEncodedData.Create(Encoded);
+    Data.Header := 'source';
+    FBEncoded_Info.ListData.Add(Data);
+    FBEncoded_Info.ListData.Sort(@sort_);//text must be in alfabetical order.
+  except
+  end;
+  FInfoSource := GetInfoSource;
 end;
 
 procedure TDecodeTorrent.RemoveAnnounce;

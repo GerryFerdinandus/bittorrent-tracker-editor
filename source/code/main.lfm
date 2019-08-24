@@ -1,7 +1,7 @@
 object FormTrackerModify: TFormTrackerModify
-  Left = 1398
+  Left = 429
   Height = 607
-  Top = 448
+  Top = 183
   Width = 1179
   AllowDropFiles = True
   Caption = 'Bittorrent Tracker Editor'
@@ -144,7 +144,7 @@ object FormTrackerModify: TFormTrackerModify
         Top = 0
         Width = 1171
         Align = alClient
-        ColCount = 10
+        ColCount = 11
         ColumnClickSorts = True
         Columns = <        
           item
@@ -183,6 +183,10 @@ object FormTrackerModify: TFormTrackerModify
             Width = 50
           end        
           item
+            Title.Caption = 'Source'
+            Width = 64
+          end        
+          item
             Alignment = taRightJustify
             ReadOnly = True
             Title.Alignment = taRightJustify
@@ -215,6 +219,7 @@ object FormTrackerModify: TFormTrackerModify
           145
           160
           50
+          64
           100
           100
           0
@@ -223,6 +228,68 @@ object FormTrackerModify: TFormTrackerModify
     end
     object TabSheetTorrentsContents: TTabSheet
       Caption = 'Files/Trackers/Info'
+    end
+    object TabSheetPrivateTrackers: TTabSheet
+      Caption = 'Private Trackers'
+      ClientHeight = 561
+      ClientWidth = 1171
+      object GroupBoxItemsForPrivateTrackers: TGroupBox
+        Left = 0
+        Height = 176
+        Hint = 'Private trackers URL may not end with /announce'
+        Top = 8
+        Width = 288
+        Caption = 'Items for private trackers'
+        ClientHeight = 158
+        ClientWidth = 284
+        TabOrder = 0
+        object CheckBoxSkipAnnounceCheck: TCheckBox
+          Left = 16
+          Height = 19
+          Top = 0
+          Width = 221
+          Caption = 'Skip Announce Check in the URL (-SAC)'
+          OnChange = CheckBoxSkipAnnounceCheckChange
+          ParentShowHint = False
+          ShowHint = True
+          TabOrder = 0
+        end
+        object GroupBoxInfoSource: TGroupBox
+          Left = 16
+          Height = 120
+          Top = 32
+          Width = 264
+          Caption = 'Warning: This will change the torrent info HASH'
+          ClientHeight = 102
+          ClientWidth = 260
+          TabOrder = 1
+          object CheckBoxRemoveAllSourceTag: TCheckBox
+            Left = 8
+            Height = 19
+            Top = 8
+            Width = 132
+            Caption = 'Remove all source tag'
+            OnChange = CheckBoxRemoveAllSourceTagChange
+            TabOrder = 0
+          end
+          object LabeledEditInfoSource: TLabeledEdit
+            Left = 8
+            Height = 21
+            Hint = 'Keep empty if you do not want to add or change anything.'
+            Top = 56
+            Width = 221
+            EditLabel.Height = 13
+            EditLabel.Width = 221
+            EditLabel.Caption = 'Add/Change source tag value: (-SOURCE)'
+            EditLabel.ParentColor = False
+            ParentShowHint = False
+            ShowHint = True
+            TabOrder = 1
+            TabStop = False
+            OnEditingDone = LabeledEditInfoSourceEditingDone
+          end
+        end
+      end
     end
   end
   object SelectDirectoryDialog1: TSelectDirectoryDialog

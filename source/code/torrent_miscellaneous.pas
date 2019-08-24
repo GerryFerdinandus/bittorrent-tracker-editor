@@ -84,6 +84,16 @@ type
     //Log string text output
     LogStringList: TStringList;
 
+    // No announce check needed for some private trackers
+    SkipAnnounceCheck: boolean;
+
+    // Private tracker may need extra 'info:source' variable
+    SourceTag: UTF8String;
+
+    // This is needed if someone want to convert private torrent to public torrent
+    // Source tag is not used in public tracker.
+    RemoveAllSourceTag: Boolean;
+
   end;
 
 
@@ -600,12 +610,22 @@ end;
 
 function ConsoleModeDecodeParameter(out FileNameOrDirStr: UTF8String;
   var TrackerList: TTrackerList): boolean;
+var
+  i: integer;
 begin
   {
-   Console mode can be started with 2 parameter
-      Update methode: -U0 , -U1, -U2, -U3, -U4
+   Console mode can be started with example 2 parameter
+      Update methode: -U0 , -U1, -U2, -U3, -U4 etc.
       String with a link to folder or to torrent file. 'C:\dir'
 
+   Must keep backward compatible with the first and previeus release.
+   First or seccond parameter must be related to -Ux
+
+   other parameter after are optional -SOC and -SOURCE
+
+   example:
+   "path_to_folder" -U3 -SAC -SOURCE "ABC"
+   -U3 "path_to_folder" -SAC -SOURCE "ABC"
   }
 
   case Paramcount of
@@ -623,7 +643,7 @@ begin
       TrackerList.TrackerListOrderForUpdatedTorrent := tloSort;
       Result := True;
     end;
-    2:
+    else
     begin
       //Two parameters. The user can select the update methode.
       //Check for '-U' contruction as first parameter
@@ -631,23 +651,54 @@ begin
       begin
         //Update parameter is the first parameter
         Result := DecodeConsoleUpdateParameter(ParamStr(1), TrackerList);
+        // second parameter is the file/folder
         FileNameOrDirStr := UTF8Trim(ParamStr(2));
-      end
-      else
+        Exit;
+      end;
+
+      //Check for '-U' contruction as second parameter
+      if (Pos('-U', ParamStr(2)) = 1) then
       begin
-        //Update parameter is the second parameter
+        // Update parameter is the second parameter
         Result := DecodeConsoleUpdateParameter(ParamStr(2), TrackerList);
+        // first parameter MUST be the file/folder
         FileNameOrDirStr := UTF8Trim(ParamStr(1));
+        Exit;
+      end;
+
+      //Check for parameter -SAC and -SOURCE
+      for i := 2 to ParamCount do
+      begin
+        if ParamStr(i) = '-SAC' then
+        begin
+          TrackerList.SkipAnnounceCheck := True;
+        end;
+
+        if ParamStr(i) = '-SOURCE' then
+        begin
+          if ParamCount < i + 1 then
+          begin
+            TrackerList.LogStringList.Add(
+              'ERROR: There is no value after -SOURCE');
+            Result := False;
+            exit;
+          end;
+
+          // parameter after -SOURCE must be the value.
+          TrackerList.SourceTag := ParamStr(i + 1);
+          // Empty '' -> remove all source tag
+          TrackerList.RemoveAllSourceTag := TrackerList.SourceTag = '';
+        end;
       end;
 
     end;
-    else
-    begin
-      TrackerList.LogStringList.Add(
-        'ERROR: There can only be maximum of 2 parameter. Not: ' + IntToStr(ParamCount));
-      Result := False;
-      exit;
-    end;
+      //else
+      //begin
+      //  TrackerList.LogStringList.Add(
+      //    'ERROR: There can only be maximum of 2 parameter. Not: ' + IntToStr(ParamCount));
+      //  Result := False;
+      //  exit;
+      //end;
 
   end;
 end;
@@ -713,7 +764,8 @@ const
 begin
   //TrackerURL must end with ANNOUNCE_STRING
   Result := (RightStr(TrackerURL, length(ANNOUNCE_STRING)) = ANNOUNCE_STRING) or
-    (RightStr(TrackerURL, length(ANNOUNCE_PHP_STRING)) = ANNOUNCE_PHP_STRING)
+    (RightStr(TrackerURL, length(ANNOUNCE_PHP_STRING)) = ANNOUNCE_PHP_STRING);
+
 end;
 
 end.

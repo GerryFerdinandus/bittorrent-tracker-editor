@@ -355,6 +355,12 @@ begin
   begin
     FTreeViewFileContents.Items.AddChild(TreeNodeInfo, 'Private: no');
   end;
+  // some private torrent have info:source
+  if DecodeTorrent.InfoSource <> '' then
+  begin
+    FTreeViewFileContents.Items.AddChild(TreeNodeInfo, 'Source: ' +
+      DecodeTorrent.InfoSource);
+  end;
 
   //All the files count inside the torrent must be added to FTotalFileInsideTorrent
   Inc(FTotalFileInsideTorrent, DecodeTorrent.InfoFilesCount);
