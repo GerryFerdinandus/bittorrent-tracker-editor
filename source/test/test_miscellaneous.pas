@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT
 unit test_miscellaneous;
 
 {$mode objfpc}{$H+}

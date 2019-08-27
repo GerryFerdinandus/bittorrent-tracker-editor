@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: CC0-1.0
 {
 public domain code?
 Source code from:

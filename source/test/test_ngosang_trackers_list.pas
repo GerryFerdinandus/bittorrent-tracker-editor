@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT
 unit test_ngosang_trackers_list;
 
 {$mode objfpc}{$H+}

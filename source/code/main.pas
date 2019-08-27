@@ -1,7 +1,4 @@
-{ MIT licence
-  Copyright (c) Gerry Ferdinandus
-}
-
+// SPDX-License-Identifier: MIT
 unit main;
 
 {
