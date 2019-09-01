@@ -401,7 +401,7 @@ object FormTrackerModify: TFormTrackerModify
         OnClick = MenuUpdateTorrentSortClick
       end
       object MenuUpdateRandomize: TMenuItem
-        Caption = '&Randomize the trackers list.(-U8)'
+        Caption = '&Randomize the trackers list.(-U7)'
         OnClick = MenuUpdateRandomizeClick
       end
     end
