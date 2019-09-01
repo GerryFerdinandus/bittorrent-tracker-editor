@@ -6,7 +6,11 @@
 
 
 
-### What version of the product are you using? On what operating system? ###
+### What version of the product are you using. (Please use the latest version of bittorrent-tracker-editor and your torrent client) ###
+
+
+
+###  On what operating system? ###
 
 
 
