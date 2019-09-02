@@ -317,6 +317,7 @@ end;
 procedure TFormTrackerModify.CheckBoxSkipAnnounceCheckChange(Sender: TObject);
 begin
   FTrackerList.SkipAnnounceCheck := CheckBoxSkipAnnounceCheck.Checked;
+  ViewUpdateFormCaption;
 end;
 
 procedure TFormTrackerModify.CheckBoxRemoveAllSourceTagChange(Sender: TObject);
@@ -1761,10 +1762,16 @@ begin
   DecodeTime(FProcessTimeTotal, Hour, Minute, Second, MilliSecond);
   ProcessTimeStr := IntToStr((Second * 1000) + MilliSecond) + ' mSec';
 }
-
   //Show user how many files are loaded
   Caption := FORM_CAPTION + '( Torrent files: ' +
     IntToStr(FTrackerList.TorrentFileNameList.Count) + ' )';
+
+  if CheckBoxSkipAnnounceCheck.Checked then
+  begin
+    Caption := Caption + '(-SAC)';
+  end;
+
+
   //  + ' (Process Time: ' +  ProcessTimeStr + ' )'; //for debug purpose.
 end;
 
