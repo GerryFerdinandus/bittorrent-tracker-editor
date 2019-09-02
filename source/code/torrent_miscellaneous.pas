@@ -664,7 +664,6 @@ begin
         Result := DecodeConsoleUpdateParameter(ParamStr(2), TrackerList);
         // first parameter MUST be the file/folder
         FileNameOrDirStr := UTF8Trim(ParamStr(1));
-        Exit;
       end;
 
       //Check for parameter -SAC and -SOURCE
@@ -673,6 +672,7 @@ begin
         if ParamStr(i) = '-SAC' then
         begin
           TrackerList.SkipAnnounceCheck := True;
+          Continue;
         end;
 
         if ParamStr(i) = '-SOURCE' then
