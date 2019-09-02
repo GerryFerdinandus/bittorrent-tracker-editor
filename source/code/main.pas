@@ -157,6 +157,7 @@ type
     // is the present torrent file being process
     FDecodePresentTorrent: TDecodeTorrent;
 
+    FDragAndDropStartUp, // user have start the program via Drag And Drop
     FConsoleMode, //user have start the program in console mode
     FFilePresentBanByUserList//There is a file 'remove_trackers.txt' detected
     : boolean;
@@ -165,7 +166,7 @@ type
     FLogFile, FTrackerFile: TextFile;
     FProcessTimeStart, FProcessTimeTotal: TDateTime;
     FControlerGridTorrentData: TControlerGridTorrentData;
-
+    function CheckForAnnounce(const TrackerURL: UTF8String): boolean;
     procedure AppendTrackersToMemoNewTrackers(TrackerList: TStringList);
     procedure ShowUserErrorMessage(const ErrorText: string; const FormText: string = '');
     function TrackerWithURLAndAnnounce(const TrackerURL: UTF8String): boolean;
@@ -177,7 +178,7 @@ type
     procedure ViewUpdateFormCaption;
     procedure ClearAllTorrentFilesNameAndTrackerInside;
     procedure SaveTrackerFinalListToFile;
-    procedure ConsoleMode;
+    procedure ConsoleModeOrDragAndDropStartupMode;
     procedure UpdateViewRemoveTracker;
     function ReloadAllTorrentAndRefreshView: boolean;
     function AddTorrentFileList(TorrentFileNameStringList: TStringList): boolean;
@@ -189,8 +190,9 @@ type
     procedure ShowTrackerInsideFileList;
 
     procedure CheckedOnOffAllTrackers(Value: boolean);
-    function CopyUserInputNewTrackersToList: boolean;
-    procedure LoadTrackersTextFileAddTrackers;
+    function CopyUserInputNewTrackersToList(Temporary_SkipAnnounceCheck: boolean =
+      False): boolean;
+    procedure LoadTrackersTextFileAddTrackers(Temporary_SkipAnnounceCheck: boolean);
     procedure LoadTrackersTextFileRemoveTrackers;
   public
     { public declarations }
@@ -223,11 +225,6 @@ const
 
 procedure TFormTrackerModify.FormCreate(Sender: TObject);
 begin
-
-  //Update some captions
-  Caption := FORM_CAPTION;
-  GroupBoxPresentTracker.Caption := GROUPBOX_PRESENT_TRACKERS_CAPTION;
-
   //Create controler for StringGridTorrentData
   FControlerGridTorrentData := TControlerGridTorrentData.Create(StringGridTorrentData);
 
@@ -295,9 +292,10 @@ begin
   //there must be two command line or more for a console mode.
   //one is for drag and drop via shortcut in windows mode.
   FConsoleMode := ParamCount >= 2;
+  FDragAndDropStartUp := ParamCount = 1;
 
   //Show the default trackers
-  LoadTrackersTextFileAddTrackers;
+  LoadTrackersTextFileAddTrackers(True);
 
   //Load the unwanted trackers list.
   LoadTrackersTextFileRemoveTrackers;
@@ -309,9 +307,15 @@ begin
   //or in windows mode via shortcut with drag/drop ( = 1)
   if ParamCount > 0 then
   begin
-    ConsoleMode;
+    ConsoleModeOrDragAndDropStartupMode;
   end;
 
+  //There should be no more exception made for the drag and drop
+  FDragAndDropStartUp := False;
+
+  //Update some captions
+  ViewUpdateFormCaption;
+  GroupBoxPresentTracker.Caption := GROUPBOX_PRESENT_TRACKERS_CAPTION;
 end;
 
 procedure TFormTrackerModify.CheckBoxSkipAnnounceCheckChange(Sender: TObject);
@@ -490,6 +494,12 @@ begin
   end;
 end;
 
+function TFormTrackerModify.CheckForAnnounce(const TrackerURL: UTF8String): boolean;
+begin
+  Result := (not FTrackerList.SkipAnnounceCheck) and
+    (not WebTorrentTrackerURL(TrackerURL)) and (not FDragAndDropStartUp);
+end;
+
 procedure TFormTrackerModify.ShowUserErrorMessage(const ErrorText: string;
   const FormText: string);
 begin
@@ -511,19 +521,12 @@ end;
 
 function TFormTrackerModify.TrackerWithURLAndAnnounce(
   const TrackerURL: UTF8String): boolean;
-var
-  CheckForAnnounce: boolean;
 begin
   //Validate the begin of the URL
   Result := ValidTrackerURL(TrackerURL);
   if Result then
   begin
-    // Normaly there is an announce present in the URL
-    // But not for WebTorrent and Private trackers
-    CheckForAnnounce := (not FTrackerList.SkipAnnounceCheck) and
-      (not WebTorrentTrackerURL(TrackerURL));
-
-    if CheckForAnnounce then
+    if CheckForAnnounce(TrackerURL) then
     begin
       Result := TrackerURLWithAnnounce(TrackerURL);
     end;
@@ -860,7 +863,7 @@ begin
   CloseFile(FTrackerFile);
 end;
 
-procedure TFormTrackerModify.ConsoleMode;
+procedure TFormTrackerModify.ConsoleModeOrDragAndDropStartupMode;
 var
   FileNameOrDirStr: UTF8String;
   StringList: TStringList;
@@ -868,11 +871,11 @@ var
 begin
   // There are two options
   //-
-  // One parameter only
-  //    This is the first tracker-editor version with only 'sort' trackers list.
+  // One parameter only. Program startup via DragAndDrop
   //    The first parameter[1] is path to file or dir.
+
   //-
-  // Two parameter version
+  // Two parameter version. Always console mode.
   //    This is later version where there is more selection about the tracker list.
 
   //Will be set to True when error occure.
@@ -1096,10 +1099,10 @@ begin
 end;
 
 
-function TFormTrackerModify.CopyUserInputNewTrackersToList: boolean;
+function TFormTrackerModify.CopyUserInputNewTrackersToList(
+  Temporary_SkipAnnounceCheck: boolean): boolean;
 var
   TrackerStrLoop, TrackerStr, ErrorStr: UTF8String;
-  CheckForAnnounce: boolean;
 begin
   {
    Called after 'update torrent' is selected.
@@ -1121,9 +1124,7 @@ begin
     Result := ValidTrackerURL(TrackerStr);
     if Result then
     begin
-      CheckForAnnounce := (not FTrackerList.SkipAnnounceCheck) and
-        (not WebTorrentTrackerURL(TrackerStr));
-      if CheckForAnnounce then
+      if CheckForAnnounce(TrackerStr) and (not Temporary_SkipAnnounceCheck) then
       begin
         Result := TrackerURLWithAnnounce(TrackerStr);
         if not Result then
@@ -1198,7 +1199,8 @@ begin
 
 end;
 
-procedure TFormTrackerModify.LoadTrackersTextFileAddTrackers;
+procedure TFormTrackerModify.LoadTrackersTextFileAddTrackers(
+  Temporary_SkipAnnounceCheck: boolean);
 var
   i: integer;
 begin
@@ -1217,7 +1219,7 @@ begin
   end;
 
   //Check for error in tracker list
-  if not CopyUserInputNewTrackersToList then
+  if not CopyUserInputNewTrackersToList(Temporary_SkipAnnounceCheck) then
   begin
     MemoNewTrackers.Lines.Clear;
   end;
