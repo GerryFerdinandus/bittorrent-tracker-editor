@@ -9,8 +9,16 @@ uses
   Classes, SysUtils, torrent_miscellaneous;
 
 type
-  TVerifyTrackerResult = record
+  TStartupParameter = record
     TrackerListOrder: TTrackerListOrder;
+    SkipAnnounceCheck: boolean;
+    SourcePresent: boolean;
+    SourceText: UTF8String;
+  end;
+
+
+  TVerifyTrackerResult = record
+    StartupParameter: TStartupParameter;
 
     TrackerOriginal,
     TrackerAdded,
@@ -469,7 +477,7 @@ begin
   end;
 
   //Must verify if the output is what we expected
-  case VerifyTracker.TrackerListOrder of
+  case VerifyTracker.StartupParameter.TrackerListOrder of
     // Console parameter: -U0
     // Insert new trackers list BEFORE, the original trackers list inside the torrent file.
     // And remove possible duplicated trackers from the ORIGINAL trackers list.

@@ -62,17 +62,17 @@ type
     FConsoleLogData: TConsoleLogData;
 
     function ReadConsoleLogFile: boolean;
-    procedure TestParameter(TrackerListOrder: TTrackerListOrder);
+    procedure TestParameter(const StartupParameter: TStartupParameter);
     procedure DownloadPreTestTrackerList;
     procedure LoadTrackerListAddAndRemoved;
     procedure CallExecutableFile;
     procedure CopyTrackerEndResultToVerifyTrackerResult;
-    procedure CreateEmptyTorrent(TrackerListOrder: TTrackerListOrder);
+    procedure CreateEmptyTorrent(const StartupParameter: TStartupParameter);
     procedure TestEmptyTorrentResult;
-    procedure CreateFilledTorrent(TrackerListOrder: TTrackerListOrder);
+    procedure CreateFilledTorrent(const StartupParameter: TStartupParameter);
     procedure DownloadNewTrackonTrackers;
     procedure Test_Paramater_Ux(TrackerListOrder: TTrackerListOrder);
-    procedure Add_One_URL(TrackerListOrder: TTrackerListOrder;
+    procedure Add_One_URL(const StartupParameter: TStartupParameter;
       const tracker_URL: string; TestMustBeSuccess: boolean);
 
   protected
@@ -80,7 +80,8 @@ type
     procedure TearDown; override;
   published
     procedure Test_Tracker_UserInput_All_Different_URL;
-    procedure Test_Create_Empty_Torrent_And_Then_Filled_It_All_Mode;
+    procedure Test_Tracker_UserInput_All_Different_URL_And_SAC;
+    procedure Test_Create_Empty_Torrent_And_Then_Filled_It_All_List_Order_Mode;
 
     procedure Test_Paramater_U0;
     procedure Test_Paramater_U1;
@@ -147,12 +148,24 @@ begin
   Test_Paramater_Ux(tloRandomize);
 end;
 
-procedure TTestStartUpParameter.TestParameter(TrackerListOrder: TTrackerListOrder);
+//procedure TTestStartUpParameter.TestParameter(TrackerListOrder: TTrackerListOrder);
+procedure TTestStartUpParameter.TestParameter(const StartupParameter: TStartupParameter);
 begin
-  FVerifyTrackerResult.TrackerListOrder := TrackerListOrder;
+  FVerifyTrackerResult.StartupParameter := StartupParameter;
 
   //Fill in the command line parameter '-Ux', x = number
-  FCommandLine := format('%s -U%d', [FFullPathToTorrent, Ord(TrackerListOrder)]);
+  FCommandLine := format('%s -U%d', [FFullPathToTorrent,
+    Ord(StartupParameter.TrackerListOrder)]);
+
+  if StartupParameter.SkipAnnounceCheck then
+  begin
+    FCommandLine := FCommandLine + ' -SAC';
+  end;
+
+  if StartupParameter.SourcePresent then
+  begin
+    FCommandLine := FCommandLine + ' -SOURCE ' + StartupParameter.SourceText;
+  end;
 end;
 
 procedure TTestStartUpParameter.DownloadPreTestTrackerList;
@@ -196,7 +209,7 @@ begin
 end;
 
 procedure TTestStartUpParameter.CreateEmptyTorrent(
-  TrackerListOrder: TTrackerListOrder);
+  const StartupParameter: TStartupParameter);
 begin
   //write a empty remove trackers
   FVerifyTrackerResult.TrackerRemoved.Clear;
@@ -209,7 +222,7 @@ begin
     FILE_NAME_ADD_TRACKERS);
 
   //Generate the command line parameter
-  TestParameter(TrackerListOrder);
+  TestParameter(StartupParameter);
 
   //call the tracker editor exe file
   CallExecutableFile;
@@ -224,7 +237,8 @@ begin
     'The tracker list should be empty.');
 end;
 
-procedure TTestStartUpParameter.CreateFilledTorrent(TrackerListOrder: TTrackerListOrder);
+procedure TTestStartUpParameter.CreateFilledTorrent(
+  const StartupParameter: TStartupParameter);
 begin
   DownloadNewTrackonTrackers;
 
@@ -254,7 +268,7 @@ begin
     FILE_NAME_ADD_TRACKERS);
 
   //Generate the command line parameter
-  TestParameter(TrackerListOrder);
+  TestParameter(StartupParameter);
 
   //call the tracker editor exe file
   CallExecutableFile;
@@ -284,10 +298,14 @@ procedure TTestStartUpParameter.Test_Paramater_Ux(TrackerListOrder: TTrackerList
 
 var
   OK: boolean;
+  StartupParameter: TStartupParameter;
 begin
   //Create a torrent with fix torrent items
   //this is the pre test condition
-  CreateFilledTorrent(tloInsertNewBeforeAndKeepNewIntact);
+  StartupParameter.TrackerListOrder := tloInsertNewBeforeAndKeepNewIntact;
+  StartupParameter.SkipAnnounceCheck := False;
+  StartupParameter.SourcePresent := False;
+  CreateFilledTorrent(StartupParameter);
 
   //Download all the trackers .txt files
   DownloadPreTestTrackerList;
@@ -296,7 +314,8 @@ begin
   LoadTrackerListAddAndRemoved;
 
   //Generate the command line parameter
-  TestParameter(TrackerListOrder);
+  StartupParameter.TrackerListOrder := TrackerListOrder;
+  TestParameter(StartupParameter);
 
   //call the tracker editor exe file
   CallExecutableFile;
@@ -318,7 +337,7 @@ begin
   Check(FConsoleLogData.TorrentFilesCount = TEST_TORRENT_FILES_COUNT);
 end;
 
-procedure TTestStartUpParameter.Add_One_URL(TrackerListOrder: TTrackerListOrder;
+procedure TTestStartUpParameter.Add_One_URL(const StartupParameter: TStartupParameter;
   const tracker_URL: string; TestMustBeSuccess: boolean);
 begin
   //add one tracker to the 'add_trackers'
@@ -329,7 +348,7 @@ begin
     FILE_NAME_ADD_TRACKERS);
 
   //Generate the command line parameter
-  TestParameter(TrackerListOrder);
+  TestParameter(StartupParameter);
 
   //call the tracker editor exe file
   CallExecutableFile;
@@ -362,49 +381,115 @@ procedure TTestStartUpParameter.Test_Tracker_UserInput_All_Different_URL;
 var
   TrackerListOrder: TTrackerListOrder;
   TrackerURL: string;
+  StartupParameter: TStartupParameter;
 const
   ANNOUNCE = '/announce';
   ANNOUNCE_PHP = '/announce.php';
 begin
+  StartupParameter.SkipAnnounceCheck := False;
+  StartupParameter.SourcePresent := False;
+
   //Test if all the tracker update mode is working
   for TrackerListOrder in TTrackerListOrder do
   begin
+    StartupParameter.TrackerListOrder := TrackerListOrder;
+
     TrackerURL := 'udp://test.com';
-    Add_One_URL(TrackerListOrder, TrackerURL, False);
-    Add_One_URL(TrackerListOrder, TrackerURL + ANNOUNCE, True);
-    Add_One_URL(TrackerListOrder, TrackerURL + ANNOUNCE_PHP, True);
+    Add_One_URL(StartupParameter, TrackerURL, False);
+    Add_One_URL(StartupParameter, TrackerURL + ANNOUNCE, True);
+    Add_One_URL(StartupParameter, TrackerURL + ANNOUNCE_PHP, True);
 
     TrackerURL := 'http://test.com';
-    Add_One_URL(TrackerListOrder, TrackerURL, False);
-    Add_One_URL(TrackerListOrder, TrackerURL + ANNOUNCE, True);
-    Add_One_URL(TrackerListOrder, TrackerURL + ANNOUNCE_PHP, True);
+    Add_One_URL(StartupParameter, TrackerURL, False);
+    Add_One_URL(StartupParameter, TrackerURL + ANNOUNCE, True);
+    Add_One_URL(StartupParameter, TrackerURL + ANNOUNCE_PHP, True);
 
     TrackerURL := 'https://test.com';
-    Add_One_URL(TrackerListOrder, TrackerURL, False);
-    Add_One_URL(TrackerListOrder, TrackerURL + ANNOUNCE, True);
-    Add_One_URL(TrackerListOrder, TrackerURL + ANNOUNCE_PHP, True);
+    Add_One_URL(StartupParameter, TrackerURL, False);
+    Add_One_URL(StartupParameter, TrackerURL + ANNOUNCE, True);
+    Add_One_URL(StartupParameter, TrackerURL + ANNOUNCE_PHP, True);
 
     //webtorrent may have NOT announce
     TrackerURL := 'ws://test.com';
-    Add_One_URL(TrackerListOrder, TrackerURL, True);
-    Add_One_URL(TrackerListOrder, TrackerURL + ANNOUNCE, True);
+    Add_One_URL(StartupParameter, TrackerURL, True);
+    Add_One_URL(StartupParameter, TrackerURL + ANNOUNCE, True);
 
     TrackerURL := 'wss://test.com';
-    Add_One_URL(TrackerListOrder, TrackerURL, True);
-    Add_One_URL(TrackerListOrder, TrackerURL + ANNOUNCE, True);
+    Add_One_URL(StartupParameter, TrackerURL, True);
+    Add_One_URL(StartupParameter, TrackerURL + ANNOUNCE, True);
   end;
 end;
 
-
-procedure TTestStartUpParameter.Test_Create_Empty_Torrent_And_Then_Filled_It_All_Mode;
+procedure TTestStartUpParameter.Test_Tracker_UserInput_All_Different_URL_And_SAC;
 var
   TrackerListOrder: TTrackerListOrder;
+  TrackerURL: string;
+  StartupParameter: TStartupParameter;
+const
+  ANNOUNCE = '/announce';
+  ANNOUNCE_PHP = '/announce.php';
+  ANNOUNCE_private = '/announce?abcd';
+
+  procedure TestStartUpParameter;
+  begin
+    Add_One_URL(StartupParameter, TrackerURL, True);
+    Add_One_URL(StartupParameter, TrackerURL + ANNOUNCE, True);
+    Add_One_URL(StartupParameter, TrackerURL + ANNOUNCE_PHP, True);
+    Add_One_URL(StartupParameter, TrackerURL + ANNOUNCE_private, True);
+  end;
+
+  procedure TestAllURL;
+  begin
+    //Test if all the tracker update mode is working
+    for TrackerListOrder in TTrackerListOrder do
+    begin
+      StartupParameter.TrackerListOrder := TrackerListOrder;
+
+      TrackerURL := 'udp://test.com';
+      TestStartUpParameter;
+
+      TrackerURL := 'http://test.com';
+      TestStartUpParameter;
+
+      TrackerURL := 'https://test.com';
+      TestStartUpParameter;
+
+      TrackerURL := 'ws://test.com';
+      TestStartUpParameter;
+
+      TrackerURL := 'wss://test.com';
+      TestStartUpParameter;
+    end;
+  end;
+
+begin
+  // Skip announce check.
+  StartupParameter.SkipAnnounceCheck := True;
+  StartupParameter.SourcePresent := False;
+  TestAllURL;
+
+  // Skip announce check and add SOURCE
+  StartupParameter.SkipAnnounceCheck := True;
+  StartupParameter.SourcePresent := True;
+  StartupParameter.SourceText := 'ABCDE';
+  TestAllURL;
+end;
+
+procedure TTestStartUpParameter.
+Test_Create_Empty_Torrent_And_Then_Filled_It_All_List_Order_Mode;
+var
+  TrackerListOrder: TTrackerListOrder;
+  StartupParameter: TStartupParameter;
 begin
   //Test if all the mode that support empty torrent creation
   //Empty torrent -> filled torrent -> empty torrent
 
+  StartupParameter.SkipAnnounceCheck := False;
+  StartupParameter.SourcePresent := False;
+
   for TrackerListOrder in TTrackerListOrder do
   begin
+    StartupParameter.TrackerListOrder := TrackerListOrder;
 
     //It is by design that it can not create a empty torrent
     //The 'KeepOriginalIntactAndRemoveNothing' prevent it from deleting the torrent
@@ -419,7 +504,7 @@ begin
       continue;
 
     //Create empty the torrent
-    CreateEmptyTorrent(TrackerListOrder);
+    CreateEmptyTorrent(StartupParameter);
     //check the exit code
     CheckEquals(0, FExitCode);
 
@@ -431,7 +516,7 @@ begin
     Check(FConsoleLogData.TorrentFilesCount = TEST_TORRENT_FILES_COUNT);
 
     //fill the empty torrent with data
-    CreateFilledTorrent(TrackerListOrder);
+    CreateFilledTorrent(StartupParameter);
     //check the exit code
     CheckEquals(0, FExitCode);
 
@@ -442,7 +527,7 @@ begin
     Check(FConsoleLogData.TorrentFilesCount = TEST_TORRENT_FILES_COUNT);
 
     //Create empty the torrent again
-    CreateEmptyTorrent(TrackerListOrder);
+    CreateEmptyTorrent(StartupParameter);
     //check the exit code
     CheckEquals(0, FExitCode);
 
