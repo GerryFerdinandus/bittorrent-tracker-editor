@@ -5,7 +5,7 @@
 language: generic
 
 sudo: required
-dist: xenial
+dist: bionic
 
 env:
   global:
