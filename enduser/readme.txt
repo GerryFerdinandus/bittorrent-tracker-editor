@@ -4,14 +4,71 @@ If you do not want to use it this way, then just remove both the files 'add_trac
 These '.txt' files must be place in the same directory as the program.
 
 --------------------
+--- Linux usage example : 1 (public trackers)
+Update all the torrent files with only the latest tested stable tracker.
 
-Console mode:
+curl https://newtrackon.com/api/stable --output add_trackers.txt
+echo > remove_trackers.txt
+./trackereditor ../test_torrent -U0
+
+Line 1: This will download the latest stable trackers into add_trackers.txt
+Line 2: Remove_trackers.txt is now a empty file. All trackers from the present torrent will be REMOVED.
+Line 3: Update all the torrent files inside the test_torrent folder.
+
+note -U0 parameter can be change to -U4 (sort by name)
+This is my prefer setting for the rtorrent client.
+rtorrent client announce to all the trackers inside the torrent file.
+I prefer to see all the trackers in alphabetical order inside rtorrent client console view.
+rtorrent client need to have the 'session' folder cleared and restart rtorrent to make this working.
+This can be run via regular cron job to keep the client running with 100% functional trackers.
+
+--- Linux usage example: 2 (public trackers)
+Mix the latest tested stable tracker with the present trackers already present inside the torrent files.
+
+curl https://raw.githubusercontent.com/ngosang/trackerslist/master/trackers_best.txt  --output add_trackers.txt
+curl https://raw.githubusercontent.com/ngosang/trackerslist/master/blacklist.txt  --output remove_trackers.txt
+./trackereditor ../test_torrent -U0
+
+Line 1: This will download the latest stable trackers into add_trackers.txt
+Line 2: Remove_trackers.txt now contain blacklisted trackers
+Line 3: Update all the torrent files inside the test_torrent folder.
+
+Diference betwean example 1 vs 2
+Example 1 is guarantee that all the trackers are working.
+Example 2 You are responseble for the trackers working that are not part of add_trackers.txt
+
+--- Linux usage example: 3 (private trackers)
+In add_trackers.txt file manualy the private tracker URL
+echo > remove_trackers.txt
+./trackereditor ../test_torrent -U0 -SAC -SOURCE "abcd"
+
+Line 2: Remove_trackers.txt is now a empty file. All trackers from the present torrent will be REMOVED.
+Line 3: Update all the torrent files inside the test_torrent folder.
+        -SAC (Skip Annouce Check) This is needed to skip private tracker URL check.
+        -SOURCE Add private tracker source tag "abcd"
+
+-SOURCE is optionally.
+-SOURCE "" Empty sting will remove all the source tag
+--------------------
+
+Usage example Windows desktop short cut for private tracker user.
+This is the same idea as "Usage example: 3 (private trackers)"
+But start it from the desktop shortcut (double click) and not from windows console via bat file etc.
+
+Desktop shortcut can have extra parameter append.
+C:\Users\root\Documents\github\bittorrent-tracker-editor\enduser\trackereditor.exe ..\test_torrent -U0 -SAC -SOURCE abc
+
+Make sure that add_trackers.txt is filled with the private URL
+And remove_trackers.txt is a empty file.
+
+--------------------
+
+Console mode windows example:
 Start program with a parameter to torrent file or dir
 trackereditor.exe "C:\dir\torrent\file.torrent" -U4
 trackereditor.exe "C:\dir\torrent" -U4
 What tracker will be added/removed depend the content of the add_trackers.txt and remove_trackers.txt files.
 
---------------------
 
 Additional Files: Trackers file and log file 
 These 3 files can be optionally present in the same dir as the trackereditor executable file.
