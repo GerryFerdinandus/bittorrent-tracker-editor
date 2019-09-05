@@ -2,7 +2,15 @@
 ADD: Verify the working status of public trackers. (Issue 21)
 ADD: Wrong tracker URL format from torrent files should be unselected by default (Issue 22)
 ADD: Upload trackers to newTrackon (Issue 23)
-Compiler Lazarus: v1.80
+FIX: WebTorrent do not have '/announce'  (Issue 24)
+FiX: add support for '/announce.php'(Issue 27)
+ADD: Extra tabpage 'private torrent'. For issue 31 and 34
+ADD: Check box 'Skip Announce Check in the URL' (Issue 31)
+ADD: Command parameter '-SAC' -> 'Skip Announce Check' in the URL (Issue 31)
+ADD: Support 'Info Source' tag for private trackers (issue 34)
+ADD: Command parameter '-SOURCE' -> info Source tag for private trackers. See readme.txt file (issue 34)
+ADD: Direct download support for ngosang via menu (Issue 35)
+Compiler Lazarus: v2.04
 
 ------ Version 1.32
 ADD: Add more options for updating the torrent tracker list. (Issue 8)
