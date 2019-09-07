@@ -1,44 +1,33 @@
-#!/bin/bash
+#!/bin/sh
 
-#Create a zip file for Windows, Linux and Apple macOS
+# Create a zip file for Linux and Apple macOS
 
-#this will be set later
+# This will be set later
 unset RELEASE_ZIP_FILE
 
-#----------- check for Windows, Linux and Apple macOS build
+#----------- check for Linux and Apple macOS build
 if [ "$TRAVIS_OS_NAME" = "linux" ]
 then
-
-  #wine = windows
-  if [ "$LAZ_ENV" = "wine" ]
-  then
-
-  #windows
-  export RELEASE_ZIP_FILE="trackereditor_win32.zip"
-  zip -j $RELEASE_ZIP_FILE enduser/*.txt enduser/trackereditor.exe enduser/libeay32.dll enduser/ssleay32.dll
-
-  else
-
-  #linux
+  # Linux
+  echo "Building zip file for Linux amd64"
   export RELEASE_ZIP_FILE="trackereditor_linux_amd64.zip"
   zip -j $RELEASE_ZIP_FILE enduser/*.txt enduser/trackereditor
 
-  fi
-
 elif [ "$TRAVIS_OS_NAME" = "osx" ]
 then
-  #Apple os x
+  # Apple macOS
+  echo "Building zip file for macOS"
   export RELEASE_ZIP_FILE="trackereditor_macOS.zip"
   cd enduser
 
-  #move the executable to the application bundle
+  # Move the executable to the application bundle
   mv trackereditor trackereditor.app/Contents/MacOS
 
-  #move the trackers list to application bundle
+  # Move the trackers list to application bundle
   mv add_trackers.txt trackereditor.app/Contents/MacOS
   mv remove_trackers.txt trackereditor.app/Contents/MacOS
 
-  #Create the zip file.
+  # Create the zip file.
   zip -j ../$RELEASE_ZIP_FILE *.txt
   zip -r ../$RELEASE_ZIP_FILE trackereditor.app
   cd ..
