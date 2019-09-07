@@ -2,24 +2,26 @@
 # License: MIT
 
 # Suppress the warning with the online Travis WebLint
+# must be generic and not shell else build issue.
 language: generic
-
 sudo: required
-dist: bionic
+
+# Linux compability issue.
+# Need to build in xenial with lazarus 1.8.2.
+# Do not use bionic or newer Lazarus version
 
 env:
   global:
-    - WINEPREFIX=~/.winelaz
     - DISPLAY=:99.0
 
 matrix:
   include:
     - os: linux
-      env: LAZ_VER=$PROJECT_LAZARUS_VERSION
+      dist: xenial
+      env: LAZ_VER=1.8.2
     - os: osx
-      env: LAZ_VER=$PROJECT_LAZARUS_VERSION
-      osx_image: $PROJECT_OSX_IMAGE
-
+      osx_image: xcode9.4
+      env: LAZ_VER=2.0.4
 
 before_install:
 # Start virtual display server
