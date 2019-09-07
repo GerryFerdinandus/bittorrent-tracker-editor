@@ -45,4 +45,8 @@ then
 
 fi
 
+echo "Create Amazon s3 folder"
+mkdir -p s3
+cp $RELEASE_ZIP_FILE s3/$(date +%F_%R)_$RELEASE_ZIP_FILE
+
 echo "Created $RELEASE_ZIP_FILE for GitHub"

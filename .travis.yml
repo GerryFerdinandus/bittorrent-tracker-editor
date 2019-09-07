@@ -47,13 +47,21 @@ before_deploy:
   - source ./scripts/travis_deploy.sh
 
 deploy:
-  provider: releases
-  prerelease: false
-  skip_cleanup: true
-  api_key:
-    secure: hmjev+YIClSOec6wMclUv5W4lgyLpdX7DlUpF2LQ1W/EO/x/b8RzmSPjNZ5sa7IDUe1WoVXm89G6HtkGGHcRqJrZjNn18HvpvEOnIYgIEXBVtW9uaURsSJ2LYve9beHHvYzs0doEQp1I24qTENUOqMABStk7MKRTATZ7nBWIinZVkpojEYIizQtCnUWwJXpzgs9mx7BEAVqLJPJ35oXNVjEgE96gsWMaYuX82BsVpL9VjGIaYpbEc1iBFBr2RHTgHG03H+2wBewJ4gh3hFwq9vt6mEqdC6Y9UIqmAEUMzCpokqrIfV2cfnPe24miPqmCLboua7Ddu8OpLj/yQ9DvC8xVEVh8aiGszzPvnytaFuRfLxI5HdAtUkA/9P3dXwjJKLJs568kyCTz4Tk7Icrb7seS1i84BJs3Vp2/lkmqDRDR0OqVGTczZGsxfTK+iaZJaNXb999BmGBw+xnPuG1lgrjHUYyEH2ha9D/9eOXiQfxdKUktPs1cF0II7uv5Cg3LEcFyN/A7jblNpM5B9cnf5kJ13lbpqL+Eyig90b9Q9YsrwGGOqtXJG+jSqXOv0O9/warFJfadA0avJljOFv4Pxl4tYe73EA/gP1GVG5UVC/F9nWZhUzP1kPCjzTzHoYBDCmHf8/GErdpCtibqRHoMIelrbcpe0jr+j5aNPxnTKAc=
-  file: "${RELEASE_ZIP_FILE}"
-  on:
-    tags: true 
-    repo: GerryFerdinandus/bittorrent-tracker-editor
-
+  - provider: releases
+    prerelease: false
+    skip_cleanup: true
+    api_key:
+      secure: hmjev+YIClSOec6wMclUv5W4lgyLpdX7DlUpF2LQ1W/EO/x/b8RzmSPjNZ5sa7IDUe1WoVXm89G6HtkGGHcRqJrZjNn18HvpvEOnIYgIEXBVtW9uaURsSJ2LYve9beHHvYzs0doEQp1I24qTENUOqMABStk7MKRTATZ7nBWIinZVkpojEYIizQtCnUWwJXpzgs9mx7BEAVqLJPJ35oXNVjEgE96gsWMaYuX82BsVpL9VjGIaYpbEc1iBFBr2RHTgHG03H+2wBewJ4gh3hFwq9vt6mEqdC6Y9UIqmAEUMzCpokqrIfV2cfnPe24miPqmCLboua7Ddu8OpLj/yQ9DvC8xVEVh8aiGszzPvnytaFuRfLxI5HdAtUkA/9P3dXwjJKLJs568kyCTz4Tk7Icrb7seS1i84BJs3Vp2/lkmqDRDR0OqVGTczZGsxfTK+iaZJaNXb999BmGBw+xnPuG1lgrjHUYyEH2ha9D/9eOXiQfxdKUktPs1cF0II7uv5Cg3LEcFyN/A7jblNpM5B9cnf5kJ13lbpqL+Eyig90b9Q9YsrwGGOqtXJG+jSqXOv0O9/warFJfadA0avJljOFv4Pxl4tYe73EA/gP1GVG5UVC/F9nWZhUzP1kPCjzTzHoYBDCmHf8/GErdpCtibqRHoMIelrbcpe0jr+j5aNPxnTKAc=
+    file: "${RELEASE_ZIP_FILE}"
+    on:
+      tags: true
+      repo: GerryFerdinandus/bittorrent-tracker-editor
+  - provider: s3
+    access_key_id: $AWS_ACCESS_KEY
+    secret_access_key: $AWS_SECRET_KEY
+    bucket: "bittorrent-tracker-editor"
+    skip_cleanup: true
+    region: eu-central-1
+    local_dir: s3
+    on:
+      branch: to_be_deleted_unit_test
