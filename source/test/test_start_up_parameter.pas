@@ -594,6 +594,9 @@ begin
 end;
 
 initialization
-
+  // macOS version does not support startup parameter
+{$IFNDEF DARWIN}
   RegisterTest(TTestStartUpParameter);
+{$ENDIF}
+
 end.
