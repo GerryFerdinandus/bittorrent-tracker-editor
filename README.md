@@ -49,6 +49,23 @@ There is no backup function in this software. Use it at your own risk. Bittorren
 
 ## Software history: ##
 
+### 1.33.0.beta.6 ###
+  * ADD: Direct download support for ngosang via menu (Issue 35)
+  * ADD: Extra tabpage 'private torrent'. For issue 31 and 34
+  * ADD: Check box 'Skip Announce Check in the URL' (Issue 31)
+  * ADD: Command parameter '-SAC' -> 'Skip Announce Check' in the URL (Issue 31)
+  * ADD: Support 'Info Source' tag for private trackers (issue 34)
+  * ADD: Command parameter '-SOURCE' -> info Source tag for private trackers. See readme.txt file (issue 34)
+
+### 1.33.0.beta.5 ###
+  * FiX: support for '/announce.php'(Issue 27)
+
+### 1.33.0.beta.4 ###
+  * FIX: There was an issue with uploading tracker list to newTrackon.
+
+### 1.33.0.beta.3 ###
+  * FIX: WebTorrent do not have '/announce'  (Issue 24)
+
 ### 1.33.0.beta.2 ###
   * ADD: Wrong tracker URL format from torrent files should be unselected by default ([Issue 22](https://github.com/GerryFerdinandus/bittorrent-tracker-editor/issues/22))
   * ADD: Upload trackers to newTrackon ([Issue 23](https://github.com/GerryFerdinandus/bittorrent-tracker-editor/issues/23))
