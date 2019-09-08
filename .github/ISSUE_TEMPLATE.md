@@ -15,3 +15,7 @@
 
 
 ### Please provide any additional information below. ###
+
+
+
+### Add a modified sintel torrent files example to reproduce the issue. [Download from Github: sintel](https://github.com/GerryFerdinandus/bittorrent-tracker-editor/tree/master/test_torrent) ###
