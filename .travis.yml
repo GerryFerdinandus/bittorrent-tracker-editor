@@ -32,8 +32,8 @@ install:
   - ./travis-lazarus/.travis.install.py
 
 script:
-# Build trackereditor project (Debug mode)
-  - lazbuild --build-mode=Debug $LAZ_OPT $PROJECT_LPI_EDITOR_PATH
+# Build trackereditor project (Release mode)
+  - lazbuild --build-mode=Release $LAZ_OPT $PROJECT_LPI_EDITOR_PATH
 
 # Build unit test project (Debug mode)
   - lazbuild --build-mode=Debug $LAZ_OPT $PROJECT_LPI_UNIT_TEST_PATH
@@ -42,9 +42,6 @@ script:
   - source ./scripts/travis_unit_test.sh
 
 before_deploy:
-# Build trackereditor project (Release mode)
-  - lazbuild --build-mode=Release $LAZ_OPT $PROJECT_LPI_EDITOR_PATH
-
 # Create the zip file for deployment
   - source ./scripts/travis_deploy.sh
 
