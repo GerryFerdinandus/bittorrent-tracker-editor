@@ -2,22 +2,18 @@
 
 # Create a zip file for Linux and Apple macOS
 
-# This will be set later
-unset RELEASE_ZIP_FILE
 
 #----------- check for Linux and Apple macOS build
 if [ "$TRAVIS_OS_NAME" = "linux" ]
 then
   # Linux
   echo "Building zip file for Linux amd64"
-  export RELEASE_ZIP_FILE="trackereditor_linux_amd64.zip"
   zip -j $RELEASE_ZIP_FILE enduser/*.txt enduser/trackereditor
 
 elif [ "$TRAVIS_OS_NAME" = "osx" ]
 then
   # Apple macOS
   echo "Building zip file for macOS"
-  export RELEASE_ZIP_FILE="trackereditor_macOS.zip"
   cd enduser
 
   # Move the executable to the application bundle
