@@ -130,3 +130,7 @@ This screen shot show the program, after a folder is selected with torrent files
 ---
 
 This program is developed using [Lazarus](http://lazarus.freepascal.org/) RAD and [Free Pascal](http://www.freepascal.org/) compiler.
+
+---
+
+This product includes software developed by the OpenSSL Project for use in the OpenSSL Toolkit (http://www.openssl.org/)

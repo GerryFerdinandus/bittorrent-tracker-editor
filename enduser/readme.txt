@@ -154,3 +154,7 @@ Console parameter: -U6
 
 Console parameter: -U7
 	Randomize the trackers list.
+
+--------------------
+Acknowledgment:
+This product includes software developed by the OpenSSL Project for use in the OpenSSL Toolkit (http://www.openssl.org/)
