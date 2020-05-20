@@ -1,35 +1,39 @@
 # Part of `travis-lazarus` (https://github.com/nielsAD/travis-lazarus)
 # License: MIT
 
-# Suppress the warning with the online Travis WebLint
-# must be generic and not shell else build issue.
-language: generic
-sudo: required
+language: shell
 
 # Linux compability issue.
 # Need to build in xenial with lazarus 1.8.2.
 # Do not use bionic or newer Lazarus version
 
-env:
-  global:
-    - DISPLAY=:99.0
+# For linux headless.
+# See travis_unit_test.sh will install and use xvfb-run
+#services: (- xvfb) does not work must use xvfb-run
 
-matrix:
+jobs:
   include:
     - os: linux
       dist: xenial
       env: LAZ_VER=1.8.2 RELEASE_ZIP_FILE="trackereditor_linux_amd64.zip"
     - os: osx
-      osx_image: xcode9.4
-      env: LAZ_VER=2.0.4 RELEASE_ZIP_FILE="trackereditor_macOS.zip"
+      osx_image: xcode11.3
+      env: LAZ_PKG=true LAZ_OPT="--widgetset=cocoa" RELEASE_ZIP_FILE="trackereditor_macOS.zip"
+    - os: linux
+      dist: xenial
+      arch: arm64
+      env: LAZ_PKG=true RELEASE_ZIP_FILE="trackereditor_linux_AArch64.zip"
+
 
 before_install:
-# Start virtual display server
-  - Xvfb $DISPLAY &
+- if [[ "$TRAVIS_OS_NAME" == "windows" ]]; then choco install python3 --params "/InstallDir:C:\python3"; fi
+- if [[ "$TRAVIS_OS_NAME" == "windows" ]]; then export PATH=/c/Python3:/c/Python3/Scripts:/c/lazarus:$PATH; fi
 
 install:
 # Install prerequisites (fpc/lazarus/wine/qemu)
-  - ./travis-lazarus/.travis.install.py
+- if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo apt-get install xvfb -y; fi
+- if [[ "$TRAVIS_OS_NAME" == "windows" ]]; then python ./travis-lazarus/.travis.install.py; fi
+- if [[ "$TRAVIS_OS_NAME" != "windows" ]]; then ./travis-lazarus/.travis.install.py; fi
 
 script:
 # Build trackereditor project (Release mode)
@@ -48,8 +52,9 @@ before_deploy:
 deploy:
   - provider: releases
     prerelease: false
-    skip_cleanup: true
-    api_key:
+    cleanup: false
+    edge: true # opt in to dpl v2
+    token:
       secure: hmjev+YIClSOec6wMclUv5W4lgyLpdX7DlUpF2LQ1W/EO/x/b8RzmSPjNZ5sa7IDUe1WoVXm89G6HtkGGHcRqJrZjNn18HvpvEOnIYgIEXBVtW9uaURsSJ2LYve9beHHvYzs0doEQp1I24qTENUOqMABStk7MKRTATZ7nBWIinZVkpojEYIizQtCnUWwJXpzgs9mx7BEAVqLJPJ35oXNVjEgE96gsWMaYuX82BsVpL9VjGIaYpbEc1iBFBr2RHTgHG03H+2wBewJ4gh3hFwq9vt6mEqdC6Y9UIqmAEUMzCpokqrIfV2cfnPe24miPqmCLboua7Ddu8OpLj/yQ9DvC8xVEVh8aiGszzPvnytaFuRfLxI5HdAtUkA/9P3dXwjJKLJs568kyCTz4Tk7Icrb7seS1i84BJs3Vp2/lkmqDRDR0OqVGTczZGsxfTK+iaZJaNXb999BmGBw+xnPuG1lgrjHUYyEH2ha9D/9eOXiQfxdKUktPs1cF0II7uv5Cg3LEcFyN/A7jblNpM5B9cnf5kJ13lbpqL+Eyig90b9Q9YsrwGGOqtXJG+jSqXOv0O9/warFJfadA0avJljOFv4Pxl4tYe73EA/gP1GVG5UVC/F9nWZhUzP1kPCjzTzHoYBDCmHf8/GErdpCtibqRHoMIelrbcpe0jr+j5aNPxnTKAc=
     file: "${RELEASE_ZIP_FILE}"
     on:
@@ -59,8 +64,9 @@ deploy:
     access_key_id: $AWS_ACCESS_KEY
     secret_access_key: $AWS_SECRET_KEY
     bucket: "bittorrent-tracker-editor"
-    skip_cleanup: true
+    cleanup: false
     region: eu-central-1
     local_dir: s3
+    edge: true # opt in to dpl v2
     on:
       branch: to_be_deleted_unit_test
