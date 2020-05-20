@@ -11,6 +11,11 @@ then
   # show openSSL version
   openssl version
 
+  # Exit immediately if a command exits with a non-zero status.
+  set -e
+  xvfb-run enduser/test_trackereditor -a --format=plain
+  set +e
+
 elif [ "$TRAVIS_OS_NAME" = "osx" ]
 then
   # show macOS version
@@ -18,12 +23,20 @@ then
 
   # show openSSL version
   openssl version
+
+  # Exit immediately if a command exits with a non-zero status.
+  set -e
+  enduser/test_trackereditor -a --format=plain
+  set +e
+
+elif [ "$TRAVIS_OS_NAME" = "windows" ]
+then
+  # Exit immediately if a command exits with a non-zero status.
+  set -e
+  enduser/test_trackereditor -a --format=plain
+  set +e
 fi
 
-# Exit immediately if a command exits with a non-zero status.
-set -e
-enduser/test_trackereditor -a --format=plain
-set +e
 
 # Remove all the extra file created by test
 # We do not what it in the ZIP release files.
