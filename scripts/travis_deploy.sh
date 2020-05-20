@@ -7,6 +7,7 @@
 if [ "$TRAVIS_OS_NAME" = "linux" ]
 then
   # Linux
+  sudo apt-get install zip -y
   echo "Building zip file for Linux amd64"
   zip -j $RELEASE_ZIP_FILE enduser/*.txt enduser/trackereditor
 
