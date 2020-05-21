@@ -33,7 +33,7 @@ elif [ "$TRAVIS_OS_NAME" = "windows" ]
 then
   # Exit immediately if a command exits with a non-zero status.
   set -e
-  enduser/test_trackereditor -a --format=plain
+  enduser/test_trackereditor.exe -a --format=plain
   set +e
 fi
 

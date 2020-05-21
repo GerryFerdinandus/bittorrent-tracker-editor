@@ -16,14 +16,15 @@ jobs:
     - os: linux
       dist: xenial
       env: LAZ_VER=1.8.2 RELEASE_ZIP_FILE="trackereditor_linux_amd64.zip"
-    - os: osx
-      osx_image: xcode11.3
-      env: LAZ_PKG=true LAZ_OPT="--widgetset=cocoa" RELEASE_ZIP_FILE="trackereditor_macOS.zip"
     - os: linux
       dist: xenial
       arch: arm64
       env: LAZ_PKG=true RELEASE_ZIP_FILE="trackereditor_linux_AArch64.zip"
-
+    - os: osx
+      osx_image: xcode11.3
+      env: LAZ_PKG=true LAZ_OPT="--widgetset=cocoa" RELEASE_ZIP_FILE="trackereditor_macOS.zip"
+    - os: windows
+      env: LAZ_VER=2.0.8 LAZ_REL=64 LAZ_OPT="--os=win32 --cpu=i386" RELEASE_ZIP_FILE="trackereditor_win32.zip"
 
 before_install:
 - if [[ "$TRAVIS_OS_NAME" == "windows" ]]; then choco install python3 --params "/InstallDir:C:\python3"; fi
@@ -32,10 +33,18 @@ before_install:
 install:
 # Install prerequisites (fpc/lazarus/wine/qemu)
 - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo apt-get install xvfb -y; fi
+# Output something every 10 minutes or Travis kills the job
+- while sleep 60; do echo "===== 1 minute mark ====="; done &
 - if [[ "$TRAVIS_OS_NAME" == "windows" ]]; then python ./travis-lazarus/.travis.install.py; fi
 - if [[ "$TRAVIS_OS_NAME" != "windows" ]]; then ./travis-lazarus/.travis.install.py; fi
+# Killing background sleep loop
+- kill %1
 
 script:
+# Output something every 10 minutes or Travis kills the job
+  - echo "start script"
+  - while sleep 60; do echo "===== 1 minute mark ====="; done &
+
 # Build trackereditor project (Release mode)
   - lazbuild --build-mode=Release $LAZ_OPT $PROJECT_LPI_EDITOR_PATH
 
@@ -44,6 +53,9 @@ script:
 
 # Start the unit test
   - source ./scripts/travis_unit_test.sh
+
+# Killing background sleep loop
+  - kill %1
 
 before_deploy:
 # Create the zip file for deployment

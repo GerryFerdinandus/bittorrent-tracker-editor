@@ -1,9 +1,8 @@
 #!/bin/sh
 
-# Create a zip file for Linux and Apple macOS
+# Create a zip file for Windows, Linux and macOS.
 
-
-#----------- check for Linux and Apple macOS build
+#----------- check for Windows, Linux and macOS build
 if [ "$TRAVIS_OS_NAME" = "linux" ]
 then
   # Linux
@@ -28,7 +27,12 @@ then
   zip -j ../$RELEASE_ZIP_FILE *.txt
   zip -r ../$RELEASE_ZIP_FILE trackereditor.app
   cd ..
-
+elif [ "$TRAVIS_OS_NAME" = "windows" ]
+then
+  # Windows
+  echo "Building zip file for windows"
+  choco install zip
+  zip -j $RELEASE_ZIP_FILE enduser/*.txt enduser/trackereditor.exe enduser/*.dll
 fi
 
 echo "Create Amazon s3 folder"
