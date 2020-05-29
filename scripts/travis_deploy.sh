@@ -14,19 +14,13 @@ elif [ "$TRAVIS_OS_NAME" = "osx" ]
 then
   # Apple macOS
   echo "Building zip file for macOS"
-  cd enduser
 
-  # Move the executable to the application bundle
-  mv trackereditor trackereditor.app/Contents/MacOS
+  # Add certificate into the macOS system
+  source ./scripts/travis_add_macos_cert.sh
 
-  # Move the trackers list to application bundle
-  mv add_trackers.txt trackereditor.app/Contents/MacOS
-  mv remove_trackers.txt trackereditor.app/Contents/MacOS
+  # sign + zip the app
+  source ./scripts/travis_sign_macos_app.sh
 
-  # Create the zip file.
-  zip -j ../$RELEASE_ZIP_FILE *.txt
-  zip -r ../$RELEASE_ZIP_FILE trackereditor.app
-  cd ..
 elif [ "$TRAVIS_OS_NAME" = "windows" ]
 then
   # Windows
