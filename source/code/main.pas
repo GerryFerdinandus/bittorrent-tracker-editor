@@ -752,8 +752,11 @@ begin
 
     end;//for
 
+    // Can not create a file inside the app
+    {$IFNDEF DARWIN}
     //Create tracker.txt file
     SaveTrackerFinalListToFile;
+    {$ENDIF}
 
     //Show/reload the just updated torrent files.
     AllFilesAreReadBackCorrectly := ReloadAllTorrentAndRefreshView;
