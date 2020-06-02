@@ -26,9 +26,9 @@ jobs:
       os: osx
       osx_image: xcode11.3
       env: LAZ_PKG=true LAZ_OPT="--widgetset=cocoa" RELEASE_ZIP_FILE="trackereditor_macOS.zip"
-    - name: Windows (2.0.8) Build 32-bit software
+    - name: Windows (PKG) Build 32-bit software
       os: windows
-      env: LAZ_VER=2.0.8 LAZ_REL=64 LAZ_OPT="--os=win32 --cpu=i386" RELEASE_ZIP_FILE="trackereditor_win32.zip"
+      env: LAZ_PKG=true LAZ_REL=32 RELEASE_ZIP_FILE="trackereditor_win32.zip"
 
 before_install:
 # Install python in windows OS
