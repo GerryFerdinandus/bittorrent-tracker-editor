@@ -188,6 +188,7 @@ type
     procedure UpdateTrackerInsideFileList;
     procedure UpdateTorrentTrackerList;
     procedure ShowTrackerInsideFileList;
+    function TestConnectionSSL: Boolean;
 
     procedure CheckedOnOffAllTrackers(Value: boolean);
     function CopyUserInputNewTrackersToList(Temporary_SkipAnnounceCheck: boolean =
@@ -203,7 +204,7 @@ var
 
 implementation
 
-uses LCLIntf, lazutf8, LazFileUtils, trackerlist_online;
+uses fphttpclient, LCLIntf, lazutf8, LazFileUtils, trackerlist_online;
 
 const
   RECOMENDED_TRACKERS: array[0..2] of UTF8String =
@@ -225,6 +226,14 @@ const
 
 procedure TFormTrackerModify.FormCreate(Sender: TObject);
 begin
+  //Test the working for SSL connection
+  if TestConnectionSSL then
+  begin
+    // shutdown the GUI program
+    Application.terminate;
+    Exit;
+  end;
+
   //Create controler for StringGridTorrentData
   FControlerGridTorrentData := TControlerGridTorrentData.Create(StringGridTorrentData);
 
@@ -1795,4 +1804,23 @@ begin
 
 end;
 
+function TFormTrackerModify.TestConnectionSSL: Boolean;
+begin
+  Result := ParamCount = 1;
+  if Result then
+  begin
+    // Check for the correct parameter.
+    Result := UTF8Trim(ParamStr(1)) = '-TEST_SSL';
+    if Result then
+    begin
+      // Check if there is SLL connection
+      try
+        TFPCustomHTTPClient.SimpleGet('https://raw.githubusercontent.com/gerryferdinandus/bittorrent-tracker-editor/master/.travis.yml');
+      except
+        //No SLL or no internet connection.
+        System.ExitCode := 1;
+      end;
+    end;
+  end;
+end;
 end.

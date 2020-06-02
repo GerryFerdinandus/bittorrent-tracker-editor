@@ -79,6 +79,7 @@ type
     procedure SetUp; override;
     procedure TearDown; override;
   published
+    procedure Test_Parameter_TEST_SSL;
     procedure Test_Tracker_UserInput_All_Different_URL;
     procedure Test_Tracker_UserInput_All_Different_URL_And_SAC;
     procedure Test_Create_Empty_Torrent_And_Then_Filled_It_All_List_Order_Mode;
@@ -146,6 +147,15 @@ end;
 procedure TTestStartUpParameter.Test_Paramater_U7;
 begin
   Test_Paramater_Ux(tloRandomize);
+end;
+
+procedure TTestStartUpParameter.Test_Parameter_TEST_SSL;
+begin
+  // Check if SSL connection is working.
+  FCommandLine := '-TEST_SSL';
+  CallExecutableFile;
+  // Exit code should be zero
+  CheckEquals(0, FExitCode);
 end;
 
 //procedure TTestStartUpParameter.TestParameter(TrackerListOrder: TTrackerListOrder);

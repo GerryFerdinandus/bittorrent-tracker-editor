@@ -148,6 +148,7 @@
     </SearchPaths>
     <Linking>
       <Debugging>
+        <DebugInfoType Value="dsDwarf3"/>
         <UseHeaptrc Value="True"/>
       </Debugging>
     </Linking>
