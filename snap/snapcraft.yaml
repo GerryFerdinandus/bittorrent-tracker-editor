@@ -57,7 +57,7 @@ parts:
       mv enduser/trackereditor $SNAPCRAFT_PART_INSTALL/app
     stage-packages:
       - libcanberra-gtk-module
-      - libssl-dev
+      - openssl
       - libgail-common
       - libatk-adaptor
       - overlay-scrollbar-gtk2
