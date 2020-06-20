@@ -9,18 +9,15 @@ description: |
   - Remove one or more trackers at the same time.
   - Remove all the trackers to create trackerless torrent. DHT torrent
   - Change public/private flag. Warning: This will change the torrent info HASH.
-  - Preset add/remove tracker via add_trackers.txt and remove_trackers.txt files when present in the same folder as the executable file.
+  - Preset add/remove tracker via add_trackers.txt and remove_trackers.txt files.
   - Optional start as console program.
   - Show torrent files content.
-  - Download stable trackers from newTrackon.
-#icon: snap/gui/bittorrent-tracker-editor.png
+  - Download stable trackers from newTrackon or ngosang
 grade: stable
 confinement: strict
-#license: MIT
 
 architectures:
   - build-on: amd64
-  - build-on: i386
   - build-on: arm64
   - build-on: armhf
 
@@ -52,7 +49,7 @@ parts:
     plugin: nil
     override-build: |
       snapcraftctl build
-      lazbuild --build-mode=Release source/project/tracker_editor/trackereditor.lpi
+      lazbuild --build-mode=Release --widgetset=gtk2 source/project/tracker_editor/trackereditor.lpi
       mkdir $SNAPCRAFT_PART_INSTALL/app
       mv enduser/trackereditor $SNAPCRAFT_PART_INSTALL/app
     stage-packages:
