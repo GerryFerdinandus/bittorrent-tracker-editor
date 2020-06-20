@@ -11,9 +11,8 @@ This software works on Windows XP SP3, Windows 7+, macOS and Linux.
 ## Code Status: ##
 Continuous integration|Status| Build operating system
 ------------|---------|---------
-Travis-CI   |[![Build Status](https://travis-ci.org/GerryFerdinandus/bittorrent-tracker-editor.svg?branch=master)](https://travis-ci.org/GerryFerdinandus/bittorrent-tracker-editor)        |Linux and macOS
-AppVeyor      |[![Build status](https://ci.appveyor.com/api/projects/status/yq8u0hptl006my57/branch/master?svg=true)](https://ci.appveyor.com/project/GerryFerdinandus/bittorrent-tracker-editor/branch/master) | Windows Server
-
+Travis-CI   |[![Build Status](https://travis-ci.org/GerryFerdinandus/bittorrent-tracker-editor.svg?branch=master)](https://travis-ci.org/GerryFerdinandus/bittorrent-tracker-editor)        |Linux, macOS and Windows
+Snapcraft-CI   |[![Snap Status](https://build.snapcraft.io/badge/GerryFerdinandus/bittorrent-tracker-editor.svg)](https://build.snapcraft.io/user/GerryFerdinandus/bittorrent-tracker-editor)|Linux
 ---
 
 ## Warning: ##
@@ -36,7 +35,7 @@ There is no backup function in this software. Use it at your own risk. Bittorren
   * Preset add/remove tracker via add\_trackers.txt and remove\_trackers.txt files when present in the same folder as the executable file.
   * Optional start as console program. (See readme.txt inside download)
   * Show torrent files content.
-  * Download stable trackers from newTrackon.
+  * Download stable trackers from newTrackon or ngosang.
 
 ---
 
@@ -50,7 +49,7 @@ There is no backup function in this software. Use it at your own risk. Bittorren
 ## Software history: ##
 
 ### 1.33.0.beta.6 ###
-  * ADD: Direct download support for ngosang via menu ([Issue 35](https://github.com/GerryFerdinandus/bittorrent-tracker-editor/issues/35))
+  * ADD: Direct download support for ngosang via menu.
   * ADD: Extra tabpage 'private torrent'. For issue 31 and 34
   * ADD: Check box 'Skip Announce Check in the URL' ([Issue 31](https://github.com/GerryFerdinandus/bittorrent-tracker-editor/issues/31))
   * ADD: Command parameter '-SAC' -> 'Skip Announce Check' in the URL ([Issue 31](https://github.com/GerryFerdinandus/bittorrent-tracker-editor/issues/31))
