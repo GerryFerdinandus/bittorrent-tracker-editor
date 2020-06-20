@@ -61,11 +61,13 @@ end;
 
 procedure TTestNgosangTrackersList.SetUp;
 begin
+  WriteLn('TTestNgosangTrackersList.SetUp');
   FngosangTrackerList := TngosangTrackerList.Create;
 end;
 
 procedure TTestNgosangTrackersList.TearDown;
 begin
+  WriteLn('TTestNgosangTrackersList.TearDown');
   FngosangTrackerList.Free;
 end;
 

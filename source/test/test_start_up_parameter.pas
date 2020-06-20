@@ -553,6 +553,7 @@ end;
 
 procedure TTestStartUpParameter.SetUp;
 begin
+  WriteLn('TTestStartUpParameter.SetUp');
   //Create all the TStringList items
   FVerifyTrackerResult.TrackerOriginal := TStringList.Create;
   FVerifyTrackerResult.TrackerAdded := TStringList.Create;
@@ -585,6 +586,7 @@ end;
 
 procedure TTestStartUpParameter.TearDown;
 begin
+  WriteLn('TTestStartUpParameter.TearDown');
   //Free the TStringList items
   FVerifyTrackerResult.TrackerOriginal.Free;
   FVerifyTrackerResult.TrackerAdded.Free;

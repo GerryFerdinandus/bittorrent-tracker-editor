@@ -73,11 +73,13 @@ end;
 
 procedure TTestNewTrackon.SetUp;
 begin
+  WriteLn('TTestNewTrackon.SetUp');
   FNewTrackon := TNewTrackon.Create;
 end;
 
 procedure TTestNewTrackon.TearDown;
 begin
+  WriteLn('TTestNewTrackon.TearDown');
   FNewTrackon.Free;
 end;
 
