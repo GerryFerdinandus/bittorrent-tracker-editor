@@ -162,7 +162,7 @@ type
     FFilePresentBanByUserList//There is a file 'remove_trackers.txt' detected
     : boolean;
 
-
+    FFolderForTrackerListLoadAndSave: string;
     FLogFile, FTrackerFile: TextFile;
     FProcessTimeStart, FProcessTimeTotal: TDateTime;
     FControlerGridTorrentData: TControlerGridTorrentData;
@@ -233,6 +233,24 @@ begin
     Application.terminate;
     Exit;
   end;
+
+  {$IFDEF LINUX}
+  // if a ubuntu snap program then save it to other place
+   FFolderForTrackerListLoadAndSave := GetEnvironmentVariable('SNAP_USER_COMMON');
+   if FFolderForTrackerListLoadAndSave = '' then
+   begin
+     // NOT a snap program
+     FFolderForTrackerListLoadAndSave := ExtractFilePath(Application.ExeName);
+   end
+   else
+   begin
+     // A snap program
+     FFolderForTrackerListLoadAndSave := AppendPathDelim(FFolderForTrackerListLoadAndSave);
+   end;
+  {$ELSE}
+  // Save at the same place as the application file
+  FFolderForTrackerListLoadAndSave := ExtractFilePath(Application.ExeName);
+  {$ENDIF}
 
   //Create controler for StringGridTorrentData
   FControlerGridTorrentData := TControlerGridTorrentData.Create(StringGridTorrentData);
@@ -859,8 +877,7 @@ var
   TrackerStr: UTF8String;
 begin
   //Create the tracker text file. The old one will be overwritten
-  AssignFile(FTrackerFile, ExtractFilePath(Application.ExeName) +
-    FILE_NAME_EXPORT_TRACKERS);
+  AssignFile(FTrackerFile, FFolderForTrackerListLoadAndSave + FILE_NAME_EXPORT_TRACKERS);
   ReWrite(FTrackerFile);
   for TrackerStr in FTrackerList.TrackerFinalList do
   begin
@@ -898,7 +915,7 @@ begin
     if FConsoleMode then
     begin
       //Create the log file. The old one will be overwritten
-      AssignFile(FLogFile, ExtractFilePath(Application.ExeName) + FILE_NAME_CONSOLE_LOG);
+      AssignFile(FLogFile, FFolderForTrackerListLoadAndSave + FILE_NAME_CONSOLE_LOG);
       ReWrite(FLogFile);
     end;
 
@@ -1219,7 +1236,7 @@ begin
   //Called at the start of the program. Load a trackers list from file
 
   //if no file is found the use the default tracker list.
-  if not ReadAddTrackerFileFromUser(ExtractFilePath(Application.ExeName) +
+  if not ReadAddTrackerFileFromUser(FFolderForTrackerListLoadAndSave +
     FILE_NAME_ADD_TRACKERS) then
   begin
     MemoNewTrackers.Lines.BeginUpdate;
@@ -1241,7 +1258,7 @@ procedure TFormTrackerModify.LoadTrackersTextFileRemoveTrackers;
 var
   filename: UTF8String;
 begin
-  filename := ExtractFilePath(Application.ExeName) + FILE_NAME_REMOVE_TRACKERS;
+  filename := FFolderForTrackerListLoadAndSave + FILE_NAME_REMOVE_TRACKERS;
   try
     FFilePresentBanByUserList := FileExistsUTF8(fileName);
     if FFilePresentBanByUserList then
