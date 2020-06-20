@@ -1,6 +1,6 @@
 name: bittorrent-tracker-editor
 version: '1.33.0'
-base: core18
+base: core
 summary: Software for add or remove tracker from torrent files.
 description: |
   Features:
@@ -41,6 +41,9 @@ apps:
       - removable-media
 
 build-packages:
+  - fpc
+  - fpc-source
+  - lcl-nogui
   - lazarus
 
 parts:
