@@ -1,6 +1,6 @@
 name: bittorrent-tracker-editor
 version: '1.33.0'
-base: core
+base: core18
 summary: Software for add or remove tracker from torrent files.
 description: |
   Features:
