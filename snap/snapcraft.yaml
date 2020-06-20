@@ -1,0 +1,113 @@
+name: bittorrent-tracker-editor
+version: '1.33.0'
+base: core18
+summary: Software for add or remove tracker from torrent files.
+description: |
+  Features:
+  - Select one torrent file or a folder with torrent files.
+  - Add one or more trackers at the same time.
+  - Remove one or more trackers at the same time.
+  - Remove all the trackers to create trackerless torrent. DHT torrent
+  - Change public/private flag. Warning: This will change the torrent info HASH.
+  - Preset add/remove tracker via add_trackers.txt and remove_trackers.txt files when present in the same folder as the executable file.
+  - Optional start as console program.
+  - Show torrent files content.
+  - Download stable trackers from newTrackon.
+#icon: snap/gui/bittorrent-tracker-editor.png
+grade: stable
+confinement: strict
+#license: MIT
+
+architectures:
+  - build-on: amd64
+  - build-on: i386
+  - build-on: arm64
+  - build-on: armhf
+
+apps:
+  bittorrent-tracker-editor:
+    command: desktop-launch $SNAP/app/trackereditor
+    environment:
+      # Fallback to XWayland if running in a Wayland session.
+      DISABLE_WAYLAND: 1
+    plugs:
+      - desktop
+      - desktop-legacy
+      - x11
+      - unity7
+      - home
+      - network
+      - wayland
+      - removable-media
+
+build-packages:
+  - lazarus
+
+parts:
+  bittorrent-tracker-editor:
+    source: https://github.com/GerryFerdinandus/bittorrent-tracker-editor.git
+    plugin: nil
+    override-build: |
+      snapcraftctl build
+      lazbuild --build-mode=Release source/project/tracker_editor/trackereditor.lpi
+      mkdir $SNAPCRAFT_PART_INSTALL/app
+      mv enduser/trackereditor $SNAPCRAFT_PART_INSTALL/app
+    stage-packages:
+      - libcanberra-gtk-module
+      - libssl-dev
+      - libgail-common
+      - libatk-adaptor
+      - overlay-scrollbar-gtk2
+    after:
+      - desktop-gtk2
+
+  # This part installs the `desktop-launch` script which initialises desktop
+  # features such as fonts, themes and the XDG environment. It also installs
+  # the GTK2 runtime libraries.
+  #
+  # It is copied straight from the snapcraft desktop helpers project. Please
+  # periodically check the source for updates and copy the changes.
+  #    https://github.com/ubuntu/snapcraft-desktop-helpers/blob/master/snapcraft.yaml
+  #
+  desktop-gtk2:
+    source: https://github.com/ubuntu/snapcraft-desktop-helpers.git
+    source-subdir: gtk
+    plugin: make
+    make-parameters: ["FLAVOR=gtk2"]
+    build-packages:
+      - libgtk2.0-dev
+    stage-packages:
+      - libxkbcommon0  # XKB_CONFIG_ROOT
+      - ttf-ubuntu-font-family
+      - dmz-cursor-theme
+      - light-themes
+      - adwaita-icon-theme
+      - gnome-themes-standard
+      - shared-mime-info
+      - libgtk2.0-0
+      - libgdk-pixbuf2.0-0
+      - libglib2.0-bin
+      - libgtk2.0-bin
+      - unity-gtk2-module
+      - libappindicator1
+      - locales-all
+      - ibus-gtk
+      - libibus-1.0-5
+
+plugs:
+  gtk-2-engines:
+    interface: content
+    target: $SNAP/lib/gtk-2.0
+    default-provider: gtk2-common-themes
+  gtk-2-themes:
+    interface: content
+    target: $SNAP/data-dir/themes
+    default-provider: gtk-common-themes
+  icon-themes:
+    interface: content
+    target: $SNAP/data-dir/icons
+    default-provider: gtk-common-themes
+  sound-themes:
+    interface: content
+    target: $SNAP/data-dir/sounds
+    default-provider: gtk-common-themes
