@@ -11,7 +11,7 @@ This software works on Windows XP SP3, Windows 7+, macOS and Linux.
 ## Code Status: ##
 Continuous integration|Status| Build operating system
 ------------|---------|---------
-Travis-CI   |[![Build Status](https://travis-ci.org/GerryFerdinandus/bittorrent-tracker-editor.svg?branch=master)](https://travis-ci.org/GerryFerdinandus/bittorrent-tracker-editor)        |Linux, macOS and Windows
+Travis-CI   |[![Build Status](https://travis-ci.com/GerryFerdinandus/bittorrent-tracker-editor.svg?branch=master)](https://travis-ci.org/GerryFerdinandus/bittorrent-tracker-editor)        |Linux, macOS and Windows
 Snapcraft-CI   |[![Snap Status](https://build.snapcraft.io/badge/GerryFerdinandus/bittorrent-tracker-editor.svg)](https://build.snapcraft.io/user/GerryFerdinandus/bittorrent-tracker-editor)|Linux
 ---
 
