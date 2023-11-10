@@ -100,7 +100,7 @@ type
     procedure FormDestroy(Sender: TObject);
 
     //Drag and drop '*.torrent' files/directory or 'tracker.txt'
-    procedure FormDropFiles(Sender: TObject; const FileNames: array of UTF8String);
+    procedure FormDropFiles(Sender: TObject; const FileNames: array of utf8string);
 
     //At start of the program the form will be show/hide
     procedure FormShow(Sender: TObject);
@@ -166,10 +166,10 @@ type
     FLogFile, FTrackerFile: TextFile;
     FProcessTimeStart, FProcessTimeTotal: TDateTime;
     FControlerGridTorrentData: TControlerGridTorrentData;
-    function CheckForAnnounce(const TrackerURL: UTF8String): boolean;
+    function CheckForAnnounce(const TrackerURL: utf8string): boolean;
     procedure AppendTrackersToMemoNewTrackers(TrackerList: TStringList);
     procedure ShowUserErrorMessage(const ErrorText: string; const FormText: string = '');
-    function TrackerWithURLAndAnnounce(const TrackerURL: UTF8String): boolean;
+    function TrackerWithURLAndAnnounce(const TrackerURL: utf8string): boolean;
     procedure UpdateTorrent;
     procedure ShowHourGlassCursor(HourGlass: boolean);
     procedure ViewUpdateBegin;
@@ -182,13 +182,13 @@ type
     procedure UpdateViewRemoveTracker;
     function ReloadAllTorrentAndRefreshView: boolean;
     function AddTorrentFileList(TorrentFileNameStringList: TStringList): boolean;
-    function ReadAddTrackerFileFromUser(const FileName: UTF8String): boolean;
-    function LoadTorrentViaDir(const Dir: UTF8String): boolean;
-    function DecodeTorrentFile(const FileName: UTF8String): boolean;
+    function ReadAddTrackerFileFromUser(const FileName: utf8string): boolean;
+    function LoadTorrentViaDir(const Dir: utf8string): boolean;
+    function DecodeTorrentFile(const FileName: utf8string): boolean;
     procedure UpdateTrackerInsideFileList;
     procedure UpdateTorrentTrackerList;
     procedure ShowTrackerInsideFileList;
-    function TestConnectionSSL: Boolean;
+    function TestConnectionSSL: boolean;
 
     procedure CheckedOnOffAllTrackers(Value: boolean);
     function CopyUserInputNewTrackersToList(Temporary_SkipAnnounceCheck: boolean =
@@ -204,10 +204,10 @@ var
 
 implementation
 
-uses fphttpclient, LCLIntf, lazutf8, LazFileUtils, trackerlist_online;
+uses fphttpclient, LCLIntf, lazutf8, LazFileUtils, trackerlist_online, LCLVersion;
 
 const
-  RECOMENDED_TRACKERS: array[0..2] of UTF8String =
+  RECOMENDED_TRACKERS: array[0..2] of utf8string =
     (
     'udp://tracker.coppersurfer.tk:6969/announce',
     'udp://tracker.opentrackr.org:1337/announce',
@@ -215,7 +215,8 @@ const
     );
 
   //program name and version (http://semver.org/)
-  FORM_CAPTION = 'Bittorrent tracker editor (1.33.0.beta.6)';
+  FORM_CAPTION = 'Bittorrent tracker editor (1.33.0.beta.6/LCL ' +
+    lcl_version + '/FPC ' + {$I %FPCVERSION%} + ')';
 
   GROUPBOX_PRESENT_TRACKERS_CAPTION =
     'Present trackers in all torrent files. Select the one that you want to keep. And added to all torrent files.';
@@ -471,7 +472,7 @@ end;
 
 procedure TFormTrackerModify.AppendTrackersToMemoNewTrackers(TrackerList: TStringList);
 var
-  tracker: UTF8String;
+  tracker: utf8string;
 begin
   //Append all the trackers to MemoNewTrackers
   MemoNewTrackers.Lines.BeginUpdate;
@@ -521,7 +522,7 @@ begin
   end;
 end;
 
-function TFormTrackerModify.CheckForAnnounce(const TrackerURL: UTF8String): boolean;
+function TFormTrackerModify.CheckForAnnounce(const TrackerURL: utf8string): boolean;
 begin
   Result := (not FTrackerList.SkipAnnounceCheck) and
     (not WebTorrentTrackerURL(TrackerURL)) and (not FDragAndDropStartUp);
@@ -547,7 +548,7 @@ begin
 end;
 
 function TFormTrackerModify.TrackerWithURLAndAnnounce(
-  const TrackerURL: UTF8String): boolean;
+  const TrackerURL: utf8string): boolean;
 begin
   //Validate the begin of the URL
   Result := ValidTrackerURL(TrackerURL);
@@ -874,7 +875,7 @@ end;
 
 procedure TFormTrackerModify.SaveTrackerFinalListToFile;
 var
-  TrackerStr: UTF8String;
+  TrackerStr: utf8string;
 begin
   //Create the tracker text file. The old one will be overwritten
   AssignFile(FTrackerFile, FFolderForTrackerListLoadAndSave + FILE_NAME_EXPORT_TRACKERS);
@@ -894,7 +895,7 @@ end;
 
 procedure TFormTrackerModify.ConsoleModeOrDragAndDropStartupMode;
 var
-  FileNameOrDirStr: UTF8String;
+  FileNameOrDirStr: utf8string;
   StringList: TStringList;
   MustExitWithErrorCode: boolean;
 begin
@@ -1030,7 +1031,7 @@ end;
 
 procedure TFormTrackerModify.UpdateViewRemoveTracker;
 var
-  TrackerStr: UTF8String;
+  TrackerStr: utf8string;
   i: integer;
 begin
   {
@@ -1083,7 +1084,7 @@ end;
 
 
 
-function TFormTrackerModify.DecodeTorrentFile(const FileName: UTF8String): boolean;
+function TFormTrackerModify.DecodeTorrentFile(const FileName: utf8string): boolean;
 begin
   //Called when user add torrent files
   //False if something is wrong with decoding torrent.
@@ -1097,7 +1098,7 @@ end;
 
 procedure TFormTrackerModify.UpdateTorrentTrackerList;
 var
-  TrackerStr: UTF8String;
+  TrackerStr: utf8string;
 begin
   //Copy the trackers found in one torrent file to FTrackerList.TrackerFromInsideTorrentFilesList
   for TrackerStr in FDecodePresentTorrent.TrackerList do
@@ -1131,7 +1132,7 @@ end;
 function TFormTrackerModify.CopyUserInputNewTrackersToList(
   Temporary_SkipAnnounceCheck: boolean): boolean;
 var
-  TrackerStrLoop, TrackerStr, ErrorStr: UTF8String;
+  TrackerStrLoop, TrackerStr, ErrorStr: utf8string;
 begin
   {
    Called after 'update torrent' is selected.
@@ -1256,7 +1257,7 @@ end;
 
 procedure TFormTrackerModify.LoadTrackersTextFileRemoveTrackers;
 var
-  filename: UTF8String;
+  filename: utf8string;
 begin
   filename := FFolderForTrackerListLoadAndSave + FILE_NAME_REMOVE_TRACKERS;
   try
@@ -1350,7 +1351,7 @@ end;
 
 
 function TFormTrackerModify.ReadAddTrackerFileFromUser(
-  const FileName: UTF8String): boolean;
+  const FileName: utf8string): boolean;
 var
   TrackerFileList: TStringList;
 begin
@@ -1436,7 +1437,7 @@ end;
 
 
 
-function TFormTrackerModify.LoadTorrentViaDir(const Dir: UTF8String): boolean;
+function TFormTrackerModify.LoadTorrentViaDir(const Dir: utf8string): boolean;
 var
   TorrentFilesNameStringList: TStringList;
 begin
@@ -1454,7 +1455,7 @@ end;
 
 
 procedure TFormTrackerModify.FormDropFiles(Sender: TObject;
-  const FileNames: array of UTF8String);
+  const FileNames: array of utf8string);
 var
   Count: integer;
   TorrentFileNameStringList, //for the torrent files
@@ -1466,7 +1467,7 @@ var
   //ViewUpdateBegin must be called one time. Keep track of it.
   ViewUpdateBeginActiveOneTimeOnly: boolean;
 
-  FileNameOrDirStr: UTF8String;
+  FileNameOrDirStr: utf8string;
 begin
   //Drag and drop a folder or files?
 
@@ -1598,7 +1599,7 @@ function TFormTrackerModify.AddTorrentFileList(TorrentFileNameStringList:
   //This called from 'add folder' or 'drag and drop'
 var
   Count: integer;
-  TorrentFileNameStr: UTF8String;
+  TorrentFileNameStr: utf8string;
 begin
 { Every torrent file must be decoded for the tracker list inside.
   This torrent tracker list is add to FTrackerList.TrackerFromInsideTorrentFilesList.
@@ -1639,7 +1640,7 @@ end;
 
 function TFormTrackerModify.ReloadAllTorrentAndRefreshView: boolean;
 var
-  TorrentFileStr: UTF8String;
+  TorrentFileStr: utf8string;
 begin
 {
   This is called after updating the torrent.
@@ -1703,7 +1704,7 @@ end;
 procedure TFormTrackerModify.ViewUpdateOneTorrentFileDecoded;
 var
   RowIndex: integer;
-  TorrentFileNameStr, PrivateStr: UTF8String;
+  TorrentFileNameStr, PrivateStr: utf8string;
   DateTimeStr: string;
 begin
   //Called after loading torrent file.
@@ -1821,7 +1822,7 @@ begin
 
 end;
 
-function TFormTrackerModify.TestConnectionSSL: Boolean;
+function TFormTrackerModify.TestConnectionSSL: boolean;
 begin
   Result := ParamCount = 1;
   if Result then
@@ -1832,7 +1833,8 @@ begin
     begin
       // Check if there is SLL connection
       try
-        TFPCustomHTTPClient.SimpleGet('https://raw.githubusercontent.com/gerryferdinandus/bittorrent-tracker-editor/master/.travis.yml');
+        TFPCustomHTTPClient.SimpleGet(
+          'https://raw.githubusercontent.com/gerryferdinandus/bittorrent-tracker-editor/master/README.md');
       except
         //No SLL or no internet connection.
         System.ExitCode := 1;
@@ -1840,4 +1842,5 @@ begin
     end;
   end;
 end;
+
 end.
