@@ -106,6 +106,7 @@ constructor TBEncoded.Create(Stream: TStream);
   var
     X: char;
   begin
+    Result := '';
     // loop until we come across it
     X := ' ';
     repeat
