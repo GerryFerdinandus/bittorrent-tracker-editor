@@ -1,0 +1,128 @@
+name: CI/CD with Lazarus IDE on multiple operating systems.
+
+permissions:
+  contents: write
+
+on:
+    push:
+    pull_request:
+    workflow_dispatch:
+    # Automatic cron build every 6 months to check if everything still works.
+    schedule:
+    - cron: "0 0 1 1/6 *"
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      # Set fail-fast to false to ensure that feedback is delivered for all matrix combinations. Consider changing this to true when your workflow is stable.
+      fail-fast: false
+
+      # Set up an array to perform the following three build configurations.
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        include:
+          - os: windows-latest
+            LAZBUILD_WITH_PATH: c:/lazarus/lazbuild
+            RELEASE_ZIP_FILE: trackereditor_windows_amd64.zip
+            LAZ_OPT:
+          - os: ubuntu-latest
+            LAZBUILD_WITH_PATH: lazbuild
+            RELEASE_ZIP_FILE: trackereditor_linux_amd64.zip
+            LAZ_OPT:
+          - os: macos-latest
+            LAZBUILD_WITH_PATH: /Applications/Lazarus/lazbuild
+            RELEASE_ZIP_FILE: trackereditor_UNSIGNED_macOS_Intel_64.zip
+            LAZ_OPT: --widgetset=cocoa
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: show LAZBUILD_WITH_PATH (deprecated)
+      if: ${{ matrix.LAZBUILD_WITH_PATH }}
+      shell: bash
+      run: echo ${{ matrix.LAZBUILD_WITH_PATH }}
+
+    - name: Install Lazarus IDE
+      run:   |
+           if [ "$RUNNER_OS" == "Linux" ]; then
+                sudo apt install -y lazarus zip
+           elif [ "$RUNNER_OS" == "Windows" ]; then
+                choco install lazarus zip
+                # https://wiki.overbyte.eu/wiki/index.php/ICS_Download#Download_OpenSSL_Binaries
+                curl -L -O --output-dir enduser https://github.com/GerryFerdinandus/Renesas-RX-GCC/releases/latest/download/libssl-3-x64.dll
+                curl -L -O --output-dir enduser https://github.com/GerryFerdinandus/Renesas-RX-GCC/releases/latest/download/libcrypto-3-x64.dll
+           elif [ "$RUNNER_OS" == "macOS" ]; then
+                brew install --cask lazarus
+           else
+                echo "$RUNNER_OS not supported"
+                exit 1
+           fi
+      shell: bash
+
+    - name: Build Release version
+      # Build trackereditor project (Release mode)
+      run: ${{ matrix.LAZBUILD_WITH_PATH }} --build-mode=Release ${{ matrix.LAZ_OPT }} source/project/tracker_editor/trackereditor.lpi
+      shell: bash
+
+    - name: Build Unit Test
+      # Build unit test project (Debug mode)
+      run: ${{ matrix.LAZBUILD_WITH_PATH }} --build-mode=Debug ${{ matrix.LAZ_OPT }} source/project/unit_test/tracker_editor_test.lpi
+      shell: bash
+
+    - name: Run Unit Test on Windows
+      if: matrix.os == 'windows-latest'
+      # Also remove all the extra file created by test.
+      # We do not what it in the ZIP release files.
+      # Undo all changes made by testing.
+      run:  |
+        set -e
+        enduser/test_trackereditor -a --format=plain
+        set +e
+
+        # remove file created by unit test
+        rm -f enduser/console_log.txt
+        rm -f enduser/export_trackers.txt
+        git reset --hard
+      shell: bash
+
+    - name: Create a zip file for Linux release.
+      if: matrix.os == 'ubuntu-latest'
+      run: zip -j ${{ matrix.RELEASE_ZIP_FILE }} enduser/*.txt enduser/trackereditor
+      shell: bash
+
+    - name: Create a zip file for Windows release.
+      if: matrix.os == 'windows-latest'
+      run: |
+        zip -j ${{ matrix.RELEASE_ZIP_FILE }} enduser/*.txt enduser/trackereditor.exe enduser/*.dll
+      shell: bash
+
+    - name: Create a zip file for macOS .app release. (unsigned macOS app)
+      if: matrix.os == 'macos-latest'
+      run: |
+        # copy everything into enduser/macos/app folder
+        #
+        # Move the executable to the application bundle
+        mv enduser/trackereditor enduser/macos/app/trackereditor.app/Contents/MacOS
+        # Move the trackers list to application bundle
+        mv enduser/add_trackers.txt enduser/macos/app/trackereditor.app/Contents/MacOS
+        mv enduser/remove_trackers.txt enduser/macos/app/trackereditor.app/Contents/MacOS
+        # move all the *.txt file
+        mv enduser/*.txt enduser/macos/app
+        # zip only the app folder with extra text file.
+        /usr/bin/ditto -c -k "enduser/macos/app" "${{ matrix.RELEASE_ZIP_FILE }}"
+      shell: bash
+
+    - name: Upload Artifact
+      uses: actions/upload-artifact@v3
+      with:
+        path: ${{ matrix.RELEASE_ZIP_FILE }}
+        if-no-files-found: error # 'warn'. error
+
+    - name: Zip file release to end user
+      uses: softprops/action-gh-release@v1
+      if: startsWith(github.ref, 'refs/tags/')
+      with:
+        files: |
+          *.zip
