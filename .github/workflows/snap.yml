@@ -1,0 +1,16 @@
+name: Test build Ubuntu snap on Linux amd64
+
+on:
+    push:
+    pull_request:
+    workflow_dispatch:
+    # Automatic cron build every 6 months to check if everything still works.
+    schedule:
+    - cron: "0 0 1 1/6 *"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - uses: snapcore/action-build@v1
