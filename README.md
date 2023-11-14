@@ -1,18 +1,17 @@
 **bittorrent-tracker-editor** will add/remove bittorrent tracker from the torrent file(s).
-This software works on Windows XP SP3, Windows 7+, macOS and Linux.
+This software works on Windows 7+, macOS and Linux.
 
 ---
 
 ## Software latest release: ##
 [![GitHub Latest release](https://img.shields.io/github/release/GerryFerdinandus/bittorrent-tracker-editor/all.svg)](https://github.com/GerryFerdinandus/bittorrent-tracker-editor/releases)
-
 ---
 
-## Code Status: ##
-Continuous integration|Status| Build operating system
-------------|---------|---------
-Travis-CI   |[![Build Status](https://travis-ci.com/GerryFerdinandus/bittorrent-tracker-editor.svg?branch=master)](https://travis-ci.com/GerryFerdinandus/bittorrent-tracker-editor)        |Linux, macOS and Windows
-Snapcraft-CI   |[![Snap Status](https://build.snapcraft.io/badge/GerryFerdinandus/bittorrent-tracker-editor.svg)](https://build.snapcraft.io/user/GerryFerdinandus/bittorrent-tracker-editor)|Linux
+## Build Status: ##
+Continuous integration|Status| Generate an executable file for the operating system| Download link
+------------|---------|---------|----------
+GitHub Actions |[![GitHub Workflow Status (with event)](https://img.shields.io/github/actions/workflow/status/gerryferdinandus/bittorrent-tracker-editor/cicd.yml)](https://github.com/GerryFerdinandus/bittorrent-tracker-editor/actions/workflows/cicd.yml)|Linux(amd64), macOS(Intel processors) and Windows|[![GitHub Latest release](https://img.shields.io/github/release/GerryFerdinandus/bittorrent-tracker-editor/all.svg)](https://github.com/GerryFerdinandus/bittorrent-tracker-editor/releases)
+GitHub Actions (Ubuntu snap) |[![GitHub Workflow Status (with event)](https://img.shields.io/github/actions/workflow/status/gerryferdinandus/bittorrent-tracker-editor/snap.yml)](https://github.com/GerryFerdinandus/bittorrent-tracker-editor/actions/workflows/snap.yml)|Linux (amd64, arm64 and armhf)|[![Get it from the Snap Store](https://snapcraft.io/static/images/badges/en/snap-store-white.svg)](https://snapcraft.io/bittorrent-tracker-editor)
 ---
 
 ## Warning: ##
