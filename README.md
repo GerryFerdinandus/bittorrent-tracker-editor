@@ -5,6 +5,7 @@ This software works on Windows 7+, macOS and Linux.
 
 ## Software latest release: ##
 [![GitHub Latest release](https://img.shields.io/github/release/GerryFerdinandus/bittorrent-tracker-editor/all.svg)](https://github.com/GerryFerdinandus/bittorrent-tracker-editor/releases)
+[![GitHub commits since latest release (by SemVer including pre-releases)](https://img.shields.io/github/commits-since/gerryferdinandus/bittorrent-tracker-editor/latest)](https://github.com/GerryFerdinandus/bittorrent-tracker-editor/commits/main)
 ---
 
 ## Build Status: ##
