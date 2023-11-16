@@ -43,7 +43,5 @@
   <string>iconfile</string>
   <key>NSHighResolutionCapable</key>
   <true/>
-  <key>NSRequiresAquaSystemAppearance</key>
-  <string>YES</string>
 </dict>
 </plist>
