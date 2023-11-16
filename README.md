@@ -113,13 +113,13 @@ There is no backup function in this software. Use it at your own risk. Bittorren
 
 ---
 
-![](pictures/trackereditor.png?raw=true "Trackers List")
+![](https://github.com/GerryFerdinandus/bittorrent-tracker-editor/releases/download/V1.32.0/trackereditor_list_windows.png "Trackers List")
 
 This screen shot show the program, after a folder is selected with torrent files inside. The normal procedure is to deselect the trackers that are no longer working. Optionally add your own trackers. And select the 'Update torrent' menu.
 
 ---
 
-![](pictures/filestrackersinfo.png?raw=true "Files/Trackers/Info")
+![](https://github.com/GerryFerdinandus/bittorrent-tracker-editor/releases/download/V1.32.0/trackereditor_info_windows.png "Files/Trackers/Info")
 
 ---
 
