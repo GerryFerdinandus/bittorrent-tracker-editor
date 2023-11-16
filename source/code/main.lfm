@@ -78,7 +78,6 @@ object FormTrackerModify: TFormTrackerModify
             Top = 0
             Width = 1165
             Align = alClient
-            AlternateColor = clWhite
             ColCount = 0
             FixedCols = 0
             FixedRows = 0

@@ -13,7 +13,7 @@ uses
 
 type
 
-  TDefaultChecked = function(const TrackerURL: UTF8String): boolean of object;
+  TDefaultChecked = function(const TrackerURL: utf8string): boolean of object;
 
   { TControlerTrackerListOnline }
 
@@ -35,7 +35,7 @@ type
     procedure SetChecked(index: integer; AValue: boolean);
     procedure ShowTrackerStatus(Visible: boolean);
     procedure AppendRow(Checked: boolean; Status: TTrackerListOnlineStatus;
-      const TrackerURL: UTF8String);
+      const TrackerURL: utf8string);
   public
     property Checked[index: integer]: boolean read GetChecked write SetChecked;
     function TrackerURL(index: integer): string;
@@ -65,6 +65,17 @@ uses Graphics;
 { TControlerTrackerListOnline }
 
 
+function IsDarkTheme: boolean;
+  // by "Hansaplast" & "Alextp" from Lazarus forum
+  function _Level(C: TColor): double;
+  begin
+    Result := Red(C) * 0.3 + Green(C) * 0.59 + Blue(C) * 0.11;
+  end;
+
+begin
+  Result := _Level(ColorToRGB(clWindow)) < _Level(ColorToRGB(clWindowText));
+end;
+
 function TControlerTrackerListOnline.DownloadTrackers_All_Live_Stable: boolean;
 begin
   Result := FNewTrackon.Download_All_Live_Stable;
@@ -88,7 +99,11 @@ begin
   FStringGridTorrentURL := StringGridTorrentURL;
   FStringGridTorrentURL.RowCount := 1;
   FStringGridTorrentURL.FixedRows := 1;
-  FStringGridTorrentURL.AlternateColor := clCream;
+
+  if not IsDarkTheme then
+  begin // The dark theme for Linux and macOS cannot use AlternateColor. Text will be invisible.
+    FStringGridTorrentURL.AlternateColor := clCream;
+  end;
 
   FSelect := FStringGridTorrentURL.Columns.Add;
   FSelect.Title.Caption := 'Keep';
@@ -144,7 +159,7 @@ end;
 
 
 procedure TControlerTrackerListOnline.AppendRow(Checked: boolean;
-  Status: TTrackerListOnlineStatus; const TrackerURL: UTF8String);
+  Status: TTrackerListOnlineStatus; const TrackerURL: utf8string);
 var
   CheckedStr, StatusStr: string;
 begin
