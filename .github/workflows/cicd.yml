@@ -33,16 +33,11 @@ jobs:
             LAZ_OPT:
           - os: macos-latest
             LAZBUILD_WITH_PATH: /Applications/Lazarus/lazbuild
-            RELEASE_ZIP_FILE: trackereditor_UNSIGNED_macOS_Intel_64.zip
+            RELEASE_ZIP_FILE: trackereditor_macOS_amd64.zip
             LAZ_OPT: --widgetset=cocoa
 
     steps:
     - uses: actions/checkout@v4
-
-    - name: show LAZBUILD_WITH_PATH (deprecated)
-      if: ${{ matrix.LAZBUILD_WITH_PATH }}
-      shell: bash
-      run: echo ${{ matrix.LAZBUILD_WITH_PATH }}
 
     - name: Install Lazarus IDE
       run:   |
@@ -51,8 +46,8 @@ jobs:
            elif [ "$RUNNER_OS" == "Windows" ]; then
                 choco install lazarus zip
                 # https://wiki.overbyte.eu/wiki/index.php/ICS_Download#Download_OpenSSL_Binaries
-                curl -L -O --output-dir enduser https://github.com/GerryFerdinandus/Renesas-RX-GCC/releases/latest/download/libssl-3-x64.dll
-                curl -L -O --output-dir enduser https://github.com/GerryFerdinandus/Renesas-RX-GCC/releases/latest/download/libcrypto-3-x64.dll
+                curl -L -O --output-dir enduser https://github.com/GerryFerdinandus/bittorrent-tracker-editor/releases/download/V1.32.0/libssl-3-x64.dll
+                curl -L -O --output-dir enduser https://github.com/GerryFerdinandus/bittorrent-tracker-editor/releases/download/V1.32.0/libcrypto-3-x64.dll
            elif [ "$RUNNER_OS" == "macOS" ]; then
                 brew install --cask lazarus
            else
@@ -98,19 +93,95 @@ jobs:
         zip -j ${{ matrix.RELEASE_ZIP_FILE }} enduser/*.txt enduser/trackereditor.exe enduser/*.dll
       shell: bash
 
-    - name: Create a zip file for macOS .app release. (unsigned macOS app)
+    - name: Move file into macOS .app
       if: matrix.os == 'macos-latest'
       run: |
         # copy everything into enduser/macos/app folder
         #
         # Move the executable to the application bundle
         mv enduser/trackereditor enduser/macos/app/trackereditor.app/Contents/MacOS
+
         # Move the trackers list to application bundle
         mv enduser/add_trackers.txt enduser/macos/app/trackereditor.app/Contents/MacOS
         mv enduser/remove_trackers.txt enduser/macos/app/trackereditor.app/Contents/MacOS
+
         # move all the *.txt file
         mv enduser/*.txt enduser/macos/app
+
         # zip only the app folder with extra text file.
+        # /usr/bin/ditto -c -k "enduser/macos/app" "${{ matrix.RELEASE_ZIP_FILE }}"
+      shell: bash
+
+    - name: Codesign macOS app bundle
+      # This macOS Codesign step is copied from:
+      # https://federicoterzi.com/blog/automatic-code-signing-and-notarization-for-macos-apps-using-github-actions/
+      # This is a bit different from the previous version for Travis-CI build system to build bittorrent tracker editor
+      if: matrix.os == 'macos-latest'
+      env:
+        MACOS_CERTIFICATE: ${{ secrets.PROD_MACOS_CERTIFICATE }}
+        MACOS_CERTIFICATE_PWD: ${{ secrets.PROD_MACOS_CERTIFICATE_PWD }}
+        MACOS_CERTIFICATE_NAME: ${{ secrets.PROD_MACOS_CERTIFICATE_NAME }}
+        MACOS_CI_KEYCHAIN_PWD: ${{ secrets.PROD_MACOS_CI_KEYCHAIN_PWD }}
+      run: |
+        # Turn our base64-encoded certificate back to a regular .p12 file
+        echo $MACOS_CERTIFICATE | base64 --decode > certificate.p12
+
+        # We need to create a new keychain, otherwise using the certificate will prompt
+        # with a UI dialog asking for the certificate password, which we can't
+        # use in a headless CI environment
+
+        security create-keychain -p "$MACOS_CI_KEYCHAIN_PWD" build.keychain
+        security default-keychain -s build.keychain
+        security unlock-keychain -p "$MACOS_CI_KEYCHAIN_PWD" build.keychain
+        security import certificate.p12 -k build.keychain -P "$MACOS_CERTIFICATE_PWD" -T /usr/bin/codesign
+        security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$MACOS_CI_KEYCHAIN_PWD" build.keychain
+
+        # We finally codesign our app bundle, specifying the Hardened runtime option.
+        #/usr/bin/codesign --force -s "$MACOS_CERTIFICATE_NAME" --options runtime enduser/macos/app/trackereditor.app -v
+
+        # sign the app. -sign is the developer cetificate ID
+        # entitlements does not work at this moment
+        #codesign --timestamp --entitlements enduser/macos/entitlements.plist --force --options runtime --deep --sign $CERTIFICATE_ID $FILE_APP
+
+        # Please note: this is the same code version used in Travis-CI
+        /usr/bin/codesign --timestamp --force --options runtime --deep --sign "$MACOS_CERTIFICATE_NAME" enduser/macos/app/trackereditor.app
+      shell: bash
+
+    - name: Notarize macOS app bundle
+      if: matrix.os == 'macos-latest'
+      env:
+        PROD_MACOS_NOTARIZATION_APPLE_ID: ${{ secrets.PROD_MACOS_NOTARIZATION_APPLE_ID }}
+        PROD_MACOS_NOTARIZATION_TEAM_ID: ${{ secrets.PROD_MACOS_NOTARIZATION_TEAM_ID }}
+        PROD_MACOS_NOTARIZATION_PWD: ${{ secrets.PROD_MACOS_NOTARIZATION_PWD }}
+      run: |
+        # Store the notarization credentials so that we can prevent a UI password dialog
+        # from blocking the CI
+
+        echo "Create keychain profile"
+        xcrun notarytool store-credentials "notarytool-profile" --apple-id "$PROD_MACOS_NOTARIZATION_APPLE_ID" --team-id "$PROD_MACOS_NOTARIZATION_TEAM_ID" --password "$PROD_MACOS_NOTARIZATION_PWD"
+
+        # We can't notarize an app bundle directly, but we need to compress it as an archive.
+        # Therefore, we create a zip file containing our app bundle, so that we can send it to the
+        # notarization service
+
+        echo "Creating temp notarization archive"
+        ditto -c -k --keepParent "enduser/macos/app/trackereditor.app" "notarization.zip"
+
+        # Here we send the notarization request to the Apple's Notarization service, waiting for the result.
+        # This typically takes a few seconds inside a CI environment, but it might take more depending on the App
+        # characteristics. Visit the Notarization docs for more information and strategies on how to optimize it if
+        # you're curious
+
+        echo "Notarize app"
+        xcrun notarytool submit "notarization.zip" --keychain-profile "notarytool-profile" --wait
+
+        # Finally, we need to "attach the staple" to our executable, which will allow our app to be
+        # validated by macOS even when an internet connection is not available.
+        echo "Attach staple"
+        xcrun stapler staple "enduser/macos/app/trackereditor.app"
+
+        # zip only the app folder with extra text file.
+        echo "Zip file"
         /usr/bin/ditto -c -k "enduser/macos/app" "${{ matrix.RELEASE_ZIP_FILE }}"
       shell: bash
 
@@ -118,7 +189,7 @@ jobs:
       uses: actions/upload-artifact@v3
       with:
         path: ${{ matrix.RELEASE_ZIP_FILE }}
-        if-no-files-found: error # 'warn'. error
+        if-no-files-found: error
 
     - name: Zip file release to end user
       uses: softprops/action-gh-release@v1
