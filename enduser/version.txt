@@ -10,7 +10,9 @@ ADD: Command parameter '-SAC' -> 'Skip Announce Check' in the URL (Issue 31)
 ADD: Support 'Info Source' tag for private trackers (issue 34)
 ADD: Command parameter '-SOURCE' -> info Source tag for private trackers. See readme.txt file (issue 34)
 ADD: Direct download support for ngosang via menu (Issue 35)
-Compiler Lazarus: v2.04
+ADD: Support for OpenSSL 3
+FIX: Handle dark theme on MacOS. (Issue 49)
+Compiler Lazarus: v2.26
 
 ------ Version 1.32
 ADD: Add more options for updating the torrent tracker list. (Issue 8)

@@ -215,7 +215,7 @@ const
     );
 
   //program name and version (http://semver.org/)
-  FORM_CAPTION = 'Bittorrent tracker editor (1.33.0.beta.6/LCL ' +
+  FORM_CAPTION = 'Bittorrent tracker editor (1.33.0/LCL ' +
     lcl_version + '/FPC ' + {$I %FPCVERSION%} + ')';
 
   GROUPBOX_PRESENT_TRACKERS_CAPTION =
