@@ -180,8 +180,11 @@ jobs:
         echo "Attach staple"
         xcrun stapler staple "enduser/macos/app/trackereditor.app"
 
+        # Remove notarization.zip, otherwise it will also be 'released' to the end user
+        rm -f "notarization.zip"
+
         # zip only the app folder with extra text file.
-        echo "Zip file"
+        echo "Zip macOS app file"
         /usr/bin/ditto -c -k "enduser/macos/app" "${{ matrix.RELEASE_ZIP_FILE }}"
       shell: bash
 
