@@ -42,7 +42,7 @@ jobs:
     - name: Install Lazarus IDE
       run:   |
            if [ "$RUNNER_OS" == "Linux" ]; then
-                sudo apt install -y lazarus zip
+                sudo apt install -y lazarus zip xvfb
            elif [ "$RUNNER_OS" == "Windows" ]; then
                 choco install lazarus zip
                 # https://wiki.overbyte.eu/wiki/index.php/ICS_Download#Download_OpenSSL_Binaries
@@ -61,7 +61,8 @@ jobs:
       run: ${{ matrix.LAZBUILD_WITH_PATH }} --build-mode=Release ${{ matrix.LAZ_OPT }} source/project/tracker_editor/trackereditor.lpi
       shell: bash
 
-    - name: Build Unit Test
+    - name: Build Unit Test on Windows
+      if: matrix.os == 'windows-latest'
       # Build unit test project (Debug mode)
       run: ${{ matrix.LAZBUILD_WITH_PATH }} --build-mode=Debug ${{ matrix.LAZ_OPT }} source/project/unit_test/tracker_editor_test.lpi
       shell: bash
@@ -81,6 +82,10 @@ jobs:
         rm -f enduser/export_trackers.txt
         git reset --hard
       shell: bash
+
+    - name: Test OpenSSL works on Linux CI
+      if: matrix.os == 'ubuntu-latest'
+      run: xvfb-run --auto-servernum enduser/trackereditor -TEST_SSL
 
     - name: Create a zip file for Linux release.
       if: matrix.os == 'ubuntu-latest'
