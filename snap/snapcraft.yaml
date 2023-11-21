@@ -23,7 +23,7 @@ architectures:
 
 apps:
   bittorrent-tracker-editor:
-    command: app/trackereditor
+    command: app/trackereditor -disableaccurateframe
     environment:
       # Fallback to XWayland if running in a Wayland session.
       DISABLE_WAYLAND: 1
