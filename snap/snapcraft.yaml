@@ -1,7 +1,7 @@
 name: bittorrent-tracker-editor
 version: '1.33.0'
 base: core22
-summary: Software for add or remove tracker from torrent files.
+summary: Add or remove tracker from torrent files.
 description: |
   Features:
   - Select one torrent file or a folder with torrent files.
@@ -9,8 +9,6 @@ description: |
   - Remove one or more trackers at the same time.
   - Remove all the trackers to create trackerless torrent. DHT torrent
   - Change public/private flag. Warning: This will change the torrent info HASH.
-  - Preset add/remove tracker via add_trackers.txt and remove_trackers.txt files.
-  - Optional start as console program.
   - Show torrent files content.
   - Download stable trackers from newTrackon or ngosang
 grade: stable
@@ -19,29 +17,20 @@ confinement: strict
 architectures:
   - build-on: amd64
   - build-on: arm64
-  - build-on: armhf
 
 apps:
   bittorrent-tracker-editor:
-    command: app/trackereditor -disableaccurateframe
+    extensions:
+      - kde-neon
+    command: app/trackereditor
     environment:
       # Fallback to XWayland if running in a Wayland session.
       DISABLE_WAYLAND: 1
     plugs:
-      - desktop
-      - desktop-legacy
-      - x11
-      - unity7
       - home
       - network
-      - wayland
       - removable-media
-
-build-packages:
-  - fpc
-  - fpc-source
-  - lcl-nogui
-  - lazarus
+      - pulseaudio
 
 parts:
   bittorrent-tracker-editor:
@@ -49,45 +38,24 @@ parts:
     plugin: nil
     override-build: |
       snapcraftctl build
-      lazbuild --build-mode=Release --widgetset=gtk2 source/project/tracker_editor/trackereditor.lpi
+      lazbuild --build-mode=Release --widgetset=qt5 source/project/tracker_editor/trackereditor.lpi
       mkdir $CRAFT_PART_INSTALL/app
       mv enduser/trackereditor $CRAFT_PART_INSTALL/app
     build-packages:
-      - libgtk2.0-dev
-    stage-packages:
-      - libgtk2.0-0
-      - openssl
+      - fpc
+      - fpc-source
+      - lcl-nogui
+      - lazarus
+      - libqt5pas-dev
 
-# This part removes all the files in this snap which already exist in
-# connected content and base snaps. Since these files will be available
-# at runtime from the content and base snaps, they do not need to be
-# included in this snap itself.
-#
-# More info: https://forum.snapcraft.io/t/reducing-the-size-of-desktop-snaps/17280#heading--cleanup-part
-#
-  cleanup:
-    after:  # Make this part run last; list all your other parts here
-      - bittorrent-tracker-editor
+  libQt5Pas:
     plugin: nil
-    build-snaps:  # List all content-snaps and base snaps you're using here
-      - core22
-      - gtk-common-themes
-    override-prime: |
-      set -eux
-      for snap in "core22" "gtk-common-themes"; do  # List all content-snaps and base snaps you're using here
-          cd "/snap/$snap/current" && find . -type f,l -exec rm -f "$SNAPCRAFT_PRIME/{}" \;
-      done
+    stage-packages:
+      - libqt5pas1
+    prime:
+      - usr/lib/*/libQt5Pas.*
 
-plugs:
-  gtk-2-engines:
-    interface: content
-    target: $SNAP/lib/gtk-2.0
-    default-provider: gtk2-common-themes
-  icon-themes:
-    interface: content
-    target: $SNAP/data-dir/icons
-    default-provider: gtk-common-themes
-  sound-themes:
-    interface: content
-    target: $SNAP/data-dir/sounds
-    default-provider: gtk-common-themes
+# Only 2 files are explicitly added in this snap: trackereditor + libQt5Pas.so
+# No need to add a cleanup process. There's nothing to clean up.
+#
+# Use: 'unsquashfs *.snap' to look what is inside the snap file.
