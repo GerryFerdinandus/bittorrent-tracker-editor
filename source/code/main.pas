@@ -236,16 +236,21 @@ begin
   end;
 
   {$IFDEF LINUX}
-  // if a ubuntu snap program then save it to other place
+  // If it is a Ubuntu snap program, save it a special folder
    FFolderForTrackerListLoadAndSave := GetEnvironmentVariable('SNAP_USER_COMMON');
+  // If it is a flatpak program, save it in a special folder
+   if GetEnvironmentVariable('container') = 'flatpak' then
+   begin
+     FFolderForTrackerListLoadAndSave := GetEnvironmentVariable('XDG_DATA_HOME');
+   end;
    if FFolderForTrackerListLoadAndSave = '' then
    begin
-     // NOT a snap program
+     // No container detected. Save in the same place as the application file
      FFolderForTrackerListLoadAndSave := ExtractFilePath(Application.ExeName);
    end
    else
    begin
-     // A snap program
+     // Program run in a container. Must load file from a dedicated folder.
      FFolderForTrackerListLoadAndSave := AppendPathDelim(FFolderForTrackerListLoadAndSave);
    end;
   {$ELSE}
