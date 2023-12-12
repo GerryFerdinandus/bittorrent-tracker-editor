@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>io.github.gerryferdinandus.bittorrent-tracker-editor</id>
+  <name>bittorrent-tracker-editor</name>
+  <summary>Add or remove tracker from torrent files.</summary>
+  <developer_name>Gerry Ferdinandus</developer_name>
+  <launchable type="desktop-id">io.github.gerryferdinandus.bittorrent-tracker-editor.desktop</launchable>
+
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>MIT</project_license>
+
+  <url type="homepage">https://github.com/GerryFerdinandus/bittorrent-tracker-editor</url>
+  <url type="bugtracker">https://github.com/GerryFerdinandus/bittorrent-tracker-editor/issues</url>
+
+  <content_rating type="oars-1.1" />
+
+  <description>
+    <p>Features:</p>
+    <ul>
+      <li>Select one torrent file or a folder with torrent files</li>
+      <li>Add one or more trackers at the same time</li>
+      <li>Remove one or more trackers at the same time</li>
+      <li>Remove all the trackers to create trackerless torrent. DHT torrent</li>
+      <li>Change public/private flag. Warning: This will change the torrent info HASH</li>
+      <li>Show torrent files content</li>
+      <li>Download stable trackers from newTrackon or ngosang</li>
+    </ul>
+    <p>
+      Warning: There is no backup function in this software. Use it at your own risk.
+    </p>
+    <p>
+      BitTorrent works fine without this program. You probably don&apos;t need this software.
+    </p>
+  </description>
+
+  <screenshots>
+    <screenshot type="default">
+      <caption>The main window</caption>
+      <image>
+        https://github.com/GerryFerdinandus/bittorrent-tracker-editor/releases/download/V1.32.0/trackereditor_list_linux.png</image>
+    </screenshot>
+    <screenshot>
+      <caption>Torrent info</caption>
+      <image>
+        https://github.com/GerryFerdinandus/bittorrent-tracker-editor/releases/download/V1.32.0/trackereditor_info_linux.png</image>
+    </screenshot>
+  </screenshots>
+
+  <releases>
+    <release version="1.33.0" date="2023-11-18">
+      <description>
+        <p>
+          This release adds the following features:
+        </p>
+        <ul>
+          <li>Verify the working status of public trackers.</li>
+          <li>Direct download support for ngosang via menu.</li>
+          <li>Extra tabpage 'private torrent'.</li>
+          <li>Support 'Info Source' tag for private trackers </li>
+          <li>Wrong tracker URL format from torrent files should be unselected by default</li>
+          <li>Upload trackers to newTrackon</li>
+        </ul>
+        <p>This release fixes the following bugs:</p>
+        <ul>
+          <li>support for '/announce.php'</li>
+          <li>WebTorrent do not have '/announce'</li>
+        </ul>
+      </description>
+    </release>
+  </releases>
+</component>

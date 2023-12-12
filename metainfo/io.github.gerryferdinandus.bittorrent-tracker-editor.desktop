@@ -1,0 +1,9 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=bittorrent-tracker-editor
+Comment=Add or remove tracker from torrent files.
+Categories=Utility;Qt;
+Icon=io.github.gerryferdinandus.bittorrent-tracker-editor
+Exec=trackereditor
+Terminal=false

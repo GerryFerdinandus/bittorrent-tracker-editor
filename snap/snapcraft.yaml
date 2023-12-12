@@ -1,16 +1,8 @@
 name: bittorrent-tracker-editor
-version: '1.33.0'
+adopt-info: mainprogram
+icon: metainfo/io.github.gerryferdinandus.bittorrent-tracker-editor.png
+
 base: core22
-summary: Add or remove tracker from torrent files.
-description: |
-  Features:
-  - Select one torrent file or a folder with torrent files.
-  - Add one or more trackers at the same time.
-  - Remove one or more trackers at the same time.
-  - Remove all the trackers to create trackerless torrent. DHT torrent
-  - Change public/private flag. Warning: This will change the torrent info HASH.
-  - Show torrent files content.
-  - Download stable trackers from newTrackon or ngosang
 grade: stable
 confinement: strict
 
@@ -20,9 +12,10 @@ architectures:
 
 apps:
   bittorrent-tracker-editor:
+    desktop: mainprogram/io.github.gerryferdinandus.bittorrent-tracker-editor.desktop
     extensions:
       - kde-neon
-    command: app/trackereditor
+    command: mainprogram/trackereditor
     environment:
       # Fallback to XWayland if running in a Wayland session.
       DISABLE_WAYLAND: 1
@@ -33,29 +26,30 @@ apps:
       - pulseaudio
 
 parts:
-  bittorrent-tracker-editor:
+  mainprogram: # Build and add to snap the main program: mainprogram/trackereditor
     source: https://github.com/GerryFerdinandus/bittorrent-tracker-editor.git
+    parse-info: [metainfo/io.github.gerryferdinandus.bittorrent-tracker-editor.metainfo.xml]
     plugin: nil
     override-build: |
-      snapcraftctl build
+      craftctl default
       lazbuild --build-mode=Release --widgetset=qt5 source/project/tracker_editor/trackereditor.lpi
-      mkdir $CRAFT_PART_INSTALL/app
-      mv enduser/trackereditor $CRAFT_PART_INSTALL/app
+      mkdir $CRAFT_PART_INSTALL/mainprogram
+      cp enduser/trackereditor $CRAFT_PART_INSTALL/mainprogram
+      cp metainfo/io.github.gerryferdinandus.bittorrent-tracker-editor.desktop $CRAFT_PART_INSTALL/mainprogram
     build-packages:
       - fpc
-      - fpc-source
-      - lcl-nogui
       - lazarus
       - libqt5pas-dev
 
-  libQt5Pas:
+  libQt5Pas: # Add to snap the libQt5Pas support library : usr/lib/*/libQt5Pas.*
     plugin: nil
     stage-packages:
       - libqt5pas1
     prime:
       - usr/lib/*/libQt5Pas.*
 
-# Only 2 files are explicitly added in this snap: trackereditor + libQt5Pas.so
-# No need to add a cleanup process. There's nothing to clean up.
+# Only 3 files are explicitly added in this snap:
+# trackereditor + .desktop file via copy command
+# libQt5Pas.so via prime
 #
 # Use: 'unsquashfs *.snap' to look what is inside the snap file.
