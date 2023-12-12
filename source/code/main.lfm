@@ -278,9 +278,9 @@ object FormTrackerModify: TFormTrackerModify
             Height = 21
             Hint = 'Keep empty if you do not want to add or change anything.'
             Top = 56
-            Width = 221
+            Width = 240
             EditLabel.Height = 13
-            EditLabel.Width = 221
+            EditLabel.Width = 240
             EditLabel.Caption = 'Add/Change source tag value: (-SOURCE)'
             EditLabel.ParentColor = False
             ParentShowHint = False
