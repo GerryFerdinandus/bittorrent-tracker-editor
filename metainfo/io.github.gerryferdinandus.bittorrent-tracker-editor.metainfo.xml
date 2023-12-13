@@ -15,7 +15,9 @@
   <content_rating type="oars-1.1" />
 
   <description>
-    <p>Features:</p>
+    <p>
+      Warning: There is no backup function in this software. Use it at your own risk.
+    </p>
     <ul>
       <li>Select one torrent file or a folder with torrent files</li>
       <li>Add one or more trackers at the same time</li>
@@ -25,9 +27,6 @@
       <li>Show torrent files content</li>
       <li>Download stable trackers from newTrackon or ngosang</li>
     </ul>
-    <p>
-      Warning: There is no backup function in this software. Use it at your own risk.
-    </p>
     <p>
       BitTorrent works fine without this program. You probably don&apos;t need this software.
     </p>
