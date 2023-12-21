@@ -12,7 +12,8 @@ This software works on Windows 7+, macOS and Linux.
 Continuous integration|Status| Generate an executable file for the operating system| Download link
 ------------|---------|---------|----------
 GitHub Actions |[![GitHub Workflow Status (with event)](https://img.shields.io/github/actions/workflow/status/gerryferdinandus/bittorrent-tracker-editor/cicd.yml)](https://github.com/GerryFerdinandus/bittorrent-tracker-editor/actions/workflows/cicd.yml)|Linux(amd64), macOS(Intel processors) and Windows|[![GitHub Latest release](https://img.shields.io/github/release/GerryFerdinandus/bittorrent-tracker-editor/all.svg)](https://github.com/GerryFerdinandus/bittorrent-tracker-editor/releases)
-GitHub Actions (Ubuntu snap) |[![GitHub Workflow Status (with event)](https://img.shields.io/github/actions/workflow/status/gerryferdinandus/bittorrent-tracker-editor/snap.yml)](https://github.com/GerryFerdinandus/bittorrent-tracker-editor/actions/workflows/snap.yml)|Linux (amd64, arm64 and armhf)|[![Get it from the Snap Store](https://snapcraft.io/static/images/badges/en/snap-store-white.svg)](https://snapcraft.io/bittorrent-tracker-editor)
+GitHub Actions (Ubuntu snap) |[![GitHub Workflow Status (with event)](https://img.shields.io/github/actions/workflow/status/gerryferdinandus/bittorrent-tracker-editor/snap.yml)](https://github.com/GerryFerdinandus/bittorrent-tracker-editor/actions/workflows/snap.yml)|Linux (amd64 and arm64)|[![Get it from the Snap Store](https://snapcraft.io/static/images/badges/en/snap-store-white.svg)](https://snapcraft.io/bittorrent-tracker-editor)
+Flathub build server||Linux (amd64 and arm64)|<a href='https://flathub.org/apps/io.github.gerryferdinandus.bittorrent-tracker-editor'><img width='180' alt='Download on Flathub' src='https://flathub.org/assets/badges/flathub-badge-i-en.svg'/></a>
 ---
 
 ## Warning: ##
