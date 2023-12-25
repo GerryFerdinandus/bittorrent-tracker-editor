@@ -29,8 +29,8 @@ jobs:
             LAZ_OPT:
           - os: ubuntu-latest
             LAZBUILD_WITH_PATH: lazbuild
-            RELEASE_ZIP_FILE: trackereditor_linux_amd64.zip
-            LAZ_OPT:
+            RELEASE_ZIP_FILE: trackereditor_linux_amd64_gtk2.zip
+            LAZ_OPT: --widgetset=gtk2
           - os: macos-latest
             LAZBUILD_WITH_PATH: /Applications/Lazarus/lazbuild
             RELEASE_ZIP_FILE: trackereditor_macOS_amd64.zip
@@ -58,13 +58,13 @@ jobs:
 
     - name: Build Release version
       # Build trackereditor project (Release mode)
-      run: ${{ matrix.LAZBUILD_WITH_PATH }} --build-mode=Release ${{ matrix.LAZ_OPT }} source/project/tracker_editor/trackereditor.lpi
+      run: ${{ matrix.LAZBUILD_WITH_PATH }} --build-all --build-mode=Release ${{ matrix.LAZ_OPT }} source/project/tracker_editor/trackereditor.lpi
       shell: bash
 
     - name: Build Unit Test on Windows
       if: matrix.os == 'windows-latest'
       # Build unit test project (Debug mode)
-      run: ${{ matrix.LAZBUILD_WITH_PATH }} --build-mode=Debug ${{ matrix.LAZ_OPT }} source/project/unit_test/tracker_editor_test.lpi
+      run: ${{ matrix.LAZBUILD_WITH_PATH }} --build-all --build-mode=Debug ${{ matrix.LAZ_OPT }} source/project/unit_test/tracker_editor_test.lpi
       shell: bash
 
     - name: Run Unit Test on Windows
@@ -98,23 +98,41 @@ jobs:
         zip -j ${{ matrix.RELEASE_ZIP_FILE }} enduser/*.txt enduser/trackereditor.exe enduser/*.dll
       shell: bash
 
-    - name: Move file into macOS .app
+    - name: Move program and icon into macOS .app
       if: matrix.os == 'macos-latest'
+      env:
+        ICON_FILE: 'metainfo/io.github.gerryferdinandus.bittorrent-tracker-editor.png'
+        PROGRAM_NAME_WITH_PATH: 'enduser/trackereditor'
       run: |
-        # copy everything into enduser/macos/app folder
-        #
-        # Move the executable to the application bundle
-        mv enduser/trackereditor enduser/macos/app/trackereditor.app/Contents/MacOS
+        # remove the path
+        PROGRAM_NAME_ONLY=$(basename -- "$PROGRAM_NAME_WITH_PATH")
 
-        # Move the trackers list to application bundle
-        mv enduser/add_trackers.txt enduser/macos/app/trackereditor.app/Contents/MacOS
-        mv enduser/remove_trackers.txt enduser/macos/app/trackereditor.app/Contents/MacOS
+        # ------ Move program to app
+        # remove symbolic link in app. Need real program here.
+        rm -f "${PROGRAM_NAME_WITH_PATH}.app/Contents/MacOS/${PROGRAM_NAME_ONLY}"
+        # copy the program to the app version.
+        mv -f "${PROGRAM_NAME_WITH_PATH}" "${PROGRAM_NAME_WITH_PATH}.app/Contents/MacOS"
 
-        # move all the *.txt file
-        mv enduser/*.txt enduser/macos/app
+        # ------ Create icon set and move it into the app
+        iconset_folder="temp_folder.iconset"
+        rm -rf "${iconset_folder}"
+        mkdir -p "${iconset_folder}"
 
-        # zip only the app folder with extra text file.
-        # /usr/bin/ditto -c -k "enduser/macos/app" "${{ matrix.RELEASE_ZIP_FILE }}"
+        for s in 16 32 128 256 512; do
+          d=$(($s*2))
+          sips -Z $s $ICON_FILE --out "${iconset_folder}/icon_${s}x$s.png"
+          sips -Z $d $ICON_FILE --out "${iconset_folder}/icon_${s}x$s@2x.png"
+        done
+
+        # create .icns icon file
+        iconutil -c icns "${iconset_folder}" -o "iconfile.icns"
+        rm -r "${iconset_folder}"
+
+        # move icon file to the app
+        mv -f "iconfile.icns"  "${PROGRAM_NAME_WITH_PATH}.app/Contents/Resources"
+
+        # add icon to plist xml file CFBundleIconFile = "iconfile"
+        plutil -insert CFBundleIconFile -string "iconfile" "${PROGRAM_NAME_WITH_PATH}.app/Contents/Info.plist"
       shell: bash
 
     - name: Codesign macOS app bundle
@@ -127,6 +145,7 @@ jobs:
         MACOS_CERTIFICATE_PWD: ${{ secrets.PROD_MACOS_CERTIFICATE_PWD }}
         MACOS_CERTIFICATE_NAME: ${{ secrets.PROD_MACOS_CERTIFICATE_NAME }}
         MACOS_CI_KEYCHAIN_PWD: ${{ secrets.PROD_MACOS_CI_KEYCHAIN_PWD }}
+        MACOS_APP: enduser/trackereditor.app
       run: |
         # Turn our base64-encoded certificate back to a regular .p12 file
         echo $MACOS_CERTIFICATE | base64 --decode > certificate.p12
@@ -142,14 +161,11 @@ jobs:
         security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$MACOS_CI_KEYCHAIN_PWD" build.keychain
 
         # We finally codesign our app bundle, specifying the Hardened runtime option.
-        #/usr/bin/codesign --force -s "$MACOS_CERTIFICATE_NAME" --options runtime enduser/macos/app/trackereditor.app -v
+        #/usr/bin/codesign --force -s "$MACOS_CERTIFICATE_NAME" --options runtime "$MACOS_APP" -v
 
         # sign the app. -sign is the developer cetificate ID
-        # entitlements does not work at this moment
-        #codesign --timestamp --entitlements enduser/macos/entitlements.plist --force --options runtime --deep --sign $CERTIFICATE_ID $FILE_APP
-
-        # Please note: this is the same code version used in Travis-CI
-        /usr/bin/codesign --timestamp --force --options runtime --deep --sign "$MACOS_CERTIFICATE_NAME" enduser/macos/app/trackereditor.app
+        # Must use --deep to sign all internal content
+        /usr/bin/codesign --timestamp --force --options runtime --deep --sign "$MACOS_CERTIFICATE_NAME" "$MACOS_APP"
       shell: bash
 
     - name: Notarize macOS app bundle
@@ -158,6 +174,7 @@ jobs:
         PROD_MACOS_NOTARIZATION_APPLE_ID: ${{ secrets.PROD_MACOS_NOTARIZATION_APPLE_ID }}
         PROD_MACOS_NOTARIZATION_TEAM_ID: ${{ secrets.PROD_MACOS_NOTARIZATION_TEAM_ID }}
         PROD_MACOS_NOTARIZATION_PWD: ${{ secrets.PROD_MACOS_NOTARIZATION_PWD }}
+        MACOS_APP: enduser/trackereditor.app
       run: |
         # Store the notarization credentials so that we can prevent a UI password dialog
         # from blocking the CI
@@ -170,7 +187,7 @@ jobs:
         # notarization service
 
         echo "Creating temp notarization archive"
-        ditto -c -k --keepParent "enduser/macos/app/trackereditor.app" "notarization.zip"
+        ditto -c -k --keepParent "$MACOS_APP" "notarization.zip"
 
         # Here we send the notarization request to the Apple's Notarization service, waiting for the result.
         # This typically takes a few seconds inside a CI environment, but it might take more depending on the App
@@ -183,20 +200,22 @@ jobs:
         # Finally, we need to "attach the staple" to our executable, which will allow our app to be
         # validated by macOS even when an internet connection is not available.
         echo "Attach staple"
-        xcrun stapler staple "enduser/macos/app/trackereditor.app"
+        xcrun stapler staple "$MACOS_APP"
 
         # Remove notarization.zip, otherwise it will also be 'released' to the end user
         rm -f "notarization.zip"
 
-        # zip only the app folder with extra text file.
+        # zip only the app folder.
         echo "Zip macOS app file"
-        /usr/bin/ditto -c -k "enduser/macos/app" "${{ matrix.RELEASE_ZIP_FILE }}"
+        /usr/bin/ditto -c -k --keepParent "$MACOS_APP" "${{ matrix.RELEASE_ZIP_FILE }}"
       shell: bash
 
     - name: Upload Artifact
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
+        name: artifact-${{ matrix.os }}
         path: ${{ matrix.RELEASE_ZIP_FILE }}
+        compression-level: 0 # no compression. Content is already a zip file
         if-no-files-found: error
 
     - name: Zip file release to end user
