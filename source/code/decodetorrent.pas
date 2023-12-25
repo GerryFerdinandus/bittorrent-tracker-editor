@@ -17,7 +17,7 @@ unit DecodeTorrent;
 interface
 
 uses
-  Classes, SysUtils, contnrs, LazUTF8Classes, BEncode;
+  Classes, SysUtils, contnrs, BEncode;
 
 type
 
@@ -177,13 +177,13 @@ end;
 
 function TDecodeTorrent.DecodeTorrent(const Filename: utf8string): boolean;
 var
-  S: TFileStreamUtf8;
+  S: TFileStream;
 begin
   FFilenameTorrent := Filename;
   //Load torrent file in FMemoryStream. This will be process by DecodeTorrent();
   try
     //Support FilenameTorrent with unicode.
-    S := TFileStreamUtf8.Create(FilenameTorrent, fmOpenRead or fmShareDenyWrite);
+    S := TFileStream.Create(FilenameTorrent, fmOpenRead or fmShareDenyWrite);
     try
       FMemoryStream.LoadFromStream(S);
     finally
@@ -571,14 +571,14 @@ end;
 function TDecodeTorrent.SaveTorrent(const Filename: utf8string): boolean;
 var
   str: utf8string;
-  S: TFileStreamUTF8;
+  S: TFileStream;
 begin
   try
     //Encode it to string format
     str := '';
     TBEncoded.Encode(FBEncoded, str);
     //Write string to file. Support filename with unicode.
-    S := TFileStreamUTF8.Create(FileName, fmCreate);
+    S := TFileStream.Create(FileName, fmCreate);
     try
       Result := s.Write(Str[1], length(Str)) = length(Str);
     finally
