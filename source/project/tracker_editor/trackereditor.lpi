@@ -72,6 +72,10 @@
             <OtherUnitFiles Value="..\..\code"/>
             <UnitOutputDirectory Value="..\..\..\lib\trackereditor\$(TargetCPU)-$(TargetOS)"/>
           </SearchPaths>
+          <Conditionals Value="If TargetOS = &apos;darwin&apos; then
+begin
+  CustomOptions += &apos;-WM10.14&apos;;
+end;"/>
           <CodeGeneration>
             <SmartLinkUnit Value="True"/>
             <Optimizations>
