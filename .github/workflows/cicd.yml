@@ -175,6 +175,9 @@ jobs:
         PROD_MACOS_NOTARIZATION_TEAM_ID: ${{ secrets.PROD_MACOS_NOTARIZATION_TEAM_ID }}
         PROD_MACOS_NOTARIZATION_PWD: ${{ secrets.PROD_MACOS_NOTARIZATION_PWD }}
         MACOS_APP: enduser/trackereditor.app
+        NOTARIZE_RESULT: notarize_result.txt
+        NOTARIZE_LOG: notarize_log.json
+        SUBMISSION_ID: ""
       run: |
         # Store the notarization credentials so that we can prevent a UI password dialog
         # from blocking the CI
@@ -195,7 +198,17 @@ jobs:
         # you're curious
 
         echo "Notarize app"
-        xcrun notarytool submit "notarization.zip" --keychain-profile "notarytool-profile" --wait
+        xcrun notarytool submit "notarization.zip" --keychain-profile "notarytool-profile" --wait > "$NOTARIZE_RESULT" 2>&1
+
+        echo "Notarize log"
+        SUBMISSION_ID=`awk '/id: / { print $2;exit; }' $NOTARIZE_RESULT`
+        echo "id: ${SUBMISSION_ID}"
+        xcrun notarytool log "$SUBMISSION_ID" --keychain-profile "notarytool-profile" "$NOTARIZE_LOG"
+        cat "$NOTARIZE_LOG"
+
+        # These files are no longer needed, so we can remove them.
+        rm -f "$NOTARIZE_LOG"
+        rm -f "$NOTARIZE_RESULT"
 
         # Finally, we need to "attach the staple" to our executable, which will allow our app to be
         # validated by macOS even when an internet connection is not available.
