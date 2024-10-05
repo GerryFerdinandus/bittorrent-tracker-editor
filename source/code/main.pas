@@ -243,6 +243,11 @@ begin
    begin
      FFolderForTrackerListLoadAndSave := GetEnvironmentVariable('XDG_DATA_HOME');
    end;
+   // If it is a appimage program, save it in a present folder.
+   if GetEnvironmentVariable('APPIMAGE') <> '' then
+   begin // OWD = Path to working directory at the time the AppImage is called
+     FFolderForTrackerListLoadAndSave := GetEnvironmentVariable('OWD');
+   end;
    if FFolderForTrackerListLoadAndSave = '' then
    begin
      // No container detected. Save in the same place as the application file
