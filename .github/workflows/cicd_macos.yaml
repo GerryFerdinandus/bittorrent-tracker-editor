@@ -1,0 +1,154 @@
+name: CI/CD on macOS systems.
+
+permissions:
+  contents: write
+
+on:
+    push:
+    pull_request:
+    workflow_dispatch:
+    # Automatic cron build every 6 months to check if everything still works.
+    schedule:
+    - cron: "0 0 1 1/6 *"
+
+jobs:
+  build:
+    runs-on: macos-latest
+    env:
+      LAZBUILD_WITH_PATH: /Applications/Lazarus/lazbuild
+      RELEASE_ZIP_FILE: trackereditor_macOS_amd64.zip
+      LAZ_OPT: --widgetset=cocoa
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install Lazarus IDE
+      run: brew install --cask lazarus
+
+    - name: Build Release version
+      # Build trackereditor project (Release mode)
+      run: ${{ env.LAZBUILD_WITH_PATH }} --build-all --build-mode=Release ${{ env.LAZ_OPT }} source/project/tracker_editor/trackereditor.lpi
+      shell: bash
+
+    - name: Move program and icon into macOS .app
+      env:
+        ICON_FILE: 'metainfo/io.github.gerryferdinandus.bittorrent-tracker-editor.png'
+        PROGRAM_NAME_WITH_PATH: 'enduser/trackereditor'
+      run: |
+        # remove the path
+        PROGRAM_NAME_ONLY=$(basename -- "$PROGRAM_NAME_WITH_PATH")
+
+        # ------ Move program to app
+        # remove symbolic link in app. Need real program here.
+        rm -f "${PROGRAM_NAME_WITH_PATH}.app/Contents/MacOS/${PROGRAM_NAME_ONLY}"
+        # copy the program to the app version.
+        mv -f "${PROGRAM_NAME_WITH_PATH}" "${PROGRAM_NAME_WITH_PATH}.app/Contents/MacOS"
+
+        # ------ Create icon set and move it into the app
+        iconset_folder="temp_folder.iconset"
+        rm -rf "${iconset_folder}"
+        mkdir -p "${iconset_folder}"
+
+        for s in 16 32 128 256 512; do
+          d=$(($s*2))
+          sips -Z $s $ICON_FILE --out "${iconset_folder}/icon_${s}x$s.png"
+          sips -Z $d $ICON_FILE --out "${iconset_folder}/icon_${s}x$s@2x.png"
+        done
+
+        # create .icns icon file
+        iconutil -c icns "${iconset_folder}" -o "iconfile.icns"
+        rm -r "${iconset_folder}"
+
+        # move icon file to the app
+        mv -f "iconfile.icns"  "${PROGRAM_NAME_WITH_PATH}.app/Contents/Resources"
+
+        # add icon to plist xml file CFBundleIconFile = "iconfile"
+        plutil -insert CFBundleIconFile -string "iconfile" "${PROGRAM_NAME_WITH_PATH}.app/Contents/Info.plist"
+      shell: bash
+
+    - name: Codesign macOS app bundle
+      # This macOS Codesign step is copied from:
+      # https://federicoterzi.com/blog/automatic-code-signing-and-notarization-for-macos-apps-using-github-actions/
+      # This is a bit different from the previous version for Travis-CI build system to build bittorrent tracker editor
+      env:
+        MACOS_CERTIFICATE: ${{ secrets.PROD_MACOS_CERTIFICATE }}
+        MACOS_CERTIFICATE_PWD: ${{ secrets.PROD_MACOS_CERTIFICATE_PWD }}
+        MACOS_CERTIFICATE_NAME: ${{ secrets.PROD_MACOS_CERTIFICATE_NAME }}
+        MACOS_CI_KEYCHAIN_PWD: ${{ secrets.PROD_MACOS_CI_KEYCHAIN_PWD }}
+        MACOS_APP: enduser/trackereditor.app
+      run: |
+        # Turn our base64-encoded certificate back to a regular .p12 file
+        echo $MACOS_CERTIFICATE | base64 --decode > certificate.p12
+
+        # We need to create a new keychain, otherwise using the certificate will prompt
+        # with a UI dialog asking for the certificate password, which we can't
+        # use in a headless CI environment
+
+        security create-keychain -p "$MACOS_CI_KEYCHAIN_PWD" build.keychain
+        security default-keychain -s build.keychain
+        security unlock-keychain -p "$MACOS_CI_KEYCHAIN_PWD" build.keychain
+        security import certificate.p12 -k build.keychain -P "$MACOS_CERTIFICATE_PWD" -T /usr/bin/codesign
+        security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$MACOS_CI_KEYCHAIN_PWD" build.keychain
+
+        # We finally codesign our app bundle, specifying the Hardened runtime option.
+        #/usr/bin/codesign --force -s "$MACOS_CERTIFICATE_NAME" --options runtime "$MACOS_APP" -v
+
+        # sign the app. -sign is the developer cetificate ID
+        # Must use --deep to sign all internal content
+        /usr/bin/codesign --timestamp --force --options runtime --deep --sign "$MACOS_CERTIFICATE_NAME" "$MACOS_APP"
+      shell: bash
+
+    - name: Notarize macOS app bundle
+      env:
+        PROD_MACOS_NOTARIZATION_APPLE_ID: ${{ secrets.PROD_MACOS_NOTARIZATION_APPLE_ID }}
+        PROD_MACOS_NOTARIZATION_TEAM_ID: ${{ secrets.PROD_MACOS_NOTARIZATION_TEAM_ID }}
+        PROD_MACOS_NOTARIZATION_PWD: ${{ secrets.PROD_MACOS_NOTARIZATION_PWD }}
+        MACOS_APP: enduser/trackereditor.app
+      run: |
+        # Store the notarization credentials so that we can prevent a UI password dialog
+        # from blocking the CI
+
+        echo "Create keychain profile"
+        xcrun notarytool store-credentials "notarytool-profile" --apple-id "$PROD_MACOS_NOTARIZATION_APPLE_ID" --team-id "$PROD_MACOS_NOTARIZATION_TEAM_ID" --password "$PROD_MACOS_NOTARIZATION_PWD"
+
+        # We can't notarize an app bundle directly, but we need to compress it as an archive.
+        # Therefore, we create a zip file containing our app bundle, so that we can send it to the
+        # notarization service
+
+        echo "Creating temp notarization archive"
+        ditto -c -k --keepParent "$MACOS_APP" "notarization.zip"
+
+        # Here we send the notarization request to the Apple's Notarization service, waiting for the result.
+        # This typically takes a few seconds inside a CI environment, but it might take more depending on the App
+        # characteristics. Visit the Notarization docs for more information and strategies on how to optimize it if
+        # you're curious
+
+        echo "Notarize app"
+        xcrun notarytool submit "notarization.zip" --keychain-profile "notarytool-profile" --wait
+
+        # Finally, we need to "attach the staple" to our executable, which will allow our app to be
+        # validated by macOS even when an internet connection is not available.
+        echo "Attach staple"
+        xcrun stapler staple "$MACOS_APP"
+
+        # Remove notarization.zip, otherwise it will also be 'released' to the end user
+        rm -f "notarization.zip"
+
+        # zip only the app folder.
+        echo "Zip macOS app file"
+        /usr/bin/ditto -c -k --keepParent "$MACOS_APP" "${{ env.RELEASE_ZIP_FILE }}"
+      shell: bash
+
+    - name: Upload Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: artifact-${{ runner.os }}
+        path: ${{ env.RELEASE_ZIP_FILE }}
+        compression-level: 0 # no compression. Content is already a zip file
+        if-no-files-found: error
+
+    - name: File release to end user
+      uses: softprops/action-gh-release@v2
+      if: startsWith(github.ref, 'refs/tags/')
+      with:
+        files: ${{ env.RELEASE_ZIP_FILE }}
