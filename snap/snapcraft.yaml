@@ -12,6 +12,7 @@ architectures:
 
 apps:
   bittorrent-tracker-editor:
+    desktop: io.github.gerryferdinandus.bittorrent-tracker-editor.desktop
     extensions:
       - kde-neon
     command: trackereditor
@@ -66,6 +67,7 @@ parts:
       override-build: |
         lazbuild --build-mode=Release --widgetset=qt5 source/project/tracker_editor/trackereditor.lpi
         install enduser/trackereditor $CRAFT_PART_INSTALL/
+        install metainfo/io.github.gerryferdinandus.bittorrent-tracker-editor.desktop $CRAFT_PART_INSTALL/
 
 # --------------------------------------------------------------
 # Only 2 files are explicitly added in this snap
