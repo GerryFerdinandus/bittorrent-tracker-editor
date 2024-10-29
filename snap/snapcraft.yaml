@@ -28,6 +28,8 @@ parts:
     source: .
     plugin: nil
     build-packages:
+      - curl
+      - build-essential
       - fpc
       - libqt5x11extras5-dev
     build-environment:
