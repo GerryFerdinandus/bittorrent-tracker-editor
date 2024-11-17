@@ -13,44 +13,139 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
-    env:
-      LAZBUILD_WITH_PATH: lazbuild
-      RELEASE_FILE_NAME: trackereditor_linux_amd64.AppImage
-      LAZ_OPT: --widgetset=qt5
+    runs-on: ubuntu-24.04 #ubuntu-latest
+
+    env: # Use the latest Lazarus source code.
+      LAZARUS_URL_TAR_GZ: "https://sourceforge.net/projects/lazarus/files/Lazarus%20Zip%20_%20GZip/Lazarus%203.6/lazarus-3.6-0.tar.gz"
+
+    strategy:
+      # Set fail-fast to false to ensure that feedback is delivered for all matrix combinations.
+      fail-fast: false
+
+      # Set up an include to perform the following build configurations.
+      matrix:
+        include:
+          - BUILD_TARGET: gtk2_amd64
+            RELEASE_FILE_NAME: trackereditor_linux_amd64_gtk2.zip
+            LAZ_OPT: --widgetset=gtk2
+
+          - BUILD_TARGET: qt5_amd64
+            RELEASE_FILE_NAME: trackereditor_linux_amd64_qt5.zip
+            LAZ_OPT: --widgetset=qt5
+            QT_VERSION_CI: '5'
+
+          - BUILD_TARGET: qt6_amd64
+            RELEASE_FILE_NAME: trackereditor_linux_amd64_qt6.zip
+            LAZ_OPT: --widgetset=qt6
+            QT_VERSION_CI: '6'
+
+          - BUILD_TARGET: AppImage_amd64
+            RELEASE_FILE_NAME: trackereditor_linux_amd64_qt6.AppImage
+            LAZ_OPT: --widgetset=qt6
+            QT_VERSION_CI: '6'
 
     steps:
     - uses: actions/checkout@v4
 
-    - name: Install dependency
-      run: sudo apt-get install -y lazarus fpc fuse xvfb libqt5pas-dev qt5-qmake qtwayland5 qt5-gtk-platformtheme libqt5svg5
+    - name: Install dependency for all build
+      run: sudo apt-get install -y fpc xvfb
       shell: bash
 
-    - name: Build Release version
-      # Build trackereditor project (Release mode)
-      run: ${{ env.LAZBUILD_WITH_PATH }} --build-all --build-mode=Release ${{ env.LAZ_OPT }} source/project/tracker_editor/trackereditor.lpi
+    - name: Install dependency for gtk2
+      if: matrix.QT_VERSION_CI == ''
+      run: sudo apt-get install -y libgtk2.0-dev
       shell: bash
 
-    - name: Test OpenSSL works on Linux CI
-      run: xvfb-run --auto-servernum enduser/trackereditor -TEST_SSL
+    - name: Install dependency for qt5
+      if: matrix.QT_VERSION_CI == '5'
+      run: sudo apt-get install -y libqt5x11extras5-dev
       shell: bash
 
-    - name: Download linuxdeploy
-      # Use static versions of AppImage builder. So it won't depend on some specific OS image or library version.
-      run:  |
+    - name: Install dependency for qt6
+      if: matrix.QT_VERSION_CI == '6'
+      run: sudo apt-get install -y qt6-base-dev
+      shell: bash
+
+    - name: Install dependency for AppImage
+      if: matrix.BUILD_TARGET == 'AppImage_amd64'
+      run: |
+        # Add wayland plugin and platform theme
+        sudo apt-get install -y fuse qt6-wayland qt6-xdgdesktopportal-platformtheme qt6-gtk-platformtheme
+        # Use static versions of AppImage builder. So it won't depend on some specific OS image or library version.
         curl -L -O  https://github.com/linuxdeploy/linuxdeploy/releases/download/continuous/linuxdeploy-static-x86_64.AppImage
         curl -L -O  https://github.com/linuxdeploy/linuxdeploy-plugin-qt/releases/download/continuous/linuxdeploy-plugin-qt-static-x86_64.AppImage
         curl -L -O  https://github.com/linuxdeploy/linuxdeploy-plugin-appimage/releases/download/continuous/linuxdeploy-plugin-appimage-x86_64.AppImage
         chmod +x linuxdeploy-*.AppImage
       shell: bash
 
+    - name: Download Lazarus source code
+      run: |
+        #Download lazarus source code. Directory 'lazarus' will be created in the project folder.
+        curl -L -O ${{ env.LAZARUS_URL_TAR_GZ }}
+        tar -xzf *.tar.gz
+      shell: bash
+
+    - name: Build libQTpas.so
+      if: matrix.QT_VERSION_CI != ''
+      run: |
+        cd "${{ github.workspace }}/lazarus/lcl/interfaces/qt${{ matrix.QT_VERSION_CI }}/cbindings/"
+        /usr/lib/qt${{ matrix.QT_VERSION_CI }}/bin/qmake
+        make -j$(nproc)
+        sudo make install
+      shell: bash
+
+    - name: Build lazbuild
+      env:
+        LAZARUS_DIR: "${{ github.workspace }}/lazarus"
+      run: |
+        # make lazbuild and put the link with extra parameter in project folder
+        cd "$LAZARUS_DIR"
+        make lazbuild
+        echo "$LAZARUS_DIR/lazbuild --primary-config-path=$LAZARUS_DIR --lazarusdir=$LAZARUS_DIR \$*" > ${{ github.workspace }}/lazbuild
+        chmod +x ${{ github.workspace }}/lazbuild
+      shell: bash
+
+    - name: Build trackereditor
+      # Build trackereditor project (Release mode)
+      run: ./lazbuild --build-all --build-mode=Release ${{ matrix.LAZ_OPT }} source/project/tracker_editor/trackereditor.lpi
+      shell: bash
+
+    - name: Test if OpenSSL works on Linux CI
+      run: xvfb-run --auto-servernum enduser/trackereditor -TEST_SSL
+      shell: bash
+
+    - name: Copy libQtpas.so before releasing the Qt5/Qt6 zip file format.
+      if: matrix.BUILD_TARGET == 'qt5_amd64' || matrix.BUILD_TARGET == 'qt6_amd64'
+      run: |
+        cp -av /usr/lib/*/libQt?Pas.* ${{ github.workspace }}/enduser
+        cat <<EOF > ${{ github.workspace }}/enduser/missing_libQtPas.so.txt
+        Start program with:
+        env LD_LIBRARY_PATH=. ./trackereditor
+
+        This uses libQtpas.so, which is necessary for this program.
+        Some Linux OS stores may also offer this libQtpas.so
+        https://archlinux.org/packages/extra/x86_64/qt5pas/
+        https://archlinux.org/packages/extra/x86_64/qt6pas/
+        EOF
+      shell: bash
+
+    - name: Create a gtk2 or Qt5/Qt6 release in zip file format.
+      if: matrix.BUILD_TARGET != 'AppImage_amd64'
+      run: zip -j ${{ matrix.RELEASE_FILE_NAME }} enduser/*.txt enduser/libQt* enduser/trackereditor
+      shell: bash
+
     - name: Create AppImage
+      if: matrix.BUILD_TARGET == 'AppImage_amd64'
       # NO_STRIP: true => or else warning: qt.qpa.plugin: Could not find the Qt platform plugin "wayland" in ""
       # LDAI_NO_APPSTREAM=1: skip checking AppStream metadata for issues
       env:
-        NO_STRIP: true
+        # NO_STRIP: true
         LDAI_NO_APPSTREAM: 1
-        LDAI_OUTPUT: ${{ env.RELEASE_FILE_NAME }}
+        LDAI_OUTPUT: ${{ matrix.RELEASE_FILE_NAME }}
+        QMAKE: /usr/lib/qt${{ matrix.QT_VERSION_CI }}/bin/qmake
+        EXTRA_QT_MODULES: waylandcompositor
+        EXTRA_PLATFORM_PLUGINS: libqwayland-generic.so;libqwayland-egl.so
+        DEPLOY_PLATFORM_THEMES: true
       run:  |
         ./linuxdeploy-static-x86_64.AppImage \
           --output appimage \
@@ -64,8 +159,8 @@ jobs:
     - name: Upload Artifact
       uses: actions/upload-artifact@v4
       with:
-        name: artifact-${{ runner.os }}
-        path: ${{ env.RELEASE_FILE_NAME }}
+        name: artifact-${{ matrix.RELEASE_FILE_NAME }}
+        path: ${{ matrix.RELEASE_FILE_NAME }}
         compression-level: 0 # no compression. Content is already a compress file
         if-no-files-found: error
 
@@ -73,4 +168,4 @@ jobs:
       uses: softprops/action-gh-release@v2
       if: startsWith(github.ref, 'refs/tags/')
       with:
-        files: ${{ env.RELEASE_FILE_NAME }}
+        files: ${{ matrix.RELEASE_FILE_NAME }}
