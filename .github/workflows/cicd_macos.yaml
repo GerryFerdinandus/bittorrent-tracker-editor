@@ -17,7 +17,9 @@ jobs:
     env:
       LAZBUILD_WITH_PATH: /Applications/Lazarus/lazbuild
       RELEASE_ZIP_FILE: trackereditor_macOS_amd64.zip
+      MACOS_APP: enduser/trackereditor.app
       LAZ_OPT: --widgetset=cocoa
+      BUILD_WITH_CERTIFICATE: ${{ secrets.PROD_MACOS_CERTIFICATE_NAME }}
 
     steps:
     - uses: actions/checkout@v4
@@ -67,6 +69,7 @@ jobs:
       shell: bash
 
     - name: Codesign macOS app bundle
+      if: ${{ env.BUILD_WITH_CERTIFICATE != '' }}
       # This macOS Codesign step is copied from:
       # https://federicoterzi.com/blog/automatic-code-signing-and-notarization-for-macos-apps-using-github-actions/
       # This is a bit different from the previous version for Travis-CI build system to build bittorrent tracker editor
@@ -75,7 +78,6 @@ jobs:
         MACOS_CERTIFICATE_PWD: ${{ secrets.PROD_MACOS_CERTIFICATE_PWD }}
         MACOS_CERTIFICATE_NAME: ${{ secrets.PROD_MACOS_CERTIFICATE_NAME }}
         MACOS_CI_KEYCHAIN_PWD: ${{ secrets.PROD_MACOS_CI_KEYCHAIN_PWD }}
-        MACOS_APP: enduser/trackereditor.app
       run: |
         # Turn our base64-encoded certificate back to a regular .p12 file
         echo $MACOS_CERTIFICATE | base64 --decode > certificate.p12
@@ -91,19 +93,19 @@ jobs:
         security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$MACOS_CI_KEYCHAIN_PWD" build.keychain
 
         # We finally codesign our app bundle, specifying the Hardened runtime option.
-        #/usr/bin/codesign --force -s "$MACOS_CERTIFICATE_NAME" --options runtime "$MACOS_APP" -v
+        #/usr/bin/codesign --force -s "$MACOS_CERTIFICATE_NAME" --options runtime "${{ env.MACOS_APP }}" -v
 
         # sign the app. -sign is the developer cetificate ID
         # Must use --deep to sign all internal content
-        /usr/bin/codesign --timestamp --force --options runtime --deep --sign "$MACOS_CERTIFICATE_NAME" "$MACOS_APP"
+        /usr/bin/codesign --timestamp --force --options runtime --deep --sign "$MACOS_CERTIFICATE_NAME" "${{ env.MACOS_APP }}"
       shell: bash
 
     - name: Notarize macOS app bundle
+      if: ${{ env.BUILD_WITH_CERTIFICATE != '' }}
       env:
         PROD_MACOS_NOTARIZATION_APPLE_ID: ${{ secrets.PROD_MACOS_NOTARIZATION_APPLE_ID }}
         PROD_MACOS_NOTARIZATION_TEAM_ID: ${{ secrets.PROD_MACOS_NOTARIZATION_TEAM_ID }}
         PROD_MACOS_NOTARIZATION_PWD: ${{ secrets.PROD_MACOS_NOTARIZATION_PWD }}
-        MACOS_APP: enduser/trackereditor.app
       run: |
         # Store the notarization credentials so that we can prevent a UI password dialog
         # from blocking the CI
@@ -116,7 +118,7 @@ jobs:
         # notarization service
 
         echo "Creating temp notarization archive"
-        ditto -c -k --keepParent "$MACOS_APP" "notarization.zip"
+        ditto -c -k --keepParent "${{ env.MACOS_APP }}" "notarization.zip"
 
         # Here we send the notarization request to the Apple's Notarization service, waiting for the result.
         # This typically takes a few seconds inside a CI environment, but it might take more depending on the App
@@ -129,14 +131,13 @@ jobs:
         # Finally, we need to "attach the staple" to our executable, which will allow our app to be
         # validated by macOS even when an internet connection is not available.
         echo "Attach staple"
-        xcrun stapler staple "$MACOS_APP"
+        xcrun stapler staple "${{ env.MACOS_APP }}"
+      shell: bash
 
-        # Remove notarization.zip, otherwise it will also be 'released' to the end user
-        rm -f "notarization.zip"
-
-        # zip only the app folder.
+    - name: Zip only the app folder.
+      run: |
         echo "Zip macOS app file"
-        /usr/bin/ditto -c -k --keepParent "$MACOS_APP" "${{ env.RELEASE_ZIP_FILE }}"
+        /usr/bin/ditto -c -k --keepParent "${{ env.MACOS_APP }}" "${{ env.RELEASE_ZIP_FILE }}"
       shell: bash
 
     - name: Upload Artifact
