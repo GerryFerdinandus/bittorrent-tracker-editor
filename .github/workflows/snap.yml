@@ -14,3 +14,11 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     - uses: snapcore/action-build@v1
+
+    - name: Upload Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: artifact-snap
+        path: "*.snap"
+        compression-level: 0 # no compression. Content is already a zip file
+        if-no-files-found: error
