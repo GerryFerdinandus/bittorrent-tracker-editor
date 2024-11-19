@@ -34,7 +34,7 @@ parts:
       - fpc
       - libqt5x11extras5-dev
     build-environment:
-      - LAZARUS_URL_TAR_GZ: "https://sourceforge.net/projects/lazarus/files/Lazarus%20Zip%20_%20GZip/Lazarus%203.4/lazarus-3.4-0.tar.gz"
+      - LAZARUS_URL_TAR_GZ: "https://github.com/GerryFerdinandus/bittorrent-tracker-editor/releases/download/V1.32.0/lazarus.tar.gz"
       - LAZARUS_QT_VERSION: "5"
       - LIB_DIR: "/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR"
       - LAZARUS_DIR: "$PWD/lazarus"

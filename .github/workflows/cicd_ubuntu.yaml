@@ -16,7 +16,7 @@ jobs:
     runs-on: ubuntu-24.04 #ubuntu-latest
 
     env: # Use the latest Lazarus source code.
-      LAZARUS_URL_TAR_GZ: "https://sourceforge.net/projects/lazarus/files/Lazarus%20Zip%20_%20GZip/Lazarus%203.6/lazarus-3.6-0.tar.gz"
+      LAZARUS_URL_TAR_GZ: "https://github.com/GerryFerdinandus/bittorrent-tracker-editor/releases/download/V1.32.0/lazarus.tar.gz"
 
     strategy:
       # Set fail-fast to false to ensure that feedback is delivered for all matrix combinations.
