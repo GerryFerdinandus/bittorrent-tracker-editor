@@ -14,6 +14,7 @@ on:
 jobs:
   build:
     runs-on: windows-2022
+    timeout-minutes: 60
     env:
       LAZBUILD_WITH_PATH: c:/lazarus/lazbuild
       RELEASE_ZIP_FILE: trackereditor_windows_amd64.zip
@@ -21,6 +22,8 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
+      with:
+        submodules: true
 
     - name: Install winget
       # winget will be included in windows server 2025

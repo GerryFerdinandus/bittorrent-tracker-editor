@@ -14,6 +14,7 @@ on:
 jobs:
   build:
     runs-on: ubuntu-24.04 #ubuntu-latest
+    timeout-minutes: 60
 
     env: # Use the latest Lazarus source code.
       LAZARUS_URL_TAR_GZ: "https://github.com/GerryFerdinandus/bittorrent-tracker-editor/releases/download/V1.32.0/lazarus.tar.gz"
@@ -46,6 +47,8 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
+      with:
+        submodules: true
 
     - name: Install dependency for all build
       run: sudo apt-get install -y fpc xvfb
@@ -136,10 +139,8 @@ jobs:
 
     - name: Create AppImage
       if: matrix.BUILD_TARGET == 'AppImage_amd64'
-      # NO_STRIP: true => or else warning: qt.qpa.plugin: Could not find the Qt platform plugin "wayland" in ""
       # LDAI_NO_APPSTREAM=1: skip checking AppStream metadata for issues
       env:
-        # NO_STRIP: true
         LDAI_NO_APPSTREAM: 1
         LDAI_OUTPUT: ${{ matrix.RELEASE_FILE_NAME }}
         QMAKE: /usr/lib/qt${{ matrix.QT_VERSION_CI }}/bin/qmake
@@ -154,6 +155,11 @@ jobs:
           --executable enduser/trackereditor \
           --desktop-file metainfo/io.github.gerryferdinandus.bittorrent-tracker-editor.desktop \
           --icon-file metainfo/io.github.gerryferdinandus.bittorrent-tracker-editor.png
+      shell: bash
+
+    - name: Test AppImage
+      if: matrix.BUILD_TARGET == 'AppImage_amd64'
+      run: xvfb-run --auto-servernum ./${{ matrix.RELEASE_FILE_NAME }} -TEST_SSL
       shell: bash
 
     - name: Upload Artifact

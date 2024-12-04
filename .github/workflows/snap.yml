@@ -11,8 +11,12 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    timeout-minutes: 60
     steps:
     - uses: actions/checkout@v4
+      with:
+        submodules: true
+
     - uses: snapcore/action-build@v1
 
     - name: Upload Artifact

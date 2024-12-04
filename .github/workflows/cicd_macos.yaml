@@ -14,6 +14,7 @@ on:
 jobs:
   build:
     runs-on: macos-latest
+    timeout-minutes: 60
     env:
       LAZBUILD_WITH_PATH: /Applications/Lazarus/lazbuild
       RELEASE_ZIP_FILE: trackereditor_macOS_amd64.zip
@@ -23,6 +24,8 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
+      with:
+        submodules: true
 
     - name: Install Lazarus IDE
       run: brew install --cask lazarus

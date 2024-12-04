@@ -1,0 +1,3 @@
+[submodule "submodule/dcpcrypt"]
+	path = submodule/dcpcrypt
+	url = git://lazarus-ccr.git.sourceforge.net/gitroot/lazarus-ccr/dcpcrypt
