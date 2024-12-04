@@ -1528,6 +1528,7 @@ begin
           MemoNewTrackers.Append(UTF8Trim(TrackerFileNameStringList.Text));
         except
           //supress any error in loading the file
+          FileNameOrDirStr := FileNameOrDirStr;
         end;
       end;
 

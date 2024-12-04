@@ -90,7 +90,10 @@ begin
     tos_dead: Result := 'Dead';
     tos_unknown: Result := 'Unknown';
     else
-      assert(True, 'Unknown TTrackerListOnlineStatus')
+      begin
+        Result := '';
+        assert(True, 'Unknown TTrackerListOnlineStatus')
+      end;
   end;
 end;
 

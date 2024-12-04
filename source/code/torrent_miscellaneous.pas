@@ -246,8 +246,11 @@ begin
     Result := Format('%0.2f MiB', [ByteSize / (1024 * 1024)])
   else
   if ByteSize >= (1024) then
-    Result := Format('%0.2f KiB', [ByteSize / 1024]);
-  Result := Result + Format('  (%d Bytes)', [ByteSize]);
+    Result := Format('%0.2f KiB', [ByteSize / 1024])
+  else
+    Result := '';
+
+  Result := Result + Format(' (%d Bytes)', [ByteSize]);
 end;
 
 
@@ -629,11 +632,11 @@ begin
    -U3 "path_to_folder" -SAC -SOURCE "ABC"
   }
 
+  Result := False;
   case Paramcount of
     0:
     begin
       TrackerList.LogStringList.Add('ERROR: There are no parameter detected.');
-      Result := False;
       exit;
     end;
     1:

@@ -95,6 +95,7 @@ begin
 
   except
     //No OpenSSL or web server is down
+    FTRackerList[ngosang_List].Clear;
   end;
 
   Result := FTrackerList[ngosang_List];
