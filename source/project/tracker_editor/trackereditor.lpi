@@ -28,7 +28,7 @@
           </Target>
           <SearchPaths>
             <IncludeFiles Value="$(ProjOutDir)"/>
-            <OtherUnitFiles Value="..\..\code"/>
+            <OtherUnitFiles Value="..\..\code;..\..\..\submodule\dcpcrypt\Hashes;..\..\..\submodule\dcpcrypt"/>
             <UnitOutputDirectory Value="..\..\..\lib\trackereditor\$(TargetCPU)-$(TargetOS)"/>
           </SearchPaths>
           <Parsing>
@@ -69,7 +69,7 @@
           </Target>
           <SearchPaths>
             <IncludeFiles Value="$(ProjOutDir)"/>
-            <OtherUnitFiles Value="..\..\code"/>
+            <OtherUnitFiles Value="..\..\code;..\..\..\submodule\dcpcrypt\Hashes;..\..\..\submodule\dcpcrypt"/>
             <UnitOutputDirectory Value="..\..\..\lib\trackereditor\$(TargetCPU)-$(TargetOS)"/>
           </SearchPaths>
           <Conditionals Value="If TargetOS = &apos;darwin&apos; then
@@ -110,7 +110,7 @@ end;"/>
         <PackageName Value="LCL"/>
       </Item1>
     </RequiredPackages>
-    <Units Count="11">
+    <Units Count="14">
       <Unit0>
         <Filename Value="trackereditor.lpr"/>
         <IsPartOfProject Value="True"/>
@@ -160,6 +160,21 @@ end;"/>
         <Filename Value="..\..\code\ngosang_trackerslist.pas"/>
         <IsPartOfProject Value="True"/>
       </Unit10>
+      <Unit11>
+        <Filename Value="..\..\..\submodule\dcpcrypt\Hashes\dcpsha256.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="DCPsha256"/>
+      </Unit11>
+      <Unit12>
+        <Filename Value="..\..\..\submodule\dcpcrypt\dcpconst.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="DCPconst"/>
+      </Unit12>
+      <Unit13>
+        <Filename Value="..\..\..\submodule\dcpcrypt\dcpcrypt2.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="DCPcrypt2"/>
+      </Unit13>
     </Units>
   </ProjectOptions>
   <CompilerOptions>
@@ -170,7 +185,7 @@ end;"/>
     </Target>
     <SearchPaths>
       <IncludeFiles Value="$(ProjOutDir)"/>
-      <OtherUnitFiles Value="..\..\code"/>
+      <OtherUnitFiles Value="..\..\code;..\..\..\submodule\dcpcrypt\Hashes;..\..\..\submodule\dcpcrypt"/>
       <UnitOutputDirectory Value="..\..\..\lib\trackereditor\$(TargetCPU)-$(TargetOS)"/>
     </SearchPaths>
     <CodeGeneration>
