@@ -1748,7 +1748,25 @@ begin
   //Copy all the torrent info to the grid column.
   FControlerGridTorrentData.TorrentFile := TorrentFileNameStr;
   FControlerGridTorrentData.InfoFileName := FDecodePresentTorrent.Name;
-  FControlerGridTorrentData.InfoHash := FDecodePresentTorrent.InfoHash;
+  FControlerGridTorrentData.TorrentVersion :=
+    FDecodePresentTorrent.TorrentVersionToString;
+  case FDecodePresentTorrent.TorrentVersion of
+    tv_V1:
+    begin
+      FControlerGridTorrentData.InfoHash := 'V1: ' + FDecodePresentTorrent.InfoHash_V1;
+    end;
+    tv_V2:
+    begin
+      FControlerGridTorrentData.InfoHash := 'V2: ' + FDecodePresentTorrent.InfoHash_V2;
+    end;
+    tv_Hybrid:
+    begin // Show only V2 hash. No space for both V1 and V2
+      FControlerGridTorrentData.InfoHash := 'V2: ' + FDecodePresentTorrent.InfoHash_V2;
+    end;
+    else
+      FControlerGridTorrentData.InfoHash := 'N/A'
+  end;
+  FControlerGridTorrentData.Padding := FDecodePresentTorrent.PaddingToString;
   FControlerGridTorrentData.CreatedOn := DateTimeStr;
   FControlerGridTorrentData.CreatedBy := FDecodePresentTorrent.CreatedBy;
   FControlerGridTorrentData.Comment := FDecodePresentTorrent.Comment;

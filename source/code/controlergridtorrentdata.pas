@@ -28,15 +28,17 @@ type
     //The collumn must be in this design order.
     FTorrentFile,           //0
     FInfoFileName,          //1
-    FInfoHash,              //2
-    FCreatedOn,             //3
-    FCreatedBy,             //4
-    FComment,               //5
-    FPrivateTorrent,        //6
-    FInfoSource,             //7
-    FPieceLength,           //8
-    FTotaSize,              //9
-    FIndexOrder             //10
+    FTorrentVersion,        //2
+    FPadding,               //3
+    FInfoHash,              //4
+    FCreatedOn,             //5
+    FCreatedBy,             //6
+    FComment,               //7
+    FPrivateTorrent,        //8
+    FInfoSource,            //9
+    FPieceLength,           //10
+    FTotaSize,              //11
+    FIndexOrder             //12
     : TGridColumn;
 
     FRowIsMovedNeedUpdate: boolean;
@@ -49,15 +51,17 @@ type
     //All the string that can be written to grid.
     TorrentFile,           //0
     InfoFileName,          //1
-    InfoHash,              //2
-    CreatedOn,             //3
-    CreatedBy,             //4
-    Comment,               //5
-    PrivateTorrent,        //6
-    InfoSource,            //7
-    PieceLength,           //8
-    TotaSize,              //9
-    IndexOrder             //10
+    TorrentVersion,        //2
+    Padding,               //3
+    InfoHash,              //4
+    CreatedOn,             //5
+    CreatedBy,             //6
+    Comment,               //7
+    PrivateTorrent,        //8
+    InfoSource,            //9
+    PieceLength,           //10
+    TotaSize,              //11
+    IndexOrder             //12
     : UTF8String;
 
     procedure ClearAllImageIndex;
@@ -135,6 +139,8 @@ begin
   //write all the string to the cell.
   WriteCell(FTorrentFile, TorrentFile);
   WriteCell(FInfoFileName, InfoFileName);
+  WriteCell(FTorrentVersion, TorrentVersion);
+  WriteCell(FPadding, Padding);
   WriteCell(FInfoHash, InfoHash);
   WriteCell(FCreatedOn, CreatedOn);
   WriteCell(FCreatedBy, CreatedBy);
@@ -183,15 +189,17 @@ begin
   //Track the column
   AddColumn(FTorrentFile, 0);
   AddColumn(FInfoFileName, 1);
-  AddColumn(FInfoHash, 2);
-  AddColumn(FCreatedOn, 3);
-  AddColumn(FCreatedBy, 4);
-  AddColumn(FComment, 5);
-  AddColumn(FPrivateTorrent, 6);
-  AddColumn(FInfoSource, 7);
-  AddColumn(FPieceLength, 8);
-  AddColumn(FTotaSize, 9);
-  AddColumn(FIndexOrder, 10);
+  AddColumn(FTorrentVersion, 2);
+  AddColumn(FPadding, 3);
+  AddColumn(FInfoHash, 4);
+  AddColumn(FCreatedOn, 5);
+  AddColumn(FCreatedBy, 6);
+  AddColumn(FComment, 7);
+  AddColumn(FPrivateTorrent, 8);
+  AddColumn(FInfoSource, 9);
+  AddColumn(FPieceLength, 10);
+  AddColumn(FTotaSize, 11);
+  AddColumn(FIndexOrder, 12);
 
   //Fillin the tag value
   UpdateColumnTag;

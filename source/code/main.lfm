@@ -5,7 +5,7 @@ object FormTrackerModify: TFormTrackerModify
   Width = 1179
   AllowDropFiles = True
   Caption = 'Bittorrent Tracker Editor'
-  ClientHeight = 587
+  ClientHeight = 607
   ClientWidth = 1179
   Constraints.MinHeight = 500
   Constraints.MinWidth = 700
@@ -16,10 +16,10 @@ object FormTrackerModify: TFormTrackerModify
   OnDropFiles = FormDropFiles
   OnShow = FormShow
   Position = poScreenCenter
-  LCLVersion = '2.2.6.0'
+  LCLVersion = '3.6.0.0'
   object PageControl: TPageControl
     Left = 0
-    Height = 587
+    Height = 607
     Top = 0
     Width = 1179
     ActivePage = TabSheetTrackersList
@@ -28,15 +28,15 @@ object FormTrackerModify: TFormTrackerModify
     TabOrder = 0
     object TabSheetTrackersList: TTabSheet
       Caption = 'Trackers List'
-      ClientHeight = 561
+      ClientHeight = 581
       ClientWidth = 1171
       object PanelTop: TPanel
         Left = 0
-        Height = 561
+        Height = 581
         Top = 0
         Width = 1171
         Align = alClient
-        ClientHeight = 561
+        ClientHeight = 581
         ClientWidth = 1171
         TabOrder = 0
         object GroupBoxNewTracker: TGroupBox
@@ -62,19 +62,19 @@ object FormTrackerModify: TFormTrackerModify
         end
         object GroupBoxPresentTracker: TGroupBox
           Left = 1
-          Height = 353
+          Height = 373
           Top = 207
           Width = 1169
           Align = alClient
           Caption = 'Present trackers in all torrent files. Select the one that you want to keep.'
-          ClientHeight = 335
+          ClientHeight = 355
           ClientWidth = 1165
           Constraints.MinHeight = 100
           ParentBidiMode = False
           TabOrder = 1
           object StringGridTrackerOnline: TStringGrid
             Left = 0
-            Height = 335
+            Height = 355
             Top = 0
             Width = 1165
             Align = alClient
@@ -100,30 +100,30 @@ object FormTrackerModify: TFormTrackerModify
     end
     object TabSheetPublicPrivateTorrent: TTabSheet
       Caption = 'Public/Private'
-      ClientHeight = 561
+      ClientHeight = 581
       ClientWidth = 1171
       object PanelTopPublicTorrent: TPanel
         Left = 0
-        Height = 561
+        Height = 581
         Top = 0
         Width = 1171
         Align = alClient
-        ClientHeight = 561
+        ClientHeight = 581
         ClientWidth = 1171
         TabOrder = 0
         object GroupBoxPublicPrivateTorrent: TGroupBox
           Left = 1
-          Height = 559
+          Height = 579
           Top = 1
           Width = 1169
           Align = alClient
           Caption = 'Checked items are public torrent.  WARNING: change public/private setting will change torrent Hash info.'
-          ClientHeight = 541
+          ClientHeight = 561
           ClientWidth = 1165
           TabOrder = 0
           object CheckListBoxPublicPrivateTorrent: TCheckListBox
             Left = 0
-            Height = 541
+            Height = 561
             Top = 0
             Width = 1165
             Align = alClient
@@ -135,15 +135,15 @@ object FormTrackerModify: TFormTrackerModify
     end
     object TabSheetTorrentData: TTabSheet
       Caption = 'Data/Info'
-      ClientHeight = 561
+      ClientHeight = 581
       ClientWidth = 1171
       object StringGridTorrentData: TStringGrid
         Left = 0
-        Height = 561
+        Height = 581
         Top = 0
         Width = 1171
         Align = alClient
-        ColCount = 11
+        ColCount = 13
         ColumnClickSorts = True
         Columns = <        
           item
@@ -157,10 +157,20 @@ object FormTrackerModify: TFormTrackerModify
             Width = 250
           end        
           item
+            ReadOnly = True
+            Title.Caption = 'Torrent Version'
+            Width = 100
+          end        
+          item
+            ReadOnly = True
+            Title.Caption = 'Padding (beb 47)'
+            Width = 100
+          end        
+          item
             MaxSize = 250
             ReadOnly = True
             Title.Caption = 'Info Hash'
-            Width = 280
+            Width = 439
           end        
           item
             ReadOnly = True
@@ -201,8 +211,10 @@ object FormTrackerModify: TFormTrackerModify
           end        
           item
             ReadOnly = True
+            SizePriority = 0
             Title.Alignment = taRightJustify
             Title.Caption = 'IndexOrder (internal used)'
+            Width = 0
             Visible = False
           end>
         FixedCols = 0
@@ -213,7 +225,9 @@ object FormTrackerModify: TFormTrackerModify
         ColWidths = (
           250
           250
-          280
+          100
+          100
+          439
           145
           145
           160
@@ -230,7 +244,7 @@ object FormTrackerModify: TFormTrackerModify
     end
     object TabSheetPrivateTrackers: TTabSheet
       Caption = 'Private Trackers'
-      ClientHeight = 561
+      ClientHeight = 581
       ClientWidth = 1171
       object GroupBoxItemsForPrivateTrackers: TGroupBox
         Left = 0
@@ -244,15 +258,15 @@ object FormTrackerModify: TFormTrackerModify
         TabOrder = 0
         object CheckBoxSkipAnnounceCheck: TCheckBox
           Left = 0
-          Height = 19
+          Height = 17
           Top = 0
           Width = 284
           Align = alTop
           Caption = 'Skip Announce Check in the URL (-SAC)'
-          OnChange = CheckBoxSkipAnnounceCheckChange
           ParentShowHint = False
           ShowHint = True
           TabOrder = 0
+          OnChange = CheckBoxSkipAnnounceCheckChange
         end
         object GroupBoxInfoSource: TGroupBox
           Left = 0
@@ -266,12 +280,12 @@ object FormTrackerModify: TFormTrackerModify
           TabOrder = 1
           object CheckBoxRemoveAllSourceTag: TCheckBox
             Left = 8
-            Height = 19
+            Height = 17
             Top = 8
-            Width = 132
+            Width = 130
             Caption = 'Remove all source tag'
-            OnChange = CheckBoxRemoveAllSourceTagChange
             TabOrder = 0
+            OnChange = CheckBoxRemoveAllSourceTagChange
           end
           object LabeledEditInfoSource: TLabeledEdit
             Left = 8
