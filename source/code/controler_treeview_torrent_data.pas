@@ -70,7 +70,7 @@ const
   TORRENT_FILES_CONTENTS_FORM_CAPTION =
     'Show all the files inside the torrents. (Use right mouse for popup menu.)';
 
-{ Tcontroler_treeview_torrent_data }
+  { Tcontroler_treeview_torrent_data }
 
 procedure Tcontroler_treeview_torrent_data.FillThePopupMenu;
 begin
@@ -285,16 +285,16 @@ procedure Tcontroler_treeview_torrent_data.AddOneTorrentFileDecoded(
   DecodeTorrent: TDecodeTorrent);
 var
   CountFiles: integer;
-  TorrentFileNameStr, TrackerStr: UTF8String;
+  TorrentFileNameStr, TrackerStr: utf8string;
   TreeNodeTorrent, TreeNodeFiles, TreeNodeTrackers, TreeNodeInfo: TTreeNode;
-
 begin
   //---------------------  Fill the treeview with torrent files
 
   TorrentFileNameStr := ExtractFileName(DecodeTorrent.FilenameTorrent);
 
   //Add the torrent file name + size of all the files combined.
-  TorrentFileNameStr := TorrentFileNameStr + '     SIZE: ' +
+  TorrentFileNameStr := TorrentFileNameStr + '  (Version: ' +
+    DecodeTorrent.TorrentVersionToString + ') SIZE: ' +
     ByteSizeToBiggerSizeFormatStr(DecodeTorrent.TotalFileSize) +
     '  Files: ' + IntToStr(DecodeTorrent.InfoFilesCount) + '' +
     '  Tracker: ' + IntToStr(DecodeTorrent.TrackerList.Count) + '';
@@ -305,7 +305,9 @@ begin
     TorrentFileNameStr);  //Without directory  path
 
   //must be in this order (Files, Trackers, Info)
-  TreeNodeFiles := FTreeViewFileContents.Items.AddChild(TreeNodeTorrent, 'Files');
+  TreeNodeFiles := FTreeViewFileContents.Items.AddChild(TreeNodeTorrent,
+    'Files V' + IntToStr(DecodeTorrent.InfoFilesVersion));
+
   TreeNodeTrackers := FTreeViewFileContents.Items.AddChild(TreeNodeTorrent,
     'Trackers');
   TreeNodeInfo := FTreeViewFileContents.Items.AddChild(TreeNodeTorrent, 'Info');
@@ -340,8 +342,10 @@ begin
 
   FTreeViewFileContents.Items.AddChild(TreeNodeInfo, 'Comment: ' +
     DecodeTorrent.Comment);
-  FTreeViewFileContents.Items.AddChild(TreeNodeInfo, 'Info Hash: ' +
-    DecodeTorrent.InfoHash);
+  FTreeViewFileContents.Items.AddChild(TreeNodeInfo, 'Info Hash V1: ' +
+    DecodeTorrent.InfoHash_V1);
+  FTreeViewFileContents.Items.AddChild(TreeNodeInfo, 'Info Hash V2: ' +
+    DecodeTorrent.InfoHash_V2);
   FTreeViewFileContents.Items.AddChild(TreeNodeInfo, 'Created On: ' +
     DateTimeToStr(DecodeTorrent.CreatedDate));
   FTreeViewFileContents.Items.AddChild(TreeNodeInfo, 'Created By: ' +
@@ -362,6 +366,15 @@ begin
     FTreeViewFileContents.Items.AddChild(TreeNodeInfo, 'Source: ' +
       DecodeTorrent.InfoSource);
   end;
+
+  if DecodeTorrent.MetaVersion > 0 then
+  begin // 'meta version'is in torrent file present
+    FTreeViewFileContents.Items.AddChild(TreeNodeInfo, 'Meta Version: ' +
+      IntToStr(DecodeTorrent.MetaVersion));
+  end;
+
+  FTreeViewFileContents.Items.AddChild(TreeNodeInfo, 'Padding (beb 47): ' +
+    DecodeTorrent.PaddingToString);
 
   //All the files count inside the torrent must be added to FTotalFileInsideTorrent
   Inc(FTotalFileInsideTorrent, DecodeTorrent.InfoFilesCount);
