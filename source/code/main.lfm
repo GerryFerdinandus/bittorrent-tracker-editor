@@ -192,6 +192,7 @@ object FormTrackerModify: TFormTrackerModify
             Width = 50
           end        
           item
+            ReadOnly = True
             Title.Caption = 'Source'
             Width = 64
           end        
