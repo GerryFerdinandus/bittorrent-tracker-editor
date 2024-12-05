@@ -104,8 +104,8 @@ const
   TORRENT_FOLDER = 'test_torrent';
   END_USER_FOLDER = 'enduser';
 
-  //there are 3 test torrent files in 'test_torrent' folder.
-  TEST_TORRENT_FILES_COUNT = 3;
+  //there are 5 test torrent files in 'test_torrent' folder.
+  TEST_TORRENT_FILES_COUNT = 5;
 
 procedure TTestStartUpParameter.Test_Paramater_U0;
 begin
