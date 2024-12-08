@@ -46,6 +46,14 @@
   </screenshots>
 
   <releases>
+    <release version="1.33.1" date="2024-12-8">
+      <description>
+        <p>This release fixes the following bugs:</p>
+        <ul>
+          <li>Cannot open torrent file V2 format</li>
+        </ul>
+      </description>
+    </release>
     <release version="1.33.0" date="2023-11-18">
       <description>
         <p>

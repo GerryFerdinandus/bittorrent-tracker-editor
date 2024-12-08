@@ -215,8 +215,10 @@ const
     );
 
   //program name and version (http://semver.org/)
-  FORM_CAPTION = 'Bittorrent tracker editor (1.33.0/LCL ' +
-    lcl_version + '/FPC ' + {$I %FPCVERSION%} + ')';
+  PROGRAM_VERSION = '1.33.1';
+
+  FORM_CAPTION = 'Bittorrent tracker editor (' + PROGRAM_VERSION +
+    '/LCL ' + lcl_version + '/FPC ' + {$I %FPCVERSION%} + ')';
 
   GROUPBOX_PRESENT_TRACKERS_CAPTION =
     'Present trackers in all torrent files. Select the one that you want to keep. And added to all torrent files.';

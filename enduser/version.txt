@@ -1,3 +1,7 @@
+------ Version 1.33.1
+FIX: Cannot open torrent file V2 format (Issue 51)
+Compiler Lazarus: v3.6
+
 ------ Version 1.33
 ADD: Verify the working status of public trackers. (Issue 21)
 ADD: Wrong tracker URL format from torrent files should be unselected by default (Issue 22)
