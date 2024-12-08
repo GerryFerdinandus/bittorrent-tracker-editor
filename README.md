@@ -48,6 +48,8 @@ There is no backup function in this software. Use it at your own risk. Bittorren
 ---
 
 ## Software history: ##
+### 1.33.1 ###
+  * FIX: Cannot open torrent file V2 format. ([Issue 51](https://github.com/GerryFerdinandus/bittorrent-tracker-editor/issues/51)) 
 
 ### 1.33.0 ###
   * ADD: Support for OpenSSL 3
