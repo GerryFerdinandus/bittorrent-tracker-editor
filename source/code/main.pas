@@ -168,7 +168,7 @@ type
     FControlerGridTorrentData: TControlerGridTorrentData;
     function CheckForAnnounce(const TrackerURL: utf8string): boolean;
     procedure AppendTrackersToMemoNewTrackers(TrackerList: TStringList);
-    procedure ShowUserErrorMessage(const ErrorText: string; const FormText: string = '');
+    procedure ShowUserErrorMessage(ErrorText: string; const FormText: string = '');
     function TrackerWithURLAndAnnounce(const TrackerURL: utf8string): boolean;
     procedure UpdateTorrent;
     procedure ShowHourGlassCursor(HourGlass: boolean);
@@ -538,7 +538,7 @@ begin
     (not WebTorrentTrackerURL(TrackerURL)) and (not FDragAndDropStartUp);
 end;
 
-procedure TFormTrackerModify.ShowUserErrorMessage(const ErrorText: string;
+procedure TFormTrackerModify.ShowUserErrorMessage(ErrorText: string;
   const FormText: string);
 begin
   if FConsoleMode then
@@ -550,10 +550,9 @@ begin
   end
   else
   begin
-    if FormText = '' then
-      Application.MessageBox(PChar(@ErrorText[1]), '', MB_ICONERROR)
-    else
-      Application.MessageBox(PChar(@ErrorText[1]), PChar(@FormText[1]), MB_ICONERROR);
+    if FormText <> '' then
+      ErrorText := FormText + sLineBreak + ErrorText;
+    Application.MessageBox(PChar(@ErrorText[1]), '', MB_ICONERROR);
   end;
 end;
 
@@ -621,7 +620,6 @@ var
   Reply, BoxStyle, i, CountTrackers: integer;
   PopUpMenuStr: string;
   SomeFilesCannotBeWriten, SomeFilesAreReadOnly, AllFilesAreReadBackCorrectly: boolean;
-
 begin
   //Update all the torrent files.
 
@@ -639,8 +637,8 @@ begin
     begin
       //Warn user before updating the torrent
       BoxStyle := MB_ICONWARNING + MB_OKCANCEL;
-      Reply := Application.MessageBox('Warning: There is no undo.',
-        'Torrent files will be change!', BoxStyle);
+      Reply := Application.MessageBox('Torrent files will be change!' +
+        sLineBreak + 'Warning: There is no undo.', '', BoxStyle);
       if Reply <> idOk then
       begin
         ShowHourGlassCursor(True);
@@ -679,9 +677,9 @@ begin
     if not FConsoleMode and (CountTrackers = 0) then
     begin //Torrent without a tracker is posible. But is this what the user realy want? a DHT torrent.
       BoxStyle := MB_ICONWARNING + MB_OKCANCEL;
-      Reply := Application.MessageBox(
-        'Warning: Create torrent file without any URL of the tracker?',
-        'There are no Trackers selected!', BoxStyle);
+      Reply := Application.MessageBox('There are no Trackers selected!' +
+        sLineBreak + 'Warning: Create torrent file without any URL of the tracker?',
+        '', BoxStyle);
       if Reply <> idOk then
       begin
         ShowHourGlassCursor(False);
@@ -1317,9 +1315,9 @@ var
   i: integer;
 begin
   //Warn user about torrent Hash.
-  if Application.MessageBox(
+  if Application.MessageBox('Are you sure!' + sLineBreak +
     'Warning: Changing the public/private torrent flag will change the info hash.',
-    'Are you sure!', MB_ICONWARNING + MB_OKCANCEL) <> idOk then
+    '', MB_ICONWARNING + MB_OKCANCEL) <> idOk then
     exit;
 
   //Set all the trackers publick/private CheckBoxRemoveAllSourceTag ON or OFF
@@ -1422,7 +1420,6 @@ begin
 end;
 
 procedure TFormTrackerModify.MenuUpdateTorrentAddBeforeRemoveNewClick(Sender: TObject);
-
 begin
   //User have selected to add new tracker.
   FTrackerList.TrackerListOrderForUpdatedTorrent :=
