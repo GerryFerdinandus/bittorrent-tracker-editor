@@ -21,7 +21,7 @@ jobs:
       PROGRAM_NAME_WITH_PATH: 'enduser/trackereditor'
       BUILD_WITH_CERTIFICATE: ${{ secrets.PROD_MACOS_CERTIFICATE_NAME }}
       PROJECT_LPI: source/project/tracker_editor/trackereditor.lpi
-      RELEASE_DMG_FILE: trackereditor_macOS_universal.dmg
+      RELEASE_DMG_FILE: trackereditor_macOS_notarized_universal_binary.dmg
 
     steps:
     - uses: actions/checkout@v4
@@ -37,26 +37,22 @@ jobs:
     - name: Build trackereditor app for Apple silicon (aarch64)
       run: |
         ${{ env.LAZBUILD_WITH_PATH }} --build-all --build-mode=Release --widgetset=cocoa --cpu=aarch64 ${{ env.PROJECT_LPI }}
-        cp -a ${{ env.PROGRAM_NAME_WITH_PATH }} ${{ env.PROGRAM_NAME_WITH_PATH }}-aarch64
+        mv ${{ env.PROGRAM_NAME_WITH_PATH }} ${{ env.PROGRAM_NAME_WITH_PATH }}-aarch64
       shell: bash
 
     - name: Build trackereditor app for Intel Mac version (x86_64)
       run: |
         ${{ env.LAZBUILD_WITH_PATH }} --build-all --build-mode=Release --widgetset=cocoa --cpu=x86_64 ${{ env.PROJECT_LPI }}
-        cp -a ${{ env.PROGRAM_NAME_WITH_PATH }} ${{ env.PROGRAM_NAME_WITH_PATH }}-x86_64
+        mv ${{ env.PROGRAM_NAME_WITH_PATH }} ${{ env.PROGRAM_NAME_WITH_PATH }}-x86_64
       shell: bash
 
     - name: Create a Universal macOS binary from aarch64 and x86_64
       run: |
-        # remove the previeus binary build
-        rm -f ${{ env.PROGRAM_NAME_WITH_PATH }}
-
         # Create a new Universal macOS binary
         lipo -create -output ${{ env.PROGRAM_NAME_WITH_PATH }} ${{ env.PROGRAM_NAME_WITH_PATH }}-aarch64 ${{ env.PROGRAM_NAME_WITH_PATH }}-x86_64
 
-        # Remove this single binary build. Not needed any more.
-        rm -f ${{ env.PROGRAM_NAME_WITH_PATH }}-aarch64
-        rm -f ${{ env.PROGRAM_NAME_WITH_PATH }}-x86_64
+        # Remove these extra binary build. Not needed any more.
+        rm -f ${{ env.PROGRAM_NAME_WITH_PATH }}-*
       shell: bash
 
     - name: Extract latest program version from metainfo and update the Info.plist with it
@@ -200,16 +196,21 @@ jobs:
         xcrun stapler staple "${{ env.RELEASE_DMG_FILE }}"
       shell: bash
 
-    - name: Upload Artifact
+    - name: Use diferent .dmg file name for non signed/notarize version
+      if: ${{ env.BUILD_WITH_CERTIFICATE == '' }}
+      run: mv ${{ env.RELEASE_DMG_FILE }} trackereditor_macOS_UNSIGNED_universal_binary.dmg
+      shell: bash
+
+    - name: Upload Artifact. Signed/Notarize is optional.
       uses: actions/upload-artifact@v4
       with:
-        name: artifact-${{ env.RELEASE_DMG_FILE }}
-        path: ${{ env.RELEASE_DMG_FILE }}
+        name: artifact-${{ runner.os }}
+        path: "*.dmg"
         compression-level: 0 # no compression. Content is already a zip file
         if-no-files-found: error
 
-    - name: File release to end user
+    - name: Notarize file release to end user. If certificate is present.
       uses: softprops/action-gh-release@v2
-      if: startsWith(github.ref, 'refs/tags/')
+      if: startsWith(github.ref, 'refs/tags/') && (env.BUILD_WITH_CERTIFICATE != '')
       with:
         files: ${{ env.RELEASE_DMG_FILE }}
