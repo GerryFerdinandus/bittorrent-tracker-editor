@@ -13,10 +13,9 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-24.04 #ubuntu-latest
     timeout-minutes: 60
 
-    env: # Use the latest Lazarus source code.
+    env: # Use the latest Lazarus source code. Copied from: https://sourceforge.net/projects/lazarus/files/Lazarus%20Zip%20_%20GZip/
       LAZARUS_URL_TAR_GZ: "https://github.com/GerryFerdinandus/bittorrent-tracker-editor/releases/download/V1.32.0/lazarus.tar.gz"
 
     strategy:
@@ -29,21 +28,36 @@ jobs:
           - BUILD_TARGET: gtk2_amd64
             RELEASE_FILE_NAME: trackereditor_linux_amd64_gtk2.zip
             LAZ_OPT: --widgetset=gtk2
+            RUNS_ON: ubuntu-24.04
 
           - BUILD_TARGET: qt5_amd64
             RELEASE_FILE_NAME: trackereditor_linux_amd64_qt5.zip
             LAZ_OPT: --widgetset=qt5
             QT_VERSION_CI: '5'
+            RUNS_ON: ubuntu-24.04
 
           - BUILD_TARGET: qt6_amd64
             RELEASE_FILE_NAME: trackereditor_linux_amd64_qt6.zip
             LAZ_OPT: --widgetset=qt6
             QT_VERSION_CI: '6'
+            RUNS_ON: ubuntu-24.04
 
           - BUILD_TARGET: AppImage_amd64
             RELEASE_FILE_NAME: trackereditor_linux_amd64_qt6.AppImage
             LAZ_OPT: --widgetset=qt6
             QT_VERSION_CI: '6'
+            LINUX_DEPLOY_FILE_CPU: x86_64
+            RUNS_ON: ubuntu-22.04
+
+          - BUILD_TARGET: AppImage_arm64
+            RELEASE_FILE_NAME: trackereditor_linux_arm64_qt6.AppImage
+            LAZ_OPT: --widgetset=qt6
+            QT_VERSION_CI: '6'
+            LINUX_DEPLOY_FILE_CPU: aarch64
+            RUNS_ON: ubuntu-22.04-arm
+
+    name: ${{ matrix.BUILD_TARGET }}
+    runs-on: ${{ matrix.RUNS_ON }}
 
     steps:
     - uses: actions/checkout@v4
@@ -51,7 +65,9 @@ jobs:
         submodules: true
 
     - name: Install dependency for all build
-      run: sudo apt-get install -y fpc xvfb
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y fpc xvfb
       shell: bash
 
     - name: Install dependency for gtk2
@@ -70,14 +86,14 @@ jobs:
       shell: bash
 
     - name: Install dependency for AppImage
-      if: matrix.BUILD_TARGET == 'AppImage_amd64'
+      if: matrix.BUILD_TARGET == 'AppImage_amd64' || matrix.BUILD_TARGET == 'AppImage_arm64'
       run: |
         # Add wayland plugin and platform theme
         sudo apt-get install -y fuse qt6-wayland qt6-xdgdesktopportal-platformtheme qt6-gtk-platformtheme
-        # Use static versions of AppImage builder. So it won't depend on some specific OS image or library version.
-        curl -L -O  https://github.com/linuxdeploy/linuxdeploy/releases/download/continuous/linuxdeploy-static-x86_64.AppImage
-        curl -L -O  https://github.com/linuxdeploy/linuxdeploy-plugin-qt/releases/download/continuous/linuxdeploy-plugin-qt-static-x86_64.AppImage
-        curl -L -O  https://github.com/linuxdeploy/linuxdeploy-plugin-appimage/releases/download/continuous/linuxdeploy-plugin-appimage-x86_64.AppImage
+        # Download/Install AppImage tools
+        curl -L -O  https://github.com/linuxdeploy/linuxdeploy/releases/download/continuous/linuxdeploy-${{ matrix.LINUX_DEPLOY_FILE_CPU }}.AppImage
+        curl -L -O  https://github.com/linuxdeploy/linuxdeploy-plugin-qt/releases/download/continuous/linuxdeploy-plugin-qt-${{ matrix.LINUX_DEPLOY_FILE_CPU }}.AppImage
+        curl -L -O  https://github.com/linuxdeploy/linuxdeploy-plugin-appimage/releases/download/continuous/linuxdeploy-plugin-appimage-${{ matrix.LINUX_DEPLOY_FILE_CPU }}.AppImage
         chmod +x linuxdeploy-*.AppImage
       shell: bash
 
@@ -138,7 +154,7 @@ jobs:
       shell: bash
 
     - name: Create AppImage
-      if: matrix.BUILD_TARGET == 'AppImage_amd64'
+      if: matrix.BUILD_TARGET == 'AppImage_amd64' || matrix.BUILD_TARGET == 'AppImage_arm64'
       # LDAI_NO_APPSTREAM=1: skip checking AppStream metadata for issues
       env:
         LDAI_NO_APPSTREAM: 1
@@ -148,7 +164,7 @@ jobs:
         EXTRA_PLATFORM_PLUGINS: libqwayland-generic.so;libqwayland-egl.so
         DEPLOY_PLATFORM_THEMES: true
       run:  |
-        ./linuxdeploy-static-x86_64.AppImage \
+        ./linuxdeploy-${{ matrix.LINUX_DEPLOY_FILE_CPU }}.AppImage \
           --output appimage \
           --appdir temp_appdir \
           --plugin qt \

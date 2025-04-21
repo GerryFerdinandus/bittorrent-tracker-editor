@@ -13,7 +13,7 @@ on:
 
 jobs:
   build:
-    runs-on: windows-2022
+    runs-on: windows-2025
     timeout-minutes: 60
     env:
       LAZBUILD_WITH_PATH: c:/lazarus/lazbuild
@@ -24,12 +24,6 @@ jobs:
     - uses: actions/checkout@v4
       with:
         submodules: true
-
-    - name: Install winget
-      # winget will be included in windows server 2025
-      uses: Cyberboss/install-winget@v1
-      with:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Install Lazarus IDE
       run: winget install lazarus --disable-interactivity --accept-source-agreements --silent
