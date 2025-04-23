@@ -74,7 +74,14 @@
           </SearchPaths>
           <Conditionals Value="If TargetOS = &apos;darwin&apos; then
 begin
-  CustomOptions += &apos;-WM10.14&apos;;
+  If TargetCPU = &apos;aarch64&apos; then
+  begin
+    CustomOptions += &apos;-WM11.0&apos;;
+  end
+  else
+  begin
+    CustomOptions += &apos;-WM10.14&apos;;
+  end;
 end;"/>
           <CodeGeneration>
             <SmartLinkUnit Value="True"/>
