@@ -97,9 +97,10 @@ jobs:
         chmod +x linuxdeploy-*.AppImage
       shell: bash
 
-    - name: Download Lazarus source code
+    - name: Download Lazarus source code into temp folder
       run: |
-        #Download lazarus source code. Directory 'lazarus' will be created in the project folder.
+        #Download lazarus source code. Directory 'lazarus' will be created in the temp folder.
+        cd ${RUNNER_TEMP}
         curl -L -O ${{ env.LAZARUS_URL_TAR_GZ }}
         tar -xzf *.tar.gz
       shell: bash
@@ -107,26 +108,27 @@ jobs:
     - name: Build libQTpas.so
       if: matrix.QT_VERSION_CI != ''
       run: |
-        cd "${{ github.workspace }}/lazarus/lcl/interfaces/qt${{ matrix.QT_VERSION_CI }}/cbindings/"
+        cd "${RUNNER_TEMP}/lazarus/lcl/interfaces/qt${{ matrix.QT_VERSION_CI }}/cbindings/"
         /usr/lib/qt${{ matrix.QT_VERSION_CI }}/bin/qmake
         make -j$(nproc)
         sudo make install
       shell: bash
 
-    - name: Build lazbuild
-      env:
-        LAZARUS_DIR: "${{ github.workspace }}/lazarus"
+    - name: Build lazbuild from Lazarus source code
       run: |
-        # make lazbuild and put the link with extra parameter in project folder
+        # make lazbuild and put the link with extra parameter in the temp folder.
+        LAZARUS_DIR=${RUNNER_TEMP}/lazarus
         cd "$LAZARUS_DIR"
         make lazbuild
-        echo "$LAZARUS_DIR/lazbuild --primary-config-path=$LAZARUS_DIR --lazarusdir=$LAZARUS_DIR \$*" > ${{ github.workspace }}/lazbuild
-        chmod +x ${{ github.workspace }}/lazbuild
+        echo "$LAZARUS_DIR/lazbuild --primary-config-path=$LAZARUS_DIR --lazarusdir=$LAZARUS_DIR \$*" > ${RUNNER_TEMP}/lazbuild
+        chmod +x ${RUNNER_TEMP}/lazbuild
+        # Add lazbuild to the PATH variable. So it can be used in the next steps.
+        echo ${RUNNER_TEMP} >> $GITHUB_PATH
       shell: bash
 
     - name: Build trackereditor
       # Build trackereditor project (Release mode)
-      run: ./lazbuild --build-all --build-mode=Release ${{ matrix.LAZ_OPT }} source/project/tracker_editor/trackereditor.lpi
+      run: lazbuild --build-all --build-mode=Release ${{ matrix.LAZ_OPT }} source/project/tracker_editor/trackereditor.lpi
       shell: bash
 
     - name: Test if OpenSSL works on Linux CI

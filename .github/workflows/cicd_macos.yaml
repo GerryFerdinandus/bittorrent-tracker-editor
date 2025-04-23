@@ -16,33 +16,55 @@ jobs:
     runs-on: macos-latest
     timeout-minutes: 60
     env:
-      LAZBUILD_WITH_PATH: /Applications/Lazarus/lazbuild
       MACOS_APP: enduser/trackereditor.app
       PROGRAM_NAME_WITH_PATH: 'enduser/trackereditor'
       BUILD_WITH_CERTIFICATE: ${{ secrets.PROD_MACOS_CERTIFICATE_NAME }}
       PROJECT_LPI: source/project/tracker_editor/trackereditor.lpi
       RELEASE_DMG_FILE: trackereditor_macOS_notarized_universal_binary.dmg
+      # Copied the latest Lazarus source code from: https://sourceforge.net/projects/lazarus/files/Lazarus%20Zip%20_%20GZip/
+      LAZARUS_URL_TAR_GZ: "https://github.com/GerryFerdinandus/bittorrent-tracker-editor/releases/download/V1.32.0/lazarus.tar.gz"
 
     steps:
     - uses: actions/checkout@v4
       with:
         submodules: true
 
-    - name: Install Lazarus IDE
-      run: brew install --cask lazarus
+    - name: Install Free Pascal Compiler (FPC) multi arch version for macOS x86_64 and aarch64
+      run: brew install --cask fpc-laz
+      shell: bash
 
     - name: Install Create dmg
       run: brew install create-dmg
 
+    - name: Download Lazarus source code into temp folder
+      run: |
+        #Download lazarus source code. Directory 'lazarus' will be created in the temp folder.
+        cd ${RUNNER_TEMP}
+        curl -L -O ${{ env.LAZARUS_URL_TAR_GZ }}
+        tar -xzf *.tar.gz
+      shell: bash
+
+    - name: Build lazbuild from Lazarus source code
+      run: |
+        # make lazbuild and put the link with extra parameter in the temp folder.
+        LAZARUS_DIR=${RUNNER_TEMP}/lazarus
+        cd "$LAZARUS_DIR"
+        make lazbuild
+        echo "$LAZARUS_DIR/lazbuild --primary-config-path=$LAZARUS_DIR --lazarusdir=$LAZARUS_DIR \$*" > ${RUNNER_TEMP}/lazbuild
+        chmod +x ${RUNNER_TEMP}/lazbuild
+        # Add lazbuild to the PATH variable. So it can be used in the next steps.
+        echo ${RUNNER_TEMP} >> $GITHUB_PATH
+      shell: bash
+
     - name: Build trackereditor app for Apple silicon (aarch64)
       run: |
-        ${{ env.LAZBUILD_WITH_PATH }} --build-all --build-mode=Release --widgetset=cocoa --cpu=aarch64 ${{ env.PROJECT_LPI }}
+        lazbuild --build-all --build-mode=Release --widgetset=cocoa --cpu=aarch64 ${{ env.PROJECT_LPI }}
         mv ${{ env.PROGRAM_NAME_WITH_PATH }} ${{ env.PROGRAM_NAME_WITH_PATH }}-aarch64
       shell: bash
 
     - name: Build trackereditor app for Intel Mac version (x86_64)
       run: |
-        ${{ env.LAZBUILD_WITH_PATH }} --build-all --build-mode=Release --widgetset=cocoa --cpu=x86_64 ${{ env.PROJECT_LPI }}
+        lazbuild --build-all --build-mode=Release --widgetset=cocoa --cpu=x86_64 ${{ env.PROJECT_LPI }}
         mv ${{ env.PROGRAM_NAME_WITH_PATH }} ${{ env.PROGRAM_NAME_WITH_PATH }}-x86_64
       shell: bash
 
