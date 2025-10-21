@@ -2,23 +2,22 @@ name: bittorrent-tracker-editor
 adopt-info: mainprogram
 icon: metainfo/io.github.gerryferdinandus.bittorrent-tracker-editor.png
 
-base: core22
+base: core24
 grade: stable
 confinement: strict
 
-architectures:
-  - build-on: amd64
-  - build-on: arm64
+platforms:
+ amd64:
+   build-on: [amd64]
+ arm64:
+   build-on: [arm64]
 
 apps:
   bittorrent-tracker-editor:
     desktop: io.github.gerryferdinandus.bittorrent-tracker-editor.desktop
     extensions:
-      - kde-neon
+      - kde-neon-6
     command: trackereditor
-    environment:
-      # Fallback to XWayland if running in a Wayland session.
-      DISABLE_WAYLAND: 1
     plugs:
       - home
       - network
@@ -32,28 +31,29 @@ parts:
       - curl
       - build-essential
       - fpc
-      - libqt5x11extras5-dev
+
     build-environment:
       - LAZARUS_URL_TAR_GZ: "https://github.com/GerryFerdinandus/bittorrent-tracker-editor/releases/download/V1.32.0/lazarus.tar.gz"
-      - LAZARUS_QT_VERSION: "5"
+      - LAZARUS_QT_VERSION: "6"
       - LIB_DIR: "/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR"
       - LAZARUS_DIR: "$PWD/lazarus"
     override-build: |
-      # Remove the older libQTpas.so
-      rm -f $LIB_DIR/libQt${LAZARUS_QT_VERSION}Pas.*
-
       #Download lazarus source code. Directory 'lazarus' will be created in the root.
       curl -L -O $LAZARUS_URL_TAR_GZ
       tar -xzf *.tar.gz
 
-      # Create libQTpas.so and put it in snap $CRAFT_PART_INSTALL
+      #--- Create libQTpas.so and put it in /usr/lib/ and $CRAFT_PART_INSTALL
       cd "$LAZARUS_DIR/lcl/interfaces/qt${LAZARUS_QT_VERSION}/cbindings/"
-      qmake
+      /snap/kde-qt6-core24-sdk/current/usr/bin/qt6/qmake6
       make -j$(nproc)
-      make install
+
+      # copy the libQTpas.so to /usr/lib/ (needed for compile-time linking)
+      cp -av libQt${LAZARUS_QT_VERSION}Pas.* $LIB_DIR/
+
+      # copy the libQTpas.so to snap install directory (needed for run-time linking)
       cp -av --parents $LIB_DIR/libQt${LAZARUS_QT_VERSION}Pas.* $CRAFT_PART_INSTALL
 
-      # make lazbuild and put the link with extra parameter in /usr/bin/
+      #--- Make lazbuild and put the link with extra parameter in /usr/bin/
       cd "$LAZARUS_DIR"
       make lazbuild
       echo "$LAZARUS_DIR/lazbuild --primary-config-path=$LAZARUS_DIR --lazarusdir=$LAZARUS_DIR \$*" > /usr/bin/lazbuild
@@ -65,19 +65,20 @@ parts:
       plugin: nil
       parse-info: [metainfo/io.github.gerryferdinandus.bittorrent-tracker-editor.metainfo.xml]
       override-build: |
-        lazbuild --build-mode=Release --widgetset=qt5 source/project/tracker_editor/trackereditor.lpi
+        lazbuild --build-mode=Release --widgetset=qt6 source/project/tracker_editor/trackereditor.lpi
         install enduser/trackereditor $CRAFT_PART_INSTALL/
         install metainfo/io.github.gerryferdinandus.bittorrent-tracker-editor.desktop $CRAFT_PART_INSTALL/
 
 # --------------------------------------------------------------
-# Only 2 files are explicitly added in this snap
+# Only 3 files are explicitly added in this snap
 # - main program: enduser/trackereditor
-# - Lazarus QT suport library: libQt5Pas.so
+# - desktop file: metainfo/io.github.gerryferdinandus.bittorrent-tracker-editor.desktop
+# - libQt6Pas.so created during the build_lazarus part
 #
 # Create snap. Run from the project root folder:
-# snapcraft --verbosity verbose
+# snapcraft pack --verbosity verbose
 #
-# he snapTo look what is inside t file. Directory 'squashfs-root' will be created in the root folder:
+# To look what is inside the snap file. Directory 'squashfs-root' will be created in the root folder:
 # unsquashfs *.snap
 #
 # Install the snap:
@@ -85,9 +86,4 @@ parts:
 #
 # Run the snap
 # snap run bittorrent-tracker-editor
-# --------------------------------------------------------------
-# Todo: building for QT6 is still not working with snap
-# https://askubuntu.com/questions/1460242/ubuntu-22-04-with-qt6-qmake-could-not-find-a-qt-installation-of
-# qtchooser -install qt{LAZARUS_QT_VERSION} $(which qmake6)
-# export QT_SELECT=qt{LAZARUS_QT_VERSION}
 # --------------------------------------------------------------
