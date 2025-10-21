@@ -76,7 +76,7 @@
 begin
   If TargetCPU = &apos;aarch64&apos; then
   begin
-    CustomOptions += &apos;-WM11.0&apos;;
+    CustomOptions += &apos;-WM10.15&apos;;
   end
   else
   begin
