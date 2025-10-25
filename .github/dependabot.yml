@@ -1,0 +1,11 @@
+# Enable version updates for GitHub Actions with daily checks
+version: 2
+updates:
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    commit-message:
+      prefix: "chore"
+      include: "scope"
+    open-pull-requests-limit: 5
