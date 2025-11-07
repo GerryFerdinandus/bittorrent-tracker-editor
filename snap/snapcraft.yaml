@@ -8,9 +8,9 @@ confinement: strict
 
 platforms:
  amd64:
-   build-on: [amd64]
  arm64:
-   build-on: [arm64]
+ armhf:
+ riscv64:
 
 apps:
   bittorrent-tracker-editor:
