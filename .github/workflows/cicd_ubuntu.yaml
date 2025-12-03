@@ -60,7 +60,7 @@ jobs:
     runs-on: ${{ matrix.RUNS_ON }}
 
     steps:
-    - uses: actions/checkout@v5
+    - uses: actions/checkout@v6
       with:
         submodules: true
 
