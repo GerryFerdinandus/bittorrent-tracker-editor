@@ -45,7 +45,7 @@ jobs:
     runs-on: macos-latest
     timeout-minutes: 60
     steps:
-    - uses: actions/checkout@v5
+    - uses: actions/checkout@v6
       with:
         submodules: true
 
@@ -140,7 +140,7 @@ jobs:
     runs-on: macos-15-intel
     timeout-minutes: 60
     steps:
-    - uses: actions/checkout@v5
+    - uses: actions/checkout@v6
       with:
         submodules: true
 
