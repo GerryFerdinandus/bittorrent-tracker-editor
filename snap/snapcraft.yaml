@@ -9,8 +9,6 @@ confinement: strict
 platforms:
  amd64:
  arm64:
- armhf:
- riscv64:
 
 apps:
   bittorrent-tracker-editor:
@@ -31,6 +29,7 @@ parts:
       - curl
       - build-essential
       - fpc
+      - libxkbcommon-dev
 
     build-environment:
       - LAZARUS_URL_TAR_GZ: "https://github.com/GerryFerdinandus/bittorrent-tracker-editor/releases/download/V1.32.0/lazarus.tar.gz"
