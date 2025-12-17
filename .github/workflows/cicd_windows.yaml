@@ -67,7 +67,7 @@ jobs:
       shell: pwsh
 
     - name: Upload Artifact
-      uses: actions/upload-artifact@v5
+      uses: actions/upload-artifact@v6
       with:
         name: artifact-${{ runner.os }}
         path: ${{ env.RELEASE_ZIP_FILE }}
