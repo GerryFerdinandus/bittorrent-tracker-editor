@@ -205,7 +205,7 @@ jobs:
       shell: bash
 
     - name: Download build artifacts from previous jobs
-      uses: actions/download-artifact@v6
+      uses: actions/download-artifact@v7
       with:
         path: enduser/
         merge-multiple: true
