@@ -129,7 +129,7 @@ jobs:
       shell: bash
 
     - name: Upload Artifact.
-      uses: actions/upload-artifact@v5
+      uses: actions/upload-artifact@v6
       with:
         name: artifact-aarch64
         # Include both the zipped universal app bundle and the aarch64 binary zip
@@ -184,7 +184,7 @@ jobs:
       shell: bash
 
     - name: Upload Artifact.
-      uses: actions/upload-artifact@v5
+      uses: actions/upload-artifact@v6
       with:
         name: artifact-x86_64
         path: enduser/*.zip
@@ -355,7 +355,7 @@ jobs:
       shell: bash
 
     - name: Upload Artifact. Signed/Notarize is optional.
-      uses: actions/upload-artifact@v5
+      uses: actions/upload-artifact@v6
       with:
         name: artifact-${{ runner.os }}
         path: "*.dmg"
