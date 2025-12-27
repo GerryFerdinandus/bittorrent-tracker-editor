@@ -19,8 +19,16 @@ runs:
   steps:
     - name: Install Lazarus IDE (Windows)
       if: runner.os == 'Windows'
-      run: winget install lazarus --disable-interactivity --accept-source-agreements --silent
-      shell: powershell
+      run: |
+        winget install lazarus --disable-interactivity --accept-source-agreements --silent
+        echo 'c:/lazarus' >> $GITHUB_PATH
+      shell: pwsh
+
+    - name: Make PATH also in bash available (Windows)
+      if: runner.os == 'Windows'
+      run: |
+        echo 'c:/lazarus' >> $GITHUB_PATH
+      shell: bash
 
     - name: Install fpc (Linux)
       if: runner.os == 'Linux'

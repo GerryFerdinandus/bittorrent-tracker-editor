@@ -16,7 +16,6 @@ jobs:
     runs-on: windows-latest
     timeout-minutes: 60
     env:
-      LAZBUILD_WITH_PATH: c:/lazarus/lazbuild
       RELEASE_ZIP_FILE: trackereditor_windows_amd64.zip
       LAZ_OPT:
 
@@ -38,12 +37,12 @@ jobs:
 
     - name: Build Release version
       # Build trackereditor project (Release mode)
-      run: ${{ env.LAZBUILD_WITH_PATH }} --build-all --build-mode=Release ${{ env.LAZ_OPT }} source/project/tracker_editor/trackereditor.lpi
+      run: lazbuild --build-all --build-mode=Release ${{ env.LAZ_OPT }} source/project/tracker_editor/trackereditor.lpi
       shell: bash
 
     - name: Build Unit Test on Windows
       # Build unit test project (Debug mode)
-      run: ${{ env.LAZBUILD_WITH_PATH }} --build-all --build-mode=Debug ${{ env.LAZ_OPT }} source/project/unit_test/tracker_editor_test.lpi
+      run: lazbuild --build-all --build-mode=Debug ${{ env.LAZ_OPT }} source/project/unit_test/tracker_editor_test.lpi
       shell: bash
 
     - name: Run Unit Test on Windows
