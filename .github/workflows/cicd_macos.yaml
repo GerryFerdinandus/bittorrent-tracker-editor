@@ -37,49 +37,100 @@ env:
   BUILD_WITH_CERTIFICATE: ${{ secrets.PROD_MACOS_CERTIFICATE_NAME }}
   PROJECT_LPI: source/project/tracker_editor/trackereditor.lpi
   RELEASE_DMG_FILE: trackereditor_macOS_notarized_universal_binary.dmg
-  # Copied the latest Lazarus source code from: https://sourceforge.net/projects/lazarus/files/Lazarus%20Zip%20_%20GZip/
-  LAZARUS_URL_TAR_GZ: "https://github.com/GerryFerdinandus/bittorrent-tracker-editor/releases/download/V1.32.0/lazarus.tar.gz"
 
 jobs:
-  build_aarch64: # Build for Apple silicon Mac architecture
-    runs-on: macos-latest
+  build:
     timeout-minutes: 60
+
+    strategy:
+      # Set fail-fast to false to ensure that feedback is delivered for all matrix combinations.
+      fail-fast: false
+
+      # Set up an include to perform the following build configurations.
+      matrix:
+        include:
+          - BUILD_TARGET: build_aarch64
+            ARCH: aarch64
+            RUNS_ON: macos-latest
+
+          - BUILD_TARGET: build_x86_64
+            ARCH: x86_64
+            RUNS_ON: macos-15-intel
+
+    name: ${{ matrix.BUILD_TARGET }}
+    runs-on: ${{ matrix.RUNS_ON }}
+
     steps:
     - uses: actions/checkout@v6
       with:
         submodules: true
 
-    - name: Install Free Pascal Compiler (FPC) multi arch version for macOS x86_64 and aarch64
-      run: brew install fpc
-      shell: bash
+    - name: Install Lazarus IDE
+      uses: ./.github/actions/install_lazarus
 
-    - name: Download Lazarus source code into temp folder
+    - name: Build trackereditor app for Apple (${{ matrix.ARCH }})
       run: |
-        #Download lazarus source code. Directory 'lazarus' will be created in the temp folder.
-        cd ${RUNNER_TEMP}
-        curl -L -O ${{ env.LAZARUS_URL_TAR_GZ }}
-        tar -xzf *.tar.gz
-      shell: bash
-
-    - name: Build lazbuild from Lazarus source code
-      run: |
-        # make lazbuild and put the link with extra parameter in the temp folder.
-        LAZARUS_DIR=${RUNNER_TEMP}/lazarus
-        cd "$LAZARUS_DIR"
-        make lazbuild
-        echo "$LAZARUS_DIR/lazbuild --primary-config-path=$LAZARUS_DIR --lazarusdir=$LAZARUS_DIR \$*" > ${RUNNER_TEMP}/lazbuild
-        chmod +x ${RUNNER_TEMP}/lazbuild
-        # Add lazbuild to the PATH variable. So it can be used in the next steps.
-        echo ${RUNNER_TEMP} >> $GITHUB_PATH
-      shell: bash
-
-    - name: Build trackereditor app for Apple silicon (aarch64)
-      run: |
-        lazbuild --build-all --build-mode=Release --widgetset=cocoa --cpu=aarch64 ${{ env.PROJECT_LPI }}
+        lazbuild --build-all --build-mode=Release --widgetset=cocoa --cpu=${{ matrix.ARCH }} ${{ env.PROJECT_LPI }}
       shell: bash
 
     - name: Test App SSL connection
       run: open "${{ env.PROGRAM_NAME_WITH_PATH }}" --args -TEST_SSL
+      shell: bash
+
+    - name: Zip the macOS .app bundle for artifact upload
+      if: matrix.ARCH == 'aarch64'
+      run: ditto -c -k enduser/trackereditor.app enduser/trackereditor_app.zip
+      shell: bash
+
+    - name: Rename built -aarch64 binary for artifact upload
+      run: |
+        mv ${{ env.PROGRAM_NAME_WITH_PATH }} ${{ env.PROGRAM_NAME_WITH_PATH }}-${{ matrix.ARCH }}
+        ditto -c -k ${{ env.PROGRAM_NAME_WITH_PATH }}-${{ matrix.ARCH }} ${{ env.PROGRAM_NAME_WITH_PATH }}-${{ matrix.ARCH }}.zip
+      shell: bash
+
+    - name: Upload Artifact.
+      uses: actions/upload-artifact@v6
+      with:
+        name: artifact-${{ matrix.ARCH }}
+        # Include both the zipped universal app bundle and the aarch64 binary zip
+        path: enduser/*.zip
+        if-no-files-found: error
+
+  create_universal_macOS_binary: # Create Universal binary from aarch64 and x86_64 builds
+    needs: build
+    runs-on: macos-latest
+    timeout-minutes: 60
+
+    steps:
+    - uses: actions/checkout@v6
+      with:
+        sparse-checkout: metainfo
+
+    - name: Install create-dmg tool
+      run: brew install create-dmg
+      shell: bash
+
+    - name: Download build artifacts from previous jobs
+      uses: actions/download-artifact@v7
+      with:
+        path: enduser/
+        merge-multiple: true
+
+    - name: Display the downloaded artifact files
+      run: ls -R enduser/
+      shell: bash
+
+    - name: Unzip all the artifact files
+      run: |
+        ditto -xk enduser/trackereditor_app.zip enduser/trackereditor.app
+        ditto -xk ${{ env.PROGRAM_NAME_WITH_PATH }}-x86_64.zip enduser/
+        ditto -xk ${{ env.PROGRAM_NAME_WITH_PATH }}-aarch64.zip enduser/
+        # Remove the zip files after extraction
+        rm -f enduser/*.zip
+      shell: bash
+
+    - name: Display the downloaded artifact files after unzip
+      run: ls -R enduser/
       shell: bash
 
     - name: Set correct version number in macOS .app bundle Info.plist from metainfo xml file
@@ -116,115 +167,6 @@ jobs:
 
         # add icon to plist xml file CFBundleIconFile = "iconfile"
         plutil -insert CFBundleIconFile -string "iconfile" "${{ env.MACOS_APP }}/Contents/Info.plist"
-      shell: bash
-
-    - name: Zip the macOS .app bundle for artifact upload
-      run: ditto -c -k enduser/trackereditor.app enduser/trackereditor_app.zip
-      shell: bash
-
-    - name: Rename built -aarch64 binary for artifact upload
-      run: |
-        mv ${{ env.PROGRAM_NAME_WITH_PATH }} ${{ env.PROGRAM_NAME_WITH_PATH }}-aarch64
-        ditto -c -k ${{ env.PROGRAM_NAME_WITH_PATH }}-aarch64 ${{ env.PROGRAM_NAME_WITH_PATH }}-aarch64.zip
-      shell: bash
-
-    - name: Upload Artifact.
-      uses: actions/upload-artifact@v6
-      with:
-        name: artifact-aarch64
-        # Include both the zipped universal app bundle and the aarch64 binary zip
-        path: enduser/*.zip
-        if-no-files-found: error
-
-  build_x86_64: # Build for Intel Mac architecture
-    runs-on: macos-15-intel
-    timeout-minutes: 60
-    steps:
-    - uses: actions/checkout@v6
-      with:
-        submodules: true
-
-    - name: Install Free Pascal Compiler (FPC) multi arch version for macOS x86_64 and aarch64
-      run: brew install fpc
-      shell: bash
-
-    - name: Download Lazarus source code into temp folder
-      run: |
-        #Download lazarus source code. Directory 'lazarus' will be created in the temp folder.
-        cd ${RUNNER_TEMP}
-        curl -L -O ${{ env.LAZARUS_URL_TAR_GZ }}
-        tar -xzf *.tar.gz
-      shell: bash
-
-    - name: Build lazbuild from Lazarus source code
-      run: |
-        # make lazbuild and put the link with extra parameter in the temp folder.
-        LAZARUS_DIR=${RUNNER_TEMP}/lazarus
-        cd "$LAZARUS_DIR"
-        make lazbuild
-        echo "$LAZARUS_DIR/lazbuild --primary-config-path=$LAZARUS_DIR --lazarusdir=$LAZARUS_DIR \$*" > ${RUNNER_TEMP}/lazbuild
-        chmod +x ${RUNNER_TEMP}/lazbuild
-        # Add lazbuild to the PATH variable. So it can be used in the next steps.
-        echo ${RUNNER_TEMP} >> $GITHUB_PATH
-      shell: bash
-
-    - name: Build trackereditor app for Intel Mac version (x86_64)
-      run: |
-        lazbuild --build-all --build-mode=Release --widgetset=cocoa --cpu=x86_64 ${{ env.PROJECT_LPI }}
-      shell: bash
-
-    - name: Test App SSL connection
-      run: open "${{ env.PROGRAM_NAME_WITH_PATH }}" --args -TEST_SSL
-      shell: bash
-
-    - name: Rename built -x86_64 binary for artifact upload
-      run: |
-        mv ${{ env.PROGRAM_NAME_WITH_PATH }} ${{ env.PROGRAM_NAME_WITH_PATH }}-x86_64
-        ditto -c -k ${{ env.PROGRAM_NAME_WITH_PATH }}-x86_64 ${{ env.PROGRAM_NAME_WITH_PATH }}-x86_64.zip
-      shell: bash
-
-    - name: Upload Artifact.
-      uses: actions/upload-artifact@v6
-      with:
-        name: artifact-x86_64
-        path: enduser/*.zip
-        if-no-files-found: error
-
-
-  create_universal_macOS_binary: # Create Universal binary from aarch64 and x86_64 builds
-    runs-on: macos-latest
-    timeout-minutes: 60
-
-    needs:
-      - build_aarch64
-      - build_x86_64
-
-    steps:
-    - name: Install create-dmg tool
-      run: brew install create-dmg
-      shell: bash
-
-    - name: Download build artifacts from previous jobs
-      uses: actions/download-artifact@v7
-      with:
-        path: enduser/
-        merge-multiple: true
-
-    - name: Display the downloaded artifact files
-      run: ls -R enduser/
-      shell: bash
-
-    - name: Unzip all the artifact files
-      run: |
-        ditto -xk enduser/trackereditor_app.zip enduser/trackereditor.app
-        ditto -xk ${{ env.PROGRAM_NAME_WITH_PATH }}-x86_64.zip enduser/
-        ditto -xk ${{ env.PROGRAM_NAME_WITH_PATH }}-aarch64.zip enduser/
-        # Remove the zip files after extraction
-        rm -f enduser/*.zip
-      shell: bash
-
-    - name: Display the downloaded artifact files after unzip
-      run: ls -R enduser/
       shell: bash
 
     - name: Create a Universal macOS binary from aarch64 and x86_64
