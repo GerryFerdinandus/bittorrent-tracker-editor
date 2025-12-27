@@ -1,0 +1,93 @@
+# include this file in the cicd_windows.yaml, cicd_ubuntu.yaml, and cicd_macos.yaml like this:
+#    - name: Install Lazarus IDE
+#      uses: ./.github/actions/install_lazarus
+#      with:
+#        qt_version_ci: 6  # optional, only needed when building with qt5 or qt6
+
+
+# https://docs.github.com/en/actions/tutorials/create-actions/create-a-composite-action
+name: 'Install Lazaurus IDE'
+description: 'download and build lazbuild'
+
+inputs:
+  qt_version_ci:  # id of input
+    description: 'QT version'
+    required: false
+
+runs:
+  using: "composite"
+  steps:
+    - name: Install Lazarus IDE (Windows)
+      if: runner.os == 'Windows'
+      run: winget install lazarus --disable-interactivity --accept-source-agreements --silent
+      shell: powershell
+
+    - name: Install fpc (Linux)
+      if: runner.os == 'Linux'
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y fpc
+      shell: bash
+
+    - name: Install dependency for gtk2
+      if: runner.os == 'Linux' && inputs.qt_version_ci == ''
+      run: sudo apt-get install -y libgtk2.0-dev
+      shell: bash
+
+    - name: Install dependency for qt5
+      if: runner.os == 'Linux' && inputs.qt_version_ci == '5'
+      run: sudo apt-get install -y libqt5x11extras5-dev
+      shell: bash
+
+    - name: Install dependency for qt6
+      if: runner.os == 'Linux' && inputs.qt_version_ci == '6'
+      run: sudo apt-get install -y qt6-base-dev
+      shell: bash
+
+    - name: Install Free Pascal Compiler (FPC) multi arch version for macOS x86_64 and aarch64 (macOS)
+      if: runner.os == 'macOS'
+      run: brew install fpc
+      shell: bash      
+
+    - name: Download Lazarus source code into temp folder (Linux and macOS)
+      if: runner.os != 'Windows'
+      env:
+        # Linux and macOS need to build lazbuild from Lazarus source code.
+        # Copied the latest Lazarus source code from: https://sourceforge.net/projects/lazarus/files/Lazarus%20Zip%20_%20GZip/
+        LAZARUS_URL_TAR_GZ: "https://github.com/GerryFerdinandus/bittorrent-tracker-editor/releases/download/V1.32.0/lazarus.tar.gz"
+        RUNNER_TEMP: ${{ runner.temp }}
+      run: |
+        #Download lazarus source code. Directory 'lazarus' will be created in the temp folder.
+        echo ${RUNNER_TEMP}
+        cd ${RUNNER_TEMP}
+        curl -L -O ${{ env.LAZARUS_URL_TAR_GZ }}
+        tar -xzf *.tar.gz
+      shell: bash      
+      
+    - name: Build lazbuild from Lazarus source code (Linux and macOS)
+      if: runner.os != 'Windows'
+      env:
+        RUNNER_TEMP: ${{ runner.temp }}
+      run: |
+        # make lazbuild and put the link with extra parameter in the temp folder.
+        LAZARUS_DIR=${RUNNER_TEMP}/lazarus
+        cd "$LAZARUS_DIR"
+        make lazbuild
+        echo "$LAZARUS_DIR/lazbuild --primary-config-path=$LAZARUS_DIR --lazarusdir=$LAZARUS_DIR \$*" > ${RUNNER_TEMP}/lazbuild
+        chmod +x ${RUNNER_TEMP}/lazbuild
+        # Add lazbuild to the PATH variable.
+        echo ${RUNNER_TEMP} >> $GITHUB_PATH
+      shell: bash
+
+    - name: Build libQTpas.so (qt5 or qt6)
+      if: runner.os == 'Linux' && inputs.qt_version_ci != ''
+      env:
+        RUNNER_TEMP: ${{ runner.temp }}      
+      run: |
+        cd "${RUNNER_TEMP}/lazarus/lcl/interfaces/qt${{ inputs.qt_version_ci }}/cbindings/"
+        /usr/lib/qt${{ inputs.qt_version_ci }}/bin/qmake
+        make -j$(nproc)
+        sudo make install
+      shell: bash
+
+
