@@ -111,7 +111,7 @@ jobs:
       shell: bash
 
     - name: Download build artifacts from previous jobs
-      uses: actions/download-artifact@v7
+      uses: actions/download-artifact@v8
       with:
         path: enduser/
         merge-multiple: true
