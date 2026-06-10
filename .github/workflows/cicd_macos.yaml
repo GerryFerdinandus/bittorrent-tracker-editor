@@ -89,7 +89,7 @@ jobs:
       shell: bash
 
     - name: Upload Artifact.
-      uses: actions/upload-artifact@v6
+      uses: actions/upload-artifact@v7
       with:
         name: artifact-${{ matrix.ARCH }}
         # Include both the zipped universal app bundle and the aarch64 binary zip
@@ -297,7 +297,7 @@ jobs:
       shell: bash
 
     - name: Upload Artifact. Signed/Notarize is optional.
-      uses: actions/upload-artifact@v6
+      uses: actions/upload-artifact@v7
       with:
         name: artifact-${{ runner.os }}
         path: "*.dmg"
