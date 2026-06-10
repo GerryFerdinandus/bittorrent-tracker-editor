@@ -305,7 +305,7 @@ jobs:
         if-no-files-found: error
 
     - name: Notarize file release to end user. If certificate is present.
-      uses: softprops/action-gh-release@v2
+      uses: softprops/action-gh-release@v3
       if: startsWith(github.ref, 'refs/tags/') && (env.BUILD_WITH_CERTIFICATE != '')
       with:
         files: ${{ env.RELEASE_DMG_FILE }}
