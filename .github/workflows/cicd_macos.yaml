@@ -61,6 +61,12 @@ jobs:
     runs-on: ${{ matrix.RUNS_ON }}
 
     steps:
+
+    - name: Trust brew taps
+      if: matrix.ARCH == 'x86_64'
+      run: brew trust aws/tap azure/bicep
+      shell: bash
+
     - uses: actions/checkout@v6
       with:
         submodules: true
