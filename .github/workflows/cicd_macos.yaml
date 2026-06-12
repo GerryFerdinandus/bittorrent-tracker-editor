@@ -62,10 +62,6 @@ jobs:
 
     steps:
 
-    - name: Trust brew taps
-      run: brew trust aws/tap azure/bicep
-      shell: bash
-
     - uses: actions/checkout@v6
       with:
         submodules: true
@@ -107,10 +103,6 @@ jobs:
     timeout-minutes: 60
 
     steps:
-    - name: Trust brew taps
-      run: brew trust aws/tap azure/bicep
-      shell: bash
-            
     - uses: actions/checkout@v6
       with:
         sparse-checkout: metainfo
