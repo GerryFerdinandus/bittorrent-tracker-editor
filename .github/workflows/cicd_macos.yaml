@@ -62,8 +62,14 @@ jobs:
 
     steps:
 
-    - name: Trust brew taps
-      run: brew trust aws/tap azure/bicep
+    - name: Trust brew taps when supported
+      run: |
+        if brew commands | grep -qx trust; then
+          brew trust aws/tap || echo "brew trust failed for aws/tap; continuing build."
+          brew trust azure/bicep || echo "brew trust failed for azure/bicep; continuing build."
+        else
+          echo "brew trust command is unavailable on this runner; skipping tap trust."
+        fi
       shell: bash
 
     - uses: actions/checkout@v6
@@ -107,10 +113,16 @@ jobs:
     timeout-minutes: 60
 
     steps:
-    - name: Trust brew taps
-      run: brew trust aws/tap azure/bicep
+    - name: Trust brew taps when supported
+      run: |
+        if brew commands | grep -qx trust; then
+          brew trust aws/tap || echo "brew trust failed for aws/tap; continuing build."
+          brew trust azure/bicep || echo "brew trust failed for azure/bicep; continuing build."
+        else
+          echo "brew trust command is unavailable on this runner; skipping tap trust."
+        fi
       shell: bash
-            
+
     - uses: actions/checkout@v6
       with:
         sparse-checkout: metainfo
