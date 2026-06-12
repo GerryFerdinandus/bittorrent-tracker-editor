@@ -64,8 +64,8 @@ jobs:
 
     - name: Trust brew taps when supported
       run: |
-        if brew help trust >/dev/null 2>&1; then
-          brew trust aws/tap azure/bicep
+        if brew commands | grep -qx trust; then
+          brew trust aws/tap azure/bicep || echo "brew trust command failed; continuing build."
         else
           echo "brew trust command is unavailable on this runner; skipping tap trust."
         fi
@@ -114,8 +114,8 @@ jobs:
     steps:
     - name: Trust brew taps when supported
       run: |
-        if brew help trust >/dev/null 2>&1; then
-          brew trust aws/tap azure/bicep
+        if brew commands | grep -qx trust; then
+          brew trust aws/tap azure/bicep || echo "brew trust command failed; continuing build."
         else
           echo "brew trust command is unavailable on this runner; skipping tap trust."
         fi
