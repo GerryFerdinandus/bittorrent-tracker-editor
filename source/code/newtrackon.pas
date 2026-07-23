@@ -114,7 +114,7 @@ begin
   end;
 
   //Clean up the tracker list just downloaded
-  SanatizeTrackerList(FTRackerList[NewTrackon_List]);
+  SanitizeTrackerList(FTRackerList[NewTrackon_List]);
 end;
 
 function TNewTrackon.DownloadEverything: boolean;

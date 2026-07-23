@@ -100,7 +100,7 @@ type
 
 procedure RemoveTrackersFromList(RemoveList, UpdatedList: TStringList);
 
-procedure SanatizeTrackerList(StringList: TStringList);
+procedure SanitizeTrackerList(StringList: TStringList);
 
 procedure RandomizeTrackerList(StringList: TStringList);
 
@@ -171,7 +171,7 @@ begin
   end;
 end;
 
-procedure SanatizeTrackerList(StringList: TStringList);
+procedure SanitizeTrackerList(StringList: TStringList);
 var
   TrackerStr: UTF8String;
   i: integer;

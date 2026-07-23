@@ -91,7 +91,7 @@ begin
       TFPCustomHTTPClient.SimpleGet(URL[ngosang_List]);
 
     //Clean up the tracker list
-    SanatizeTrackerList(FTRackerList[ngosang_List]);
+    SanitizeTrackerList(FTRackerList[ngosang_List]);
 
   except
     //No OpenSSL or web server is down

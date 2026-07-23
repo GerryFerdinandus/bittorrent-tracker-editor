@@ -1280,7 +1280,7 @@ begin
     FFilePresentBanByUserList := False;
   end;
 
-  SanatizeTrackerList(FTrackerList.TrackerBanByUserList);
+  SanitizeTrackerList(FTrackerList.TrackerBanByUserList);
 
 end;
 
@@ -1369,7 +1369,7 @@ begin
   TrackerFileList := TStringList.Create;
   try
     TrackerFileList.LoadFromFile(FileName);
-    SanatizeTrackerList(TrackerFileList);
+    SanitizeTrackerList(TrackerFileList);
     MemoNewTrackers.Text := UTF8Trim(TrackerFileList.Text);
     Result := True;
   except
