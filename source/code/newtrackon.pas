@@ -47,7 +47,7 @@ type
     property TrackerList_Udp: TStringList read FTrackerList[ntl_URL_UDP];
 
     // stable HTTP/HTTPS trackers.
-    property TrackerList_Http: TStringList read FTrackerList[ntl_URL_UDP];
+    property TrackerList_Http: TStringList read FTrackerList[ntl_URL_HTTP];
 
     // trackers that no longer present in 'live' list
     property TrackerList_Dead: TStringList read FTrackerList[ntl_CREATE_DEAD];
