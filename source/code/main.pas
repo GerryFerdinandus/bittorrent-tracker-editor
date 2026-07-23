@@ -606,7 +606,7 @@ begin
     1: UncheckTrackers(tos_dead);
     2: UncheckTrackers(tos_unknown);
     else
-      Assert(True, 'Unknown Menu item selection')
+      Assert(False, 'Unknown Menu item selection')
   end;
 end;
 
@@ -844,7 +844,7 @@ begin
       end;
       else
       begin
-        Assert(True, 'case else: Should never been called. UpdateTorrent');
+        Assert(False, 'case else: Should never been called. UpdateTorrent');
       end;
 
     end;//case

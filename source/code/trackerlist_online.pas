@@ -92,7 +92,7 @@ begin
     else
       begin
         Result := '';
-        assert(True, 'Unknown TTrackerListOnlineStatus')
+        assert(False, 'Unknown TTrackerListOnlineStatus')
       end;
   end;
 end;

@@ -582,7 +582,7 @@ begin
 
       else
       begin
-        Assert(True, 'case else: Should never been called. CombineFiveTrackerListToOne');
+        Assert(False, 'case else: Should never been called. CombineFiveTrackerListToOne');
       end;
     end;
 
