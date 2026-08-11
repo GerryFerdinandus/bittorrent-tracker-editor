@@ -637,15 +637,18 @@ var
 begin
   Digest[0] := 0; // suppres compiler warning.
   Hash := TDCP_sha256.Create(nil);
-  Hash.Init;
-  Hash.UpdateStr(Source);
-  Hash.Final(Digest);
-  Result := '';
-  for i := Low(Digest) to High(Digest) do
-  begin
-    Result := Result + IntToHex(Digest[i], 2);
+  try
+    Hash.Init;
+    Hash.UpdateStr(Source);
+    Hash.Final(Digest);
+    Result := '';
+    for i := Low(Digest) to High(Digest) do
+    begin
+      Result := Result + IntToHex(Digest[i], 2);
+    end;
+  finally
+    Hash.Free;
   end;
-  Hash.Free;
 end;
 
 function TDecodeTorrent.GetMetaVersion: int64;
