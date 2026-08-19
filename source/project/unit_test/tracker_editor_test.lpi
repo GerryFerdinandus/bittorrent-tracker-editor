@@ -107,7 +107,7 @@
         <PackageName Value="FCL"/>
       </Item2>
     </RequiredPackages>
-    <Units Count="8">
+    <Units Count="9">
       <Unit0>
         <Filename Value="tracker_editor_test.lpr"/>
         <IsPartOfProject Value="True"/>
@@ -140,6 +140,10 @@
         <Filename Value="..\..\test\test_ngosang_trackers_list.pas"/>
         <IsPartOfProject Value="True"/>
       </Unit7>
+      <Unit8>
+        <Filename Value="..\..\code\fix_openssl.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit8>
     </Units>
   </ProjectOptions>
   <CompilerOptions>

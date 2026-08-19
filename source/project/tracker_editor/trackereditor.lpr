@@ -9,7 +9,7 @@ uses
   Interfaces, // this includes the LCL widgetset
   Forms, DCPsha256, DCPconst, DCPcrypt2, main, bencode, decodetorrent,
   controlergridtorrentdata, controler_trackerlist_online, trackerlist_online,
-  controler_treeview_torrent_data;
+  controler_treeview_torrent_data, fix_openssl;
 
 {$R *.res}
 
