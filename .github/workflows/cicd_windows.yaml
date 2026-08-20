@@ -66,6 +66,7 @@ jobs:
       shell: pwsh
 
     - name: Upload Artifact
+      if: ${{ github.actor != 'dependabot[bot]' || (github.event_name != 'push' && github.event_name != 'pull_request') }}
       uses: actions/upload-artifact@v7
       with:
         name: artifact-${{ runner.os }}

@@ -100,6 +100,7 @@ jobs:
       shell: bash
 
     - name: Upload Artifact.
+      if: ${{ github.actor != 'dependabot[bot]' || (github.event_name != 'push' && github.event_name != 'pull_request') }}
       uses: actions/upload-artifact@v7
       with:
         name: artifact-${{ matrix.ARCH }}
@@ -109,6 +110,7 @@ jobs:
 
   create_universal_macOS_binary: # Create Universal binary from aarch64 and x86_64 builds
     needs: build
+    if: ${{ github.actor != 'dependabot[bot]' || (github.event_name != 'push' && github.event_name != 'pull_request') }}
     runs-on: macos-latest
     timeout-minutes: 60
 
@@ -318,6 +320,7 @@ jobs:
       shell: bash
 
     - name: Upload Artifact. Signed/Notarize is optional.
+      if: ${{ github.actor != 'dependabot[bot]' || (github.event_name != 'push' && github.event_name != 'pull_request') }}
       uses: actions/upload-artifact@v7
       with:
         name: artifact-${{ runner.os }}
