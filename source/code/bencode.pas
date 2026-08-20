@@ -111,18 +111,18 @@ constructor TBEncoded.Create(Stream: TStream);
     X := ' ';
     repeat
       if Stream.Read(X, 1) <> 1 then
-        raise Exception.Create('');
+        raise Exception.Create('Unexpected end of stream while reading string length');
       if not ((X in ['0'..'9']) or (x = ':')) then
-        raise Exception.Create('');
+        raise Exception.Create('Invalid character in bencode string length');
       if X = ':' then
       begin
         if Buffer = '' then
-          raise Exception.Create('');
+          raise Exception.Create('Missing bencode string length');
         if Length(Buffer) > 7 then
-          raise Exception.Create('');
+          raise Exception.Create('Bencode string length is too large');
         SetLength(Result, StrToInt(Buffer));
         if Stream.Read(Result[1], Length(Result)) <> Length(Result) then
-          raise Exception.Create('');
+          raise Exception.Create('Unexpected end of stream while reading string data');
         Break;
       end
       else
@@ -142,7 +142,7 @@ begin
 
   // get first character to determine the format of the proceeding data
   if Stream.Read(X, 1) <> 1 then
-    raise Exception.Create('');
+    raise Exception.Create('Unexpected end of stream while reading bencode value');
 
   // is it an integer?
   if X = 'i' then
@@ -152,17 +152,17 @@ begin
     repeat
       //must be able to read the stream
       if Stream.Read(X, 1) <> 1 then
-        raise Exception.Create('');
+        raise Exception.Create('Unexpected end of stream while reading integer');
 
       //Must be a integer value or 'e'
-      if not ((X in ['0'..'9' , '-']) or (X = 'e')) then
-        raise Exception.Create('');
+      if not ((X in ['0'..'9', '-']) or (X = 'e')) then
+        raise Exception.Create('Invalid character in bencode integer');
 
       //if found the 'end' then decode it.
       if X = 'e' then
       begin
         if Buffer = '' then
-          raise Exception.Create('')
+          raise Exception.Create('Missing bencode integer value')
         else
         begin
           Format := befInteger;
@@ -184,7 +184,7 @@ begin
     repeat
       // have a peek around and see if theres an e
       if Stream.Read(X, 1) <> 1 then
-        raise Exception.Create('');
+        raise Exception.Create('Unexpected end of stream while reading bencode list');
       // is it an e?
       if X = 'e' then
         Break;
@@ -206,13 +206,14 @@ begin
     repeat
       // have a peek around and see if theres an e
       if Stream.Read(X, 1) <> 1 then
-        raise Exception.Create('');
+        raise Exception.Create(
+          'Unexpected end of stream while reading bencode dictionary');
       // is it an e?
       if X = 'e' then
         Break;
       // if it isnt an e it has to be numerical!
       if not (X in ['0'..'9']) then
-        raise Exception.Create('');
+        raise Exception.Create('Bencode dictionary key must start with a string length');
       // now read the string data
       Buffer := GetString(string(X));
       // create the element
@@ -231,7 +232,7 @@ begin
     Format := befString;
   end
   else
-    raise Exception.Create('');
+    raise Exception.Create('Unknown bencode value prefix');
 end;
 
 constructor TBEncoded.Create;
