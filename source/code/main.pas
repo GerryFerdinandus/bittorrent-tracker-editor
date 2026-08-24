@@ -150,7 +150,7 @@ type
 
     FTrackerList: TTrackerList;
     FControlerTrackerListOnline: TControlerTrackerListOnline;
-    Fcontroler_treeview_torrent_data: Tcontroler_treeview_torrent_data;
+    FControlerTreeviewTorrentData: TControlerTreeviewTorrentData;
     FDownloadStatus: boolean;
 
     FngosangTrackerList: TngosangTrackerList;
@@ -322,8 +322,8 @@ begin
     FTrackerList.TrackerFromInsideTorrentFilesList, @TrackerWithURLAndAnnounce);
 
   //Create view for treeview data of all the torrent files
-  Fcontroler_treeview_torrent_data :=
-    Tcontroler_treeview_torrent_data.Create(TabSheetTorrentsContents);
+  FControlerTreeviewTorrentData :=
+    TControlerTreeviewTorrentData.Create(TabSheetTorrentsContents);
 
   //start the program at mimimum visual size. (this is optional)
   Width := Constraints.MinWidth;
@@ -1695,7 +1695,7 @@ procedure TFormTrackerModify.ViewUpdateBegin;
 begin
   //Called before loading torrent file.
 
-  Fcontroler_treeview_torrent_data.BeginUpdate;
+  FControlerTreeviewTorrentData.BeginUpdate;
 
   //Do not show being updating till finish updating data.
   StringGridTorrentData.BeginUpdate;
@@ -1723,7 +1723,7 @@ begin
   TorrentFileNameStr := ExtractFileName(FDecodePresentTorrent.FilenameTorrent);
 
   //---------------------  Fill the Tree view with new torrent data
-  Fcontroler_treeview_torrent_data.AddOneTorrentFileDecoded(FDecodePresentTorrent);
+  FControlerTreeviewTorrentData.AddOneTorrentFileDecoded(FDecodePresentTorrent);
 
   //---------------------   Add it to the checklist box Public/private torrent
   RowIndex := CheckListBoxPublicPrivateTorrent.Items.Add(TorrentFileNameStr);
@@ -1792,7 +1792,7 @@ begin
   //Called after finish all torrent file loading.
 
   //Show what we have updated.
-  Fcontroler_treeview_torrent_data.EndUpdate;
+  FControlerTreeviewTorrentData.EndUpdate;
   StringGridTorrentData.EndUpdate;
   CheckListBoxPublicPrivateTorrent.Items.EndUpdate;
 
