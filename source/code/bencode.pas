@@ -121,8 +121,11 @@ constructor TBEncoded.Create(Stream: TStream);
         if Length(Buffer) > 7 then
           raise Exception.Create('Bencode string length is too large');
         SetLength(Result, StrToInt(Buffer));
-        if Stream.Read(Result[1], Length(Result)) <> Length(Result) then
-          raise Exception.Create('Unexpected end of stream while reading string data');
+        if Length(Result) > 0 then
+        begin
+          if Stream.Read(Result[1], Length(Result)) <> Length(Result) then
+            raise Exception.Create('Unexpected end of stream while reading string data');
+        end;
         Break;
       end
       else
