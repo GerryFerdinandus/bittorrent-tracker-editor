@@ -42,7 +42,7 @@ type
     tloSort,
 
     // Console parameter: -U5
-    // Append new trackers list BEFORE, the original trackers list inside the torrent file.
+    // Insert new trackers list BEFORE, the original trackers list inside the torrent file.
     // Keep original tracker list 'of each individual torrent' unchanged and remove nothing.
     // Every torent may have diferent tracker list!
     tloInsertNewBeforeAndKeepOriginalIntactAndRemoveNothing,
@@ -547,6 +547,7 @@ begin
 
         //Nothing should be removed
         TrackerList.TrackerManualyDeselectedByUserList.Clear;
+        TrackerList.TrackerBanByUserList.Clear;
       end;
 
 
@@ -564,6 +565,7 @@ begin
 
         //Nothing should be removed
         TrackerList.TrackerManualyDeselectedByUserList.Clear;
+        TrackerList.TrackerBanByUserList.Clear;
       end;
 
       tloRandomize:

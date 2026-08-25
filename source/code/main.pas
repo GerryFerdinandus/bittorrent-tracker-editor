@@ -1051,6 +1051,15 @@ begin
     This routine is also use in the console mode to remove trackers
   }
 
+  //'Remove nothing' modes (-U5, -U6) must never remove or uncheck any tracker.
+  if (FTrackerList.TrackerListOrderForUpdatedTorrent =
+    tloInsertNewBeforeAndKeepOriginalIntactAndRemoveNothing) or
+    (FTrackerList.TrackerListOrderForUpdatedTorrent =
+    tloAppendNewAfterAndKeepOriginalIntactAndRemoveNothing) then
+  begin
+    exit;
+  end;
+
   //If file remove_trackers.txt is present but empty then remove all tracker inside torrent.
   if FFilePresentBanByUserList and
     (UTF8Trim(FTrackerList.TrackerBanByUserList.Text) = '') then

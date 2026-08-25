@@ -29,7 +29,7 @@
           </Target>
           <SearchPaths>
             <IncludeFiles Value="$(ProjOutDir)"/>
-            <OtherUnitFiles Value="..\..\test;..\..\code"/>
+            <OtherUnitFiles Value="..\..\test;..\..\code;..\..\..\submodule\dcpcrypt\Hashes;..\..\..\submodule\dcpcrypt"/>
             <UnitOutputDirectory Value="..\..\..\lib\test_trackereditor\$(TargetCPU)-$(TargetOS)"/>
           </SearchPaths>
           <Parsing>
@@ -65,7 +65,7 @@
           </Target>
           <SearchPaths>
             <IncludeFiles Value="$(ProjOutDir)"/>
-            <OtherUnitFiles Value="..\..\test;..\..\code"/>
+            <OtherUnitFiles Value="..\..\test;..\..\code;..\..\..\submodule\dcpcrypt\Hashes;..\..\..\submodule\dcpcrypt"/>
             <UnitOutputDirectory Value="..\..\..\lib\test_trackereditor\$(TargetCPU)-$(TargetOS)"/>
           </SearchPaths>
           <CodeGeneration>
@@ -154,7 +154,7 @@
     </Target>
     <SearchPaths>
       <IncludeFiles Value="$(ProjOutDir)"/>
-      <OtherUnitFiles Value="..\..\test;..\..\code"/>
+      <OtherUnitFiles Value="..\..\test;..\..\code;..\..\..\submodule\dcpcrypt\Hashes;..\..\..\submodule\dcpcrypt"/>
       <UnitOutputDirectory Value="..\..\..\lib\test_trackereditor\$(TargetCPU)-$(TargetOS)"/>
     </SearchPaths>
     <Linking>

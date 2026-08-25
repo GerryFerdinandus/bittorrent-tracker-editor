@@ -443,6 +443,8 @@ function CheckIfRemoveIsNotPresent(var VerifyTracker: TVerifyTrackerResult): boo
 var
   tracker_URL: string;
 begin
+  Result := True;
+
   //scan the TrackerEndResult for trackers present in TrackerRemoved
   for tracker_URL in VerifyTracker.TrackerRemoved do
   begin
@@ -454,7 +456,6 @@ begin
         'This tracker URL should not be present: ' + tracker_URL;
     end;
   end;
-  Result := True;
 end;
 
 function VerifyTrackerResult(var VerifyTracker: TVerifyTrackerResult): boolean;
@@ -470,10 +471,17 @@ begin
   end;
 
   //There should not be any removed trackers items.
-  Result := CheckIfRemoveIsNotPresent(VerifyTracker);
-  if not Result then
+  //Except in the 'RemoveNothing' modes (-U5, -U6), where removal is
+  //intentionally not applied, so a requested removal may still survive.
+  if not (VerifyTracker.StartupParameter.TrackerListOrder in
+    [tloInsertNewBeforeAndKeepOriginalIntactAndRemoveNothing,
+    tloAppendNewAfterAndKeepOriginalIntactAndRemoveNothing]) then
   begin
-    exit;
+    Result := CheckIfRemoveIsNotPresent(VerifyTracker);
+    if not Result then
+    begin
+      exit;
+    end;
   end;
 
   //Must verify if the output is what we expected

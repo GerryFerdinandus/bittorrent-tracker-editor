@@ -36,7 +36,7 @@ interface
 
 uses
   Classes, SysUtils, fpcunit, testregistry, newtrackon, torrent_miscellaneous,
-  test_miscellaneous;
+  test_miscellaneous, decodetorrent;
 
 type
   TConsoleLogData = record
@@ -72,6 +72,7 @@ type
     procedure CreateFilledTorrent(const StartupParameter: TStartupParameter);
     procedure DownloadNewTrackonTrackers;
     procedure Test_Paramater_Ux(TrackerListOrder: TTrackerListOrder);
+    procedure Test_Paramater_U5_U6(TrackerListOrder: TTrackerListOrder);
     procedure Add_One_URL(const StartupParameter: TStartupParameter;
       const tracker_URL: string; TestMustBeSuccess: boolean);
 
@@ -89,8 +90,8 @@ type
     procedure Test_Paramater_U2;
     procedure Test_Paramater_U3;
     procedure Test_Paramater_U4;
-    procedure Test_Paramater_U5_TODO;
-    procedure Test_Paramater_U6_TODO;
+    procedure Test_Paramater_U5;
+    procedure Test_Paramater_U6;
     procedure Test_Paramater_U7;
 
   end;
@@ -132,16 +133,14 @@ begin
   Test_Paramater_Ux(tloSort);
 end;
 
-procedure TTestStartUpParameter.Test_Paramater_U5_TODO;
+procedure TTestStartUpParameter.Test_Paramater_U5;
 begin
-  //TODO: Must check every torrent file one by one
-  //Test_Paramater_Ux(tloInsertNewBeforeAndKeepOriginalIntactAndRemoveNothing);
+  Test_Paramater_U5_U6(tloInsertNewBeforeAndKeepOriginalIntactAndRemoveNothing);
 end;
 
-procedure TTestStartUpParameter.Test_Paramater_U6_TODO;
+procedure TTestStartUpParameter.Test_Paramater_U6;
 begin
-  //TODO: Must check every torrent file one by one
-  //Test_Paramater_Ux(tloAppendNewAfterAndKeepOriginalIntactAndRemoveNothing);
+  Test_Paramater_U5_U6(tloAppendNewAfterAndKeepOriginalIntactAndRemoveNothing);
 end;
 
 procedure TTestStartUpParameter.Test_Paramater_U7;
@@ -345,6 +344,95 @@ begin
   Check(FConsoleLogData.StatusOK);
   Check(FConsoleLogData.TrackersCount > 0);
   Check(FConsoleLogData.TorrentFilesCount = TEST_TORRENT_FILES_COUNT);
+end;
+
+procedure TTestStartUpParameter.Test_Paramater_U5_U6(TrackerListOrder: TTrackerListOrder);
+var
+  OriginalTrackersPerFile: TStringList;
+  DecodeTorrent: TDecodeTorrent;
+  StartupParameter: TStartupParameter;
+  i: integer;
+  RemovedTracker: UTF8String;
+begin
+  //Every torrent file may already have its own different tracker list, capture it first
+  OriginalTrackersPerFile := TStringList.Create;
+  DecodeTorrent := TDecodeTorrent.Create;
+  try
+    for i := 0 to FTorrentFilesNameStringList.Count - 1 do
+    begin
+      Check(DecodeTorrent.DecodeTorrent(FTorrentFilesNameStringList[i]),
+        'Failed to decode torrent before update: ' + FTorrentFilesNameStringList[i]);
+      OriginalTrackersPerFile.AddObject(FTorrentFilesNameStringList[i], TStringList.Create);
+      TStringList(OriginalTrackersPerFile.Objects[i]).Assign(DecodeTorrent.TrackerList);
+    end;
+
+    DownloadNewTrackonTrackers;
+
+    //write some trackers to add.
+    //Use tracker literals unique per TrackerListOrder: the test torrent files are
+    //not reset between tests, so reusing the same literal across U5 and U6 would
+    //make a previous test's surviving 'added' tracker look like part of the
+    //'original' tracker list for the next test.
+    FVerifyTrackerResult.TrackerAdded.Clear;
+    FVerifyTrackerResult.TrackerAdded.Add('udp://' + IntToStr(Ord(TrackerListOrder)) +
+      'a.test/announce');
+    if FNewTrackon.TrackerList_Live.Count > 0 then
+      FVerifyTrackerResult.TrackerAdded.Add(FNewTrackon.TrackerList_Live[0]);
+    FVerifyTrackerResult.TrackerAdded.Add('udp://' + IntToStr(Ord(TrackerListOrder)) +
+      'b.test/announce');
+    FVerifyTrackerResult.TrackerAdded.SaveToFile(FFullPathToEndUser +
+      FILE_NAME_ADD_TRACKERS);
+
+    //this mode must remove nothing, so a tracker requested for removal must still survive
+    RemovedTracker := FVerifyTrackerResult.TrackerAdded[0];
+    FVerifyTrackerResult.TrackerRemoved.Clear;
+    FVerifyTrackerResult.TrackerRemoved.Add(RemovedTracker);
+    FVerifyTrackerResult.TrackerRemoved.SaveToFile(FFullPathToEndUser +
+      FILE_NAME_REMOVE_TRACKERS);
+
+    //Generate the command line parameter
+    StartupParameter.TrackerListOrder := TrackerListOrder;
+    StartupParameter.SkipAnnounceCheck := False;
+    StartupParameter.SourcePresent := False;
+    TestParameter(StartupParameter);
+
+    //call the tracker editor exe file
+    CallExecutableFile;
+
+    //check the exit code
+    CheckEquals(0, FExitCode);
+
+    //Check the logdata status
+    Check(ReadConsoleLogFile, 'Log data is not present');
+    Check(FConsoleLogData.StatusOK);
+    Check(FConsoleLogData.TrackersCount > 0);
+    Check(FConsoleLogData.TorrentFilesCount = TEST_TORRENT_FILES_COUNT);
+
+    //Every torrent file has its own tracker list, so it must be verified one by one
+    for i := 0 to FTorrentFilesNameStringList.Count - 1 do
+    begin
+      Check(DecodeTorrent.DecodeTorrent(FTorrentFilesNameStringList[i]),
+        'Failed to decode torrent after update: ' + FTorrentFilesNameStringList[i]);
+
+      FVerifyTrackerResult.StartupParameter.TrackerListOrder := TrackerListOrder;
+      FVerifyTrackerResult.TrackerOriginal.Assign(
+        TStringList(OriginalTrackersPerFile.Objects[i]));
+      FVerifyTrackerResult.TrackerEndResult.Assign(DecodeTorrent.TrackerList);
+
+      Check(VerifyTrackerResult(FVerifyTrackerResult),
+        FTorrentFilesNameStringList[i] + ': ' + FVerifyTrackerResult.ErrorString);
+
+      Check(DecodeTorrent.TrackerList.IndexOf(RemovedTracker) >= 0,
+        FTorrentFilesNameStringList[i] +
+        ': tracker requested for removal must survive in RemoveNothing mode');
+    end;
+
+  finally
+    for i := 0 to OriginalTrackersPerFile.Count - 1 do
+      OriginalTrackersPerFile.Objects[i].Free;
+    OriginalTrackersPerFile.Free;
+    DecodeTorrent.Free;
+  end;
 end;
 
 procedure TTestStartUpParameter.Add_One_URL(const StartupParameter: TStartupParameter;
