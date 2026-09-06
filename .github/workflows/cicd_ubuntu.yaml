@@ -26,6 +26,7 @@ jobs:
             RELEASE_FILE_NAME: trackereditor_linux_amd64_gtk2.zip
             LAZ_OPT: --widgetset=gtk2
             RUNS_ON: ubuntu-24.04
+            RUN_TEST: true
 
           - BUILD_TARGET: qt5_amd64
             RELEASE_FILE_NAME: trackereditor_linux_amd64_qt5.zip
@@ -91,6 +92,28 @@ jobs:
 
     - name: Test if OpenSSL works on Linux CI
       run: xvfb-run --auto-servernum enduser/trackereditor -TEST_SSL
+      shell: bash
+
+    - name: Build Unit Test on Linux
+      if: matrix.RUN_TEST
+      # Build trackereditor project (Release mode) and run tests
+      run: lazbuild --build-all --build-mode=Release ${{ matrix.LAZ_OPT }} source/project/unit_test/tracker_editor_test.lpi
+      shell: bash
+
+    - name: Run Unit Test on Linux
+      if: matrix.RUN_TEST
+      # Also remove all the extra file created by test.
+      # We do not what it in the ZIP release files.
+      # Undo all changes made by testing.
+      run:  |
+        set -e
+        xvfb-run --auto-servernum enduser/test_trackereditor -a --format=plain
+        set +e
+
+        # remove file created by unit test
+        rm -f enduser/console_log.txt
+        rm -f enduser/export_trackers.txt
+        git reset --hard
       shell: bash
 
     - name: Copy libQtpas.so before releasing the Qt5/Qt6 zip file format.
