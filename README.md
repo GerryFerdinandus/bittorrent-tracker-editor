@@ -34,7 +34,7 @@ There is no backup function in this software. Use it at your own risk. Bittorren
   * Remove all the trackers to create trackerless torrent. DHT torrent
   * Change public/private flag. Warning: This will change the torrent info HASH.
   * Preset add/remove tracker via add\_trackers.txt and remove\_trackers.txt files when present in the same folder as the executable file. (For linux snap version use: home/snap/bittorrent-tracker-editor/common/ )
-  * Optional start as console program. [(readme.txt)](https://raw.githubusercontent.com/GerryFerdinandus/bittorrent-tracker-editor/refs/heads/main/enduser/readme.txt)
+  * Optional start as console program. (info:[ readme.txt, ](https://raw.githubusercontent.com/GerryFerdinandus/bittorrent-tracker-editor/refs/heads/main/enduser/readme.txt) [tracker-order-modes.svg ](https://raw.githubusercontent.com/GerryFerdinandus/bittorrent-tracker-editor/refs/heads/main/enduser/tracker-order-modes.svg))
   * Show torrent files content.
   * Download stable trackers from newTrackon or ngosang.
 
