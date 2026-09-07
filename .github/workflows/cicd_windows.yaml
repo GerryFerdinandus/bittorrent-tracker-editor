@@ -62,7 +62,7 @@ jobs:
 
     - name: Create a zip file for Windows release.
       run: |
-        Compress-Archive -Path enduser\*.txt, enduser\trackereditor.exe, enduser\*.dll -DestinationPath $Env:RELEASE_ZIP_FILE
+        Compress-Archive -Path enduser\*.txt, enduser\*.svg, enduser\trackereditor.exe, enduser\*.dll -DestinationPath $Env:RELEASE_ZIP_FILE
       shell: pwsh
 
     - name: Upload Artifact

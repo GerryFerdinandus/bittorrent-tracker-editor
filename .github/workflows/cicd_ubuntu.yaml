@@ -26,7 +26,6 @@ jobs:
             RELEASE_FILE_NAME: trackereditor_linux_amd64_gtk2.zip
             LAZ_OPT: --widgetset=gtk2
             RUNS_ON: ubuntu-24.04
-            RUN_TEST: true
 
           - BUILD_TARGET: qt5_amd64
             RELEASE_FILE_NAME: trackereditor_linux_amd64_qt5.zip
@@ -45,6 +44,7 @@ jobs:
             LAZ_OPT: --widgetset=qt6
             QT_VERSION_CI: '6'
             LINUX_DEPLOY_FILE_CPU: x86_64
+            APPIMAGE_BUILD: true
             RUNS_ON: ubuntu-22.04
 
           - BUILD_TARGET: AppImage_arm64
@@ -52,6 +52,7 @@ jobs:
             LAZ_OPT: --widgetset=qt6
             QT_VERSION_CI: '6'
             LINUX_DEPLOY_FILE_CPU: aarch64
+            APPIMAGE_BUILD: true
             RUNS_ON: ubuntu-22.04-arm
 
     name: ${{ matrix.BUILD_TARGET }}
@@ -95,13 +96,13 @@ jobs:
       shell: bash
 
     - name: Build Unit Test on Linux
-      if: matrix.RUN_TEST
       # Build trackereditor project (Release mode) and run tests
       run: lazbuild --build-all --build-mode=Release ${{ matrix.LAZ_OPT }} source/project/unit_test/tracker_editor_test.lpi
       shell: bash
 
-    - name: Run Unit Test on Linux
-      if: matrix.RUN_TEST
+    - name: test non-AppImage
+      # Run unit tests only for non-AppImage build targets
+      if: ${{ !matrix.APPIMAGE_BUILD }}
       # Also remove all the extra file created by test.
       # We do not what it in the ZIP release files.
       # Undo all changes made by testing.
@@ -132,12 +133,12 @@ jobs:
       shell: bash
 
     - name: Create a gtk2 or Qt5/Qt6 release in zip file format.
-      if: matrix.BUILD_TARGET != 'AppImage_amd64'
-      run: zip -j ${{ matrix.RELEASE_FILE_NAME }} enduser/*.txt enduser/libQt* enduser/trackereditor
+      if: ${{ !matrix.APPIMAGE_BUILD }}
+      run: zip -j ${{ matrix.RELEASE_FILE_NAME }} enduser/*.txt enduser/*.svg enduser/libQt* enduser/trackereditor
       shell: bash
 
     - name: Create AppImage
-      if: matrix.BUILD_TARGET == 'AppImage_amd64' || matrix.BUILD_TARGET == 'AppImage_arm64'
+      if: matrix.APPIMAGE_BUILD
       # LDAI_NO_APPSTREAM=1: skip checking AppStream metadata for issues
       env:
         LDAI_NO_APPSTREAM: 1
@@ -157,11 +158,21 @@ jobs:
       shell: bash
 
     - name: Test AppImage
-      if: matrix.BUILD_TARGET == 'AppImage_amd64'
-      run: xvfb-run --auto-servernum ./${{ matrix.RELEASE_FILE_NAME }} -TEST_SSL
+      # Run tests for AppImage build targets
+      # copy enduser/trackereditor with actual AppImage file and rename it to trackereditor for testing
+      # the test_trackereditor script will run the tests on the renamed AppImage
+      # use copy instead of move, so the original AppImage file is kept for the artifact upload
+      if: matrix.APPIMAGE_BUILD
+      run: |
+        set -e
+        xvfb-run --auto-servernum ./${{ matrix.RELEASE_FILE_NAME }} -TEST_SSL
+        cp ./${{ matrix.RELEASE_FILE_NAME }} enduser/trackereditor
+        cd enduser
+        xvfb-run --auto-servernum ./test_trackereditor -a --format=plain
       shell: bash
 
     - name: Upload Artifact
+      # if the actor is not dependabot or the event is not push/pull_request, upload the artifact
       if: ${{ github.actor != 'dependabot[bot]' || (github.event_name != 'push' && github.event_name != 'pull_request') }}
       uses: actions/upload-artifact@v7
       with:
