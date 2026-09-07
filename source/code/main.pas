@@ -250,20 +250,23 @@ begin
    begin // OWD = Path to working directory at the time the AppImage is called
      FFolderForTrackerListLoadAndSave := GetEnvironmentVariable('OWD');
    end;
-   if FFolderForTrackerListLoadAndSave = '' then
-   begin
-     // No container detected. Save in the same place as the application file
-     FFolderForTrackerListLoadAndSave := ExtractFilePath(Application.ExeName);
-   end
-   else
-   begin
-     // Program run in a container. Must load file from a dedicated folder.
-     FFolderForTrackerListLoadAndSave := AppendPathDelim(FFolderForTrackerListLoadAndSave);
-   end;
-  {$ELSE}
-  // Save at the same place as the application file
-  FFolderForTrackerListLoadAndSave := ExtractFilePath(Application.ExeName);
-  {$ENDIF}
+  {$ENDIF LINUX}
+
+  {$IFDEF DARWIN}
+  // PATH: ~/.config/trackereditor/
+  FFolderForTrackerListLoadAndSave := GetAppConfigDir(False);
+  if not DirectoryExists(FFolderForTrackerListLoadAndSave) then
+    CreateDirUTF8(FFolderForTrackerListLoadAndSave);
+  {$ENDIF DARWIN}
+
+  if FFolderForTrackerListLoadAndSave = '' then
+  begin
+    // Default is to use the same place as the application file
+    FFolderForTrackerListLoadAndSave := ExtractFilePath(Application.ExeName);
+  end;
+  // variable must have PathDelim
+  FFolderForTrackerListLoadAndSave := AppendPathDelim(FFolderForTrackerListLoadAndSave);
+
 
   //Create controler for StringGridTorrentData
   FControlerGridTorrentData := TControlerGridTorrentData.Create(StringGridTorrentData);
@@ -791,10 +794,8 @@ begin
     end;//for
 
     // Can not create a file inside the app
-    {$IFNDEF DARWIN}
     //Create tracker.txt file
     SaveTrackerFinalListToFile;
-    {$ENDIF}
 
     //Show/reload the just updated torrent files.
     AllFilesAreReadBackCorrectly := ReloadAllTorrentAndRefreshView;

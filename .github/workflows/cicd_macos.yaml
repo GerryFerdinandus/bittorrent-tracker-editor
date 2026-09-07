@@ -81,8 +81,17 @@ jobs:
         lazbuild --build-all --build-mode=Release --widgetset=cocoa --cpu=${{ matrix.ARCH }} ${{ env.PROJECT_LPI }}
       shell: bash
 
-    - name: Test App SSL connection
+    - name: Build Unit Test on macOS (${{ matrix.ARCH }})
+      # Build unit test project (Debug mode)
+      run: lazbuild --build-all --build-mode=Debug --widgetset=cocoa --cpu=${{ matrix.ARCH }} source/project/unit_test/tracker_editor_test.lpi
+      shell: bash
+
+    - name: Test App SSL connection (${{ matrix.ARCH }})
       run: open "${{ env.PROGRAM_NAME_WITH_PATH }}" --args -TEST_SSL
+      shell: bash
+
+    - name: Run Unit Test on macOS (${{ matrix.ARCH }})
+      run:  enduser/test_trackereditor -a --format=plain
       shell: bash
 
     - name: Zip the macOS .app bundle for artifact upload
@@ -90,7 +99,7 @@ jobs:
       run: ditto -c -k enduser/trackereditor.app enduser/trackereditor_app.zip
       shell: bash
 
-    - name: Rename built -aarch64 binary for artifact upload
+    - name: Rename built binary for artifact upload
       run: |
         mv ${{ env.PROGRAM_NAME_WITH_PATH }} ${{ env.PROGRAM_NAME_WITH_PATH }}-${{ matrix.ARCH }}
         ditto -c -k ${{ env.PROGRAM_NAME_WITH_PATH }}-${{ matrix.ARCH }} ${{ env.PROGRAM_NAME_WITH_PATH }}-${{ matrix.ARCH }}.zip

@@ -203,7 +203,7 @@ end;
 
 procedure TTestStartUpParameter.CallExecutableFile;
 begin
-  //start the. This will return the Exit code
+  //start the test program. This will return the Exit code
   FExitCode := SysUtils.ExecuteProcess(UTF8ToSys(FFullPathToBinary), FCommandLine, []);
 end;
 
@@ -651,7 +651,28 @@ begin
   //Create some full path link
   FFullPathToRoot := GetProjectRootFolderWithPathDelimiter;
   FFullPathToTorrent := FFullPathToRoot + TORRENT_FOLDER + PathDelim;
+
+  {$IFDEF DARWIN}
+  // PATH: ~/.config/test_trackereditor/ -> ~/.config/trackereditor/
+  // The path must be already created by trackereditor
+  // This unit test must use the same working forder as trackereditor
+  FFullPathToEndUser := GetAppConfigDir(False);
+  FFullPathToEndUser := IncludeTrailingPathDelimiter(FFullPathToEndUser)
+                     + '..' + PathDelim;
+  FFullPathToEndUser := ExpandFileName(FFullPathToEndUser) + 'trackereditor' + PathDelim;
+
+  //path to the programe we want to test.
+  FFullPathToBinary := FFullPathToRoot + END_USER_FOLDER + PathDelim
+                    + PROGRAME_TO_BE_TESTED_NAME;
+
+  {$ELSE DARWIN}
+  // Default is to use the same place as the application file
   FFullPathToEndUser := FFullPathToRoot + END_USER_FOLDER + PathDelim;
+
+  //path to the programe we want to test.
+  FFullPathToBinary := FFullPathToEndUser + PROGRAME_TO_BE_TESTED_NAME +
+    ExtractFileExt(ParamStr(0));
+  {$ENDIF DARWIN}
 
   //fill with torrent file(s)
   FTorrentFilesNameStringList := TStringList.Create;
@@ -660,9 +681,7 @@ begin
 
   FNewTrackon := TNewTrackon.Create;
 
-  //path to the programe we want to test.
-  FFullPathToBinary := FFullPathToEndUser + PROGRAME_TO_BE_TESTED_NAME +
-    ExtractFileExt(ParamStr(0));
+
 
   //Delete all the previeus test result
   DeleteFile(FFullPathToEndUser + FILE_NAME_CONSOLE_LOG);
