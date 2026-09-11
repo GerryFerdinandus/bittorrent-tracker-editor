@@ -5,15 +5,15 @@ unit fix_openssl;
 
 interface
 
-uses
-  opensslsockets, OpenSSL;
 
 implementation
+uses
+  opensslsockets, OpenSSL;
 initialization
   // FPC 3.2.2 is missing support for the latest openSSL 3, will be fix in the future release.
   // Latest openssl.pas https://gitlab.com/freepascal.org/fpc/source/-/blob/main/packages/openssl/src/openssl.pas?ref_type=heads
   // Copy this newer SSL detection into the older openssl code used by the present FPC 3.2.2
-{$IFDEF VER3_2}
+{$IFDEF VER3_2_2}
 {$IFDEF WINDOWS}
   DLLSSLName3 := {$IFDEF WIN64}'libssl-3-x64.dll'{$ELSE}'libssl-3.dll'{$ENDIF};
   DLLUtilName2 := {$IFDEF WIN64}'libcrypto-3-x64.dll'{$ELSE}'libcrypto-3.dll'{$ENDIF};
@@ -50,6 +50,6 @@ initialization
   OpenSSL.DLLVersions[Length(OpenSSL.DLLVersions) - 1] := '.3';
 {$ENDIF DARWIN}
 {$ENDIF WINDOWS}
-{$ENDIF VER3_2}
+{$ENDIF VER3_2_2}
 end.
 
