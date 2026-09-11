@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: MIT
-unit controlergridtorrentdata;
+unit controllergridtorrentdata;
 
 {
 The view string grid shows all the information of the torrent.
-The grid column position order can be rearange by the user.
+The grid column position order can be rearrange by the user.
 The updating and reading of the column position must be 'dynamic'.
-Must keep track of the position of the column even when the user rearange it.
+Must keep track of the position of the column even when the user rearrange it.
 
 There are 10 column that must be 'track'
 }
@@ -18,14 +18,14 @@ uses
 
 type
 
-  { TControlerGridTorrentData }
+  { TControllerGridTorrentData }
 
-  TControlerGridTorrentData = class
+  TControllerGridTorrentData = class
   private
     //The view grid that must be controled.
     FStringGridTorrentData: TStringGrid;
 
-    //The collumn must be in this design order.
+    //The column must be in this design order.
     FTorrentFile,           //0
     FInfoFileName,          //1
     FTorrentVersion,        //2
@@ -37,7 +37,7 @@ type
     FPrivateTorrent,        //8
     FInfoSource,            //9
     FPieceLength,           //10
-    FTotaSize,              //11
+    FTotalSize,              //11
     FIndexOrder             //12
     : TGridColumn;
 
@@ -60,7 +60,7 @@ type
     PrivateTorrent,        //8
     InfoSource,            //9
     PieceLength,           //10
-    TotaSize,              //11
+    TotalSize,              //11
     IndexOrder             //12
     : UTF8String;
 
@@ -74,29 +74,29 @@ type
 
 implementation
 
-{ TControlerGridTorrentData }
+{ TControllerGridTorrentData }
 const
   COLUMN_COUNT = 13;
 
-procedure TControlerGridTorrentData.StringGridTorrentDataColRowMoved(Sender: TObject;
+procedure TControllerGridTorrentData.StringGridTorrentDataColRowMoved(Sender: TObject;
   IsColumn: boolean; sIndex, tIndex: integer);
 begin
   //This is called before the column is moved 'rearrange' by the user.
   FRowIsMovedNeedUpdate := True;
 end;
 
-procedure TControlerGridTorrentData.AddColumn(var GridColumn: TGridColumn;
+procedure TControllerGridTorrentData.AddColumn(var GridColumn: TGridColumn;
   index: integer);
 begin
   GridColumn := FStringGridTorrentData.Columns[index];
 end;
 
-procedure TControlerGridTorrentData.UpdateColumnTag;
+procedure TControllerGridTorrentData.UpdateColumnTag;
 var
   i: integer;
 begin
-  //fill the 'tag' value as the position of the coulumn.
-  //this methode must be only called when the user change the column order.
+  //fill the 'tag' value as the position of the column.
+  //this method must be only called when the user change the column order.
   for i := 0 to FStringGridTorrentData.Columns.Count - 1 do
   begin
     FStringGridTorrentData.Columns[i].Tag :=
@@ -107,7 +107,7 @@ begin
   FRowIsMovedNeedUpdate := False;
 end;
 
-procedure TControlerGridTorrentData.ClearAllImageIndex;
+procedure TControllerGridTorrentData.ClearAllImageIndex;
 var
   i: integer;
 begin
@@ -118,14 +118,14 @@ begin
   end;
 end;
 
-procedure TControlerGridTorrentData.WriteCell(GridColumn: TGridColumn;
+procedure TControllerGridTorrentData.WriteCell(GridColumn: TGridColumn;
   const Str: UTF8String);
 begin
   FStringGridTorrentData.Cells[GridColumn.Tag,
     FStringGridTorrentData.RowCount - 1] := Str;
 end;
 
-procedure TControlerGridTorrentData.AppendRow;
+procedure TControllerGridTorrentData.AppendRow;
 begin
   //Add a new empty row, copy all the stings to this empty row.
 
@@ -148,14 +148,14 @@ begin
   WriteCell(FPrivateTorrent, PrivateTorrent);
   WriteCell(FInfoSource, InfoSource);
   WriteCell(FPieceLength, PieceLength);
-  WriteCell(FTotaSize, TotaSize);
+  WriteCell(FTotalSize, TotalSize);
   WriteCell(FIndexOrder, IndexOrder);
 
 end;
 
-procedure TControlerGridTorrentData.ReorderGrid;
+procedure TControllerGridTorrentData.ReorderGrid;
 begin
-  //Undo all posible sort column used by the user. Sort it back to 'begin state'
+  //Undo all possible sort column used by the user. Sort it back to 'begin state'
   //FIndexOrder is a non visible row use for this purpose. TGridColumnTitle
   FStringGridTorrentData.SortOrder := soAscending;
   FStringGridTorrentData.SortColRow(True,
@@ -165,7 +165,7 @@ begin
   ClearAllImageIndex;
 end;
 
-function TControlerGridTorrentData.ReadComment(Rowindex: integer): UTF8String;
+function TControllerGridTorrentData.ReadComment(Rowindex: integer): UTF8String;
 begin
   //Update Column.tag if row have change.
   if FRowIsMovedNeedUpdate then
@@ -175,7 +175,7 @@ begin
   Result := FStringGridTorrentData.Cells[FComment.Tag, Rowindex];
 end;
 
-constructor TControlerGridTorrentData.Create(StringGridTorrentData: TStringGrid);
+constructor TControllerGridTorrentData.Create(StringGridTorrentData: TStringGrid);
 begin
   inherited Create;
   FStringGridTorrentData := StringGridTorrentData;
@@ -183,7 +183,7 @@ begin
   //When user move the row, call StringGridTorrentDataColRowMoved.
   FStringGridTorrentData.OnColRowMoved := @StringGridTorrentDataColRowMoved;
 
-  //The view and the controler part must have the same column count.
+  //The view and the controller part must have the same column count.
   Assert(FStringGridTorrentData.Columns.Count = COLUMN_COUNT, 'Wrong column count');
 
   //Track the column
@@ -198,14 +198,14 @@ begin
   AddColumn(FPrivateTorrent, 8);
   AddColumn(FInfoSource, 9);
   AddColumn(FPieceLength, 10);
-  AddColumn(FTotaSize, 11);
+  AddColumn(FTotalSize, 11);
   AddColumn(FIndexOrder, 12);
 
   //Fillin the tag value
   UpdateColumnTag;
 end;
 
-destructor TControlerGridTorrentData.Destroy;
+destructor TControllerGridTorrentData.Destroy;
 begin
   inherited Destroy;
 end;

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-unit controler_treeview_torrent_data;
+unit controller_treeview_torrent_data;
 
 {
  Show the torrent files content in a tree view format.
@@ -13,15 +13,15 @@ uses
 
 type
 
-  { TControlerTreeviewTorrentData }
-  TControlerTreeviewTorrentDataItems = (
+  { TControllerTreeviewTorrentData }
+  TControllerTreeviewTorrentDataItems = (
     ctv_ShowAllFiles = 0,
     ctv_ShowAllTrackers = 1,
     ctv_ShowAllInfo = 2,
     ctv_ShowEverything,
     ctv_HideAll
     );
-  TControlerTreeviewTorrentData = class
+  TControllerTreeviewTorrentData = class
   private
     FTotalFileInsideTorrent: integer;
     FTotalFileSizeInsideTorrent: int64;
@@ -69,9 +69,9 @@ const
   TORRENT_FILES_CONTENTS_FORM_CAPTION =
     'Show all the files inside the torrents. (Use right mouse for popup menu.)';
 
-  { TControlerTreeviewTorrentData }
+  { TControllerTreeviewTorrentData }
 
-procedure TControlerTreeviewTorrentData.FillThePopupMenu;
+procedure TControllerTreeviewTorrentData.FillThePopupMenu;
 begin
   FPopupMenuTorrentFilesContent := TPopupMenu.Create(FTreeViewFileContents);
   FTreeViewFileContents.PopupMenu := FPopupMenuTorrentFilesContent;
@@ -109,7 +109,7 @@ begin
 
 end;
 
-procedure TControlerTreeviewTorrentData.AddMenuItem(var MenuItem: TMenuItem;
+procedure TControllerTreeviewTorrentData.AddMenuItem(var MenuItem: TMenuItem;
   Onclick: TNotifyEvent; const Caption: string; tag: integer);
 begin
   MenuItem := TMenuItem.Create(FPopupMenuTorrentFilesContent);
@@ -119,7 +119,7 @@ begin
   FPopupMenuTorrentFilesContent.Items.Add(MenuItem);
 end;
 
-constructor TControlerTreeviewTorrentData.Create(Owner: TWinControl);
+constructor TControllerTreeviewTorrentData.Create(Owner: TWinControl);
 begin
   inherited Create;
   FOwner := Owner;
@@ -144,13 +144,13 @@ begin
 
 end;
 
-destructor TControlerTreeviewTorrentData.Destroy;
+destructor TControllerTreeviewTorrentData.Destroy;
 begin
   inherited Destroy;
 end;
 
 
-procedure TControlerTreeviewTorrentData.MenuItemTorrentFilesTreeHideAllClick(
+procedure TControllerTreeviewTorrentData.MenuItemTorrentFilesTreeHideAllClick(
   Sender: TObject);
 var
   i, CountTorrents: integer;
@@ -181,7 +181,7 @@ begin
 
 end;
 
-procedure TControlerTreeviewTorrentData.MenuItemTorrentFilesTreeShowAllClick(
+procedure TControllerTreeviewTorrentData.MenuItemTorrentFilesTreeShowAllClick(
   Sender: TObject);
 begin
   //show everything
@@ -197,7 +197,7 @@ begin
   //  MenuItemTorrentFilesTreeSyncWithPopupMenu;
 end;
 
-procedure TControlerTreeviewTorrentData.Clear;
+procedure TControllerTreeviewTorrentData.Clear;
 begin
   FTreeViewFileContents.Items.Clear;
   FTreeNodeRoot := FTreeViewFileContents.Items.Add(nil, 'Torrent Files');
@@ -205,14 +205,14 @@ begin
   FTotalFileSizeInsideTorrent := 0;
 end;
 
-procedure TControlerTreeviewTorrentData.MenuItemTorrentFilesTreeSyncWithPopupMenu;
+procedure TControllerTreeviewTorrentData.MenuItemTorrentFilesTreeSyncWithPopupMenu;
 begin
   MenuItemTorrentFilesTreeShowOrHideItemClick(FMenuItemTorrentFilesTreeShowTrackers);
   MenuItemTorrentFilesTreeShowOrHideItemClick(FMenuItemTorrentFilesTreeShowInfo);
   MenuItemTorrentFilesTreeShowOrHideItemClick(FMenuItemTorrentFilesTreeShowFiles);
 end;
 
-procedure TControlerTreeviewTorrentData.BeginUpdate;
+procedure TControllerTreeviewTorrentData.BeginUpdate;
 begin
   //Called before loading torrent file.
 
@@ -223,12 +223,12 @@ begin
   Clear;
 end;
 
-procedure TControlerTreeviewTorrentData.EndUpdate;
+procedure TControllerTreeviewTorrentData.EndUpdate;
 begin
   //The view can be updated again
   FTreeViewFileContents.EndUpdate;
 
-  //Update the text about howmany files are there etc.
+  //Update the text about how many files are there etc.
   //Show the size of all the files inside the torrent
   //http://en.wikipedia.org/wiki/Gigabyte
   FGroupBoxTorrentContents.Caption :=
@@ -242,7 +242,7 @@ begin
 end;
 
 
-procedure TControlerTreeviewTorrentData.MenuItemTorrentFilesTreeShowOrHideItemClick(
+procedure TControllerTreeviewTorrentData.MenuItemTorrentFilesTreeShowOrHideItemClick(
   Sender: TObject);
 var
   i, CountTorrents, itemsNr: integer;
@@ -280,7 +280,7 @@ begin
   end;
 end;
 
-procedure TControlerTreeviewTorrentData.AddOneTorrentFileDecoded(
+procedure TControllerTreeviewTorrentData.AddOneTorrentFileDecoded(
   DecodeTorrent: TDecodeTorrent);
 var
   CountFiles: integer;
@@ -349,8 +349,8 @@ begin
     DateTimeToStr(DecodeTorrent.CreatedDate));
   FTreeViewFileContents.Items.AddChild(TreeNodeInfo, 'Created By: ' +
     DecodeTorrent.CreatedBy);
-  FTreeViewFileContents.Items.AddChild(TreeNodeInfo, 'Piece Lenght: ' +
-    IntToStr(DecodeTorrent.PieceLenght div 1024) + ' KiB');
+  FTreeViewFileContents.Items.AddChild(TreeNodeInfo, 'Piece Length: ' +
+    IntToStr(DecodeTorrent.PieceLength div 1024) + ' KiB');
   if DecodeTorrent.PrivateTorrent then
   begin
     FTreeViewFileContents.Items.AddChild(TreeNodeInfo, 'Private: yes');

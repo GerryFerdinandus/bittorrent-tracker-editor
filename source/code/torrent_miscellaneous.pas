@@ -44,13 +44,13 @@ type
     // Console parameter: -U5
     // Insert new trackers list BEFORE, the original trackers list inside the torrent file.
     // Keep original tracker list 'of each individual torrent' unchanged and remove nothing.
-    // Every torent may have diferent tracker list!
+    // Every torrent may have different tracker list!
     tloInsertNewBeforeAndKeepOriginalIntactAndRemoveNothing,
 
     // Console parameter: -U6
     // Append new trackers list AFTER, the original trackers list inside the torrent file.
     // Keep original tracker list 'of each individual torrent' unchanged and remove nothing.
-    // Every torent may have diferent tracker list!
+    // Every torrent may have different tracker list!
     tloAppendNewAfterAndKeepOriginalIntactAndRemoveNothing,
 
     // Console parameter: -U7
@@ -77,7 +77,7 @@ type
     TrackerFromInsideTorrentFilesList,
 
     //trackers that must not be present inside torrent.
-    TrackerManualyDeselectedByUserList,
+    TrackerManuallyDeselectedByUserList,
 
     // All the torrent files that must be updated
     TorrentFileNameList,
@@ -104,7 +104,7 @@ procedure SanitizeTrackerList(StringList: TStringList);
 
 procedure RandomizeTrackerList(StringList: TStringList);
 
-procedure AddButIngnoreDuplicates(StringList: TStringList; const Str: UTF8String);
+procedure AddButIgnoreDuplicates(StringList: TStringList; const Str: UTF8String);
 
 function ByteSizeToBiggerSizeFormatStr(ByteSize: int64): string;
 
@@ -143,7 +143,7 @@ const
   //'remove trackers' text file must be place in the same directory as the program.
   FILE_NAME_REMOVE_TRACKERS: string = 'remove_trackers.txt';
 
-  //'export trackers' text file wil be created in the same directory as the program.
+  //'export trackers' text file will be created in the same directory as the program.
   FILE_NAME_EXPORT_TRACKERS: string = 'export_trackers.txt';
 
   //'log' text file will be saved in the same directory as the program
@@ -218,7 +218,7 @@ begin
   end;
 end;
 
-procedure AddButIngnoreDuplicates(StringList: TStringList; const Str: UTF8String);
+procedure AddButIgnoreDuplicates(StringList: TStringList; const Str: UTF8String);
 begin
   //Stringlist that are not sorted must use IndexOf to ignore Duplicates.
   if not StringList.Sorted then
@@ -333,7 +333,7 @@ function ConsoleModeDecodeParameter(out FileNameOrDirStr: UTF8String;
 begin
 
   // Console mode can be started with 2 parameter
-  //    Update methode: -U0 , -U1, -U2, -U3, -U4
+  //    Update method: -U0 , -U1, -U2, -U3, -U4
   //    String with a link to folder or to torrent file. 'C:\dir'
 
   CountParameter := Paramcount;
@@ -351,15 +351,15 @@ begin
     begin
       //one parameter. Must be a link.
       FileNameOrDirStr := UTF8Trim(ParamStr(1));
-      //Keep the same behaviour as the previeus software version.
+      //Keep the same behaviour as the previous software version.
       //      FTrackerListOrderForUpdatedTorrent := tloSort;
       TrackerListOrder := tloSort;
       Result := True;
     end;
     2:
     begin
-      //Two parameters. The user can select the update methode.
-      //Check for '-U' contruction as first parameter
+      //Two parameters. The user can select the update method.
+      //Check for '-U' construction as first parameter
       if (Pos('-U', ParamStr(1)) = 1) then
       begin
         //Update parameter is the first parameter
@@ -416,7 +416,7 @@ begin
   //                   + TrackerList.TrackerAddedByUserList
   //                   + TrackerList.TrackerFromInsideTorrentFilesList)
   //                   - TrackerList.TrackerBanByUserList
-  //                   - TrackerList.TrackerManualyDeselectedByUserList
+  //                   - TrackerList.TrackerManuallyDeselectedByUserList
 
 
   TrackerFromInsideOneTorrentFile := TStringList.Create;
@@ -432,7 +432,7 @@ begin
       //Copy the trackers found in one torrent file to TrackerFromInsideOneTorrentFile
       for TrackerStr in PresentTorrentTrackerList do //FDecodePresentTorrent.TrackerList
       begin
-        AddButIngnoreDuplicates(TrackerFromInsideOneTorrentFile, TrackerStr);
+        AddButIgnoreDuplicates(TrackerFromInsideOneTorrentFile, TrackerStr);
       end;
 
     end;
@@ -444,19 +444,19 @@ begin
       begin
         //Before
 
-        //Must be place as first TrackerList.TrackerAddedByUserList (Not instact when duplicated)
+        //Must be place as first TrackerList.TrackerAddedByUserList (Not intact when duplicated)
         for TrackerStr in TrackerList.TrackerAddedByUserList do
-          AddButIngnoreDuplicates(TrackerList.TrackerFinalList, TrackerStr);
+          AddButIgnoreDuplicates(TrackerList.TrackerFinalList, TrackerStr);
 
         //original tracker list is second place (Keep original intact)
         RemoveTrackersFromList(TrackerFromInsideOneTorrentFile,
           TrackerList.TrackerFinalList);
         for TrackerStr in TrackerFromInsideOneTorrentFile do
-          AddButIngnoreDuplicates(TrackerList.TrackerFinalList, TrackerStr);
+          AddButIgnoreDuplicates(TrackerList.TrackerFinalList, TrackerStr);
 
-        //'Others' trackers added as last. (Not instact when duplicated)
+        //'Others' trackers added as last. (Not intact when duplicated)
         for TrackerStr in TrackerList.TrackerFromInsideTorrentFilesList do
-          AddButIngnoreDuplicates(TrackerList.TrackerFinalList, TrackerStr);
+          AddButIgnoreDuplicates(TrackerList.TrackerFinalList, TrackerStr);
       end;
 
 
@@ -464,17 +464,17 @@ begin
       begin
         //Before
 
-        //Must be place as first TrackerList.TrackerAddedByUserList (keep new instact)
+        //Must be place as first TrackerList.TrackerAddedByUserList (keep new intact)
         for TrackerStr in TrackerList.TrackerAddedByUserList do
-          AddButIngnoreDuplicates(TrackerList.TrackerFinalList, TrackerStr);
+          AddButIgnoreDuplicates(TrackerList.TrackerFinalList, TrackerStr);
 
-        //original tracker list is second place (Not instact when duplicated)
+        //original tracker list is second place (Not intact when duplicated)
         for TrackerStr in TrackerFromInsideOneTorrentFile do
-          AddButIngnoreDuplicates(TrackerList.TrackerFinalList, TrackerStr);
+          AddButIgnoreDuplicates(TrackerList.TrackerFinalList, TrackerStr);
 
-        //'Others' trackers added as last. (Not instact when duplicated)
+        //'Others' trackers added as last. (Not intact when duplicated)
         for TrackerStr in TrackerList.TrackerFromInsideTorrentFilesList do
-          AddButIngnoreDuplicates(TrackerList.TrackerFinalList, TrackerStr);
+          AddButIgnoreDuplicates(TrackerList.TrackerFinalList, TrackerStr);
       end;
 
 
@@ -482,17 +482,17 @@ begin
       begin
         //After
 
-        //original tracker list must be place first. (keep original instact)
+        //original tracker list must be place first. (keep original intact)
         for TrackerStr in TrackerFromInsideOneTorrentFile do
-          AddButIngnoreDuplicates(TrackerList.TrackerFinalList, TrackerStr);
+          AddButIgnoreDuplicates(TrackerList.TrackerFinalList, TrackerStr);
 
-        //Must be place after TrackerFromInsideOneTorrentFile (Not instact when duplicated)
+        //Must be place after TrackerFromInsideOneTorrentFile (Not intact when duplicated)
         for TrackerStr in TrackerList.TrackerAddedByUserList do
-          AddButIngnoreDuplicates(TrackerList.TrackerFinalList, TrackerStr);
+          AddButIgnoreDuplicates(TrackerList.TrackerFinalList, TrackerStr);
 
-        //'Others' trackers added as last.  (Not instact when duplicated)
+        //'Others' trackers added as last.  (Not intact when duplicated)
         for TrackerStr in TrackerList.TrackerFromInsideTorrentFilesList do
-          AddButIngnoreDuplicates(TrackerList.TrackerFinalList, TrackerStr);
+          AddButIgnoreDuplicates(TrackerList.TrackerFinalList, TrackerStr);
 
       end;
 
@@ -500,19 +500,19 @@ begin
       begin
         //After
 
-        //original tracker list must be place first. (Not instact when duplicated)
+        //original tracker list must be place first. (Not intact when duplicated)
         for TrackerStr in TrackerFromInsideOneTorrentFile do
-          AddButIngnoreDuplicates(TrackerList.TrackerFinalList, TrackerStr);
+          AddButIgnoreDuplicates(TrackerList.TrackerFinalList, TrackerStr);
 
-        //Must be place after TrackerFromInsideOneTorrentFile (keep new instact)
+        //Must be place after TrackerFromInsideOneTorrentFile (keep new intact)
         RemoveTrackersFromList(TrackerList.TrackerAddedByUserList,
           TrackerList.TrackerFinalList);
         for TrackerStr in TrackerList.TrackerAddedByUserList do
-          AddButIngnoreDuplicates(TrackerList.TrackerFinalList, TrackerStr);
+          AddButIgnoreDuplicates(TrackerList.TrackerFinalList, TrackerStr);
 
-        //'Others' trackers added as last. (Not instact when duplicated)
+        //'Others' trackers added as last. (Not intact when duplicated)
         for TrackerStr in TrackerList.TrackerFromInsideTorrentFilesList do
-          AddButIngnoreDuplicates(TrackerList.TrackerFinalList, TrackerStr);
+          AddButIgnoreDuplicates(TrackerList.TrackerFinalList, TrackerStr);
 
       end;
 
@@ -521,10 +521,10 @@ begin
         //Sort
 
         for TrackerStr in TrackerList.TrackerAddedByUserList do
-          AddButIngnoreDuplicates(TrackerList.TrackerFinalList, TrackerStr);
+          AddButIgnoreDuplicates(TrackerList.TrackerFinalList, TrackerStr);
 
         for TrackerStr in TrackerList.TrackerFromInsideTorrentFilesList do
-          AddButIngnoreDuplicates(TrackerList.TrackerFinalList, TrackerStr);
+          AddButIgnoreDuplicates(TrackerList.TrackerFinalList, TrackerStr);
 
         TrackerList.TrackerFinalList.Sort;
       end;
@@ -535,7 +535,7 @@ begin
 
         //Must be place as first TrackerList.TrackerAddedByUserList.
         for TrackerStr in TrackerList.TrackerAddedByUserList do
-          AddButIngnoreDuplicates(TrackerList.TrackerFinalList, TrackerStr);
+          AddButIgnoreDuplicates(TrackerList.TrackerFinalList, TrackerStr);
 
         //remove duplicate from the list.
         RemoveTrackersFromList(TrackerFromInsideOneTorrentFile,
@@ -543,10 +543,10 @@ begin
 
         //original tracker list is second place (Keep original intact)
         for TrackerStr in TrackerFromInsideOneTorrentFile do
-          AddButIngnoreDuplicates(TrackerList.TrackerFinalList, TrackerStr);
+          AddButIgnoreDuplicates(TrackerList.TrackerFinalList, TrackerStr);
 
         //Nothing should be removed
-        TrackerList.TrackerManualyDeselectedByUserList.Clear;
+        TrackerList.TrackerManuallyDeselectedByUserList.Clear;
         TrackerList.TrackerBanByUserList.Clear;
       end;
 
@@ -557,14 +557,14 @@ begin
 
         //original tracker list is first place (Keep original intact)
         for TrackerStr in TrackerFromInsideOneTorrentFile do
-          AddButIngnoreDuplicates(TrackerList.TrackerFinalList, TrackerStr);
+          AddButIgnoreDuplicates(TrackerList.TrackerFinalList, TrackerStr);
 
         //Must be place as second TrackerList.TrackerAddedByUserList.
         for TrackerStr in TrackerList.TrackerAddedByUserList do
-          AddButIngnoreDuplicates(TrackerList.TrackerFinalList, TrackerStr);
+          AddButIgnoreDuplicates(TrackerList.TrackerFinalList, TrackerStr);
 
         //Nothing should be removed
-        TrackerList.TrackerManualyDeselectedByUserList.Clear;
+        TrackerList.TrackerManuallyDeselectedByUserList.Clear;
         TrackerList.TrackerBanByUserList.Clear;
       end;
 
@@ -573,10 +573,10 @@ begin
         //Randomize
 
         for TrackerStr in TrackerList.TrackerAddedByUserList do
-          AddButIngnoreDuplicates(TrackerList.TrackerFinalList, TrackerStr);
+          AddButIgnoreDuplicates(TrackerList.TrackerFinalList, TrackerStr);
 
         for TrackerStr in TrackerList.TrackerFromInsideTorrentFilesList do
-          AddButIngnoreDuplicates(TrackerList.TrackerFinalList, TrackerStr);
+          AddButIgnoreDuplicates(TrackerList.TrackerFinalList, TrackerStr);
 
         RandomizeTrackerList(TrackerList.TrackerFinalList);
       end;
@@ -588,13 +588,13 @@ begin
       end;
     end;
 
-    //Trackers from TrackerList.TrackerAddedByUserList overrule the one from TrackerList.TrackerManualyDeselectedByUserList
-    //This is when there is a conflict betwean 'add' and 'remove manual selection'
+    //Trackers from TrackerList.TrackerAddedByUserList overrule the one from TrackerList.TrackerManuallyDeselectedByUserList
+    //This is when there is a conflict between 'add' and 'remove manual selection'
 
-    //Must keep TrackerList.TrackerManualyDeselectedByUserList intact. Copy it to TrackerDeselectTempList
+    //Must keep TrackerList.TrackerManuallyDeselectedByUserList intact. Copy it to TrackerDeselectTempList
     TrackerDeselectTempList := TStringList.Create;
     TrackerDeselectTempList.Text :=
-      TrackerList.TrackerManualyDeselectedByUserList.Text;
+      TrackerList.TrackerManuallyDeselectedByUserList.Text;
     RemoveTrackersFromList(TrackerList.TrackerAddedByUserList,
       TrackerDeselectTempList);
 
@@ -621,11 +621,11 @@ var
 begin
   {
    Console mode can be started with example 2 parameter
-      Update methode: -U0 , -U1, -U2, -U3, -U4 etc.
+      Update method: -U0 , -U1, -U2, -U3, -U4 etc.
       String with a link to folder or to torrent file. 'C:\dir'
 
-   Must keep backward compatible with the first and previeus release.
-   First or seccond parameter must be related to -Ux
+   Must keep backward compatible with the first and previous release.
+   First or second parameter must be related to -Ux
 
    other parameter after are optional -SOC and -SOURCE
 
@@ -645,14 +645,14 @@ begin
     begin
       //one parameter. Must be a link.
       FileNameOrDirStr := UTF8Trim(ParamStr(1));
-      //Keep the same behaviour as the previeus software version.
+      //Keep the same behaviour as the previous software version.
       TrackerList.TrackerListOrderForUpdatedTorrent := tloSort;
       Result := True;
     end;
     else
     begin
-      //Two parameters. The user can select the update methode.
-      //Check for '-U' contruction as first parameter
+      //Two parameters. The user can select the update method.
+      //Check for '-U' construction as first parameter
       if (Pos('-U', ParamStr(1)) = 1) then
       begin
         //Update parameter is the first parameter
@@ -661,7 +661,7 @@ begin
         FileNameOrDirStr := UTF8Trim(ParamStr(2));
       end
       else
-      //Check for '-U' contruction as second parameter
+      //Check for '-U' construction as second parameter
       if (Pos('-U', ParamStr(2)) = 1) then
       begin
         // Update parameter is the second parameter

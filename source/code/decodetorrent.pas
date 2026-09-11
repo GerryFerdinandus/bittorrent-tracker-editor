@@ -60,7 +60,7 @@ type
     FComment: utf8string;
     FInfoSource: utf8string;
     FName: utf8string;
-    FPieceLenght: int64;
+    FPieceLength: int64;
     FMetaVersion: int64;
     FPrivateTorrent: boolean;
     FPaddingPresent_V1: boolean;
@@ -82,7 +82,7 @@ type
     function GetCreatedDate: TDateTime;
     function GetComment: utf8string;
     function GetName: utf8string;
-    function GetPieceLenght: int64;
+    function GetPieceLength: int64;
     function GetPrivateTorrent: boolean;
     function GetInfoSource: utf8string;
     procedure SetComment(const AValue: utf8string);
@@ -116,7 +116,7 @@ type
     property Name: utf8string read FName;
 
     //info.piecelength
-    property PieceLenght: int64 read FPieceLenght;
+    property PieceLength: int64 read FPieceLength;
 
     //public/private flag
     property PrivateTorrent: boolean read FPrivateTorrent;
@@ -290,7 +290,7 @@ begin
           TrackerStr := TempBEncoded.ListData.Items[
             i].Data.ListData.First.Data.StringData;
 
-          // TrackerList is not sorted. Must use IndexOf to ignore duplicated enteries.
+          // TrackerList is not sorted. Must use IndexOf to ignore duplicated entries.
           if TrackerList.IndexOf(TrackerStr) < 0 then
           begin
             TrackerList.Add(TrackerStr);
@@ -317,7 +317,7 @@ var
   FilenameWithPathStr: utf8string;
   DecodeTorrentFileName: TDecodeTorrentFileNameAndLength;
 begin
-  // return false if there is no file at all. This must not be posible.
+  // return false if there is no file at all. This must not be possible.
   // info/files/path -> all the files names
   FInfoFilesVersion := 1;
   FObjectListFileNameAndLength.Clear;
@@ -406,7 +406,7 @@ var
     ThisIsFileWithPadding: boolean;
     DecodeTorrentFileName: TDecodeTorrentFileNameAndLength;
   begin
-    // Everyting in the tree is befDictionary
+    // Everything in the tree is befDictionary
     ThisIsFileWithPadding := False;
     FileLength := -1; // -1 is no file length found yet.
 
@@ -559,7 +559,7 @@ begin
         tv_V1: Result := GetFileList_V1;
         tv_V2: Result := GetFileList_V2;
         tv_Hybrid:
-        begin // Only V2 is actualy used. V1 need to be read to look for padding.
+        begin // Only V2 is actually used. V1 need to be read to look for padding.
           Result := GetFileList_V1;
           if Result then GetFileList_V2;
         end;
@@ -579,7 +579,7 @@ begin
     FCreatedDate := GetCreatedDate;
     FComment := GetComment;
     FName := GetName;
-    FPieceLenght := GetPieceLenght;
+    FPieceLength := GetPieceLength;
     FPrivateTorrent := GetPrivateTorrent;
     FInfoSource := GetInfoSource;
     FMetaVersion := GetMetaVersion;
@@ -642,7 +642,7 @@ var
   Digest: array[0..31] of byte;
   i: integer;
 begin
-  Digest[0] := 0; // suppres compiler warning.
+  Digest[0] := 0; // suppress compiler warning.
   Hash := TDCP_sha256.Create(nil);
   try
     Hash.Init;
@@ -763,7 +763,7 @@ try
     Data := TBEncodedData.Create(Encoded);
     Data.Header := 'announce';
     FBEncoded.ListData.Add(Data);
-    FBEncoded.ListData.Sort(@sort_);//text must be in alfabetical order.
+    FBEncoded.ListData.Sort(@sort_);//text must be in alphabetical order.
 except
 end;
 
@@ -794,7 +794,7 @@ begin//remove the old one and create a new one
     Data := TBEncodedData.Create(Encoded);
     Data.Header := BK_PRIVATE;
     FBEncoded_Info.ListData.Add(Data);
-    FBEncoded_Info.ListData.Sort(@sort_);//text must be in alfabetical order.
+    FBEncoded_Info.ListData.Sort(@sort_);//text must be in alphabetical order.
     Result := True;
   except
     Result := False;
@@ -828,7 +828,7 @@ begin//remove the old one and create a new one
     Data := TBEncodedData.Create(Encoded);
     Data.Header := BK_SOURCE;
     FBEncoded_Info.ListData.Add(Data);
-    FBEncoded_Info.ListData.Sort(@sort_);//text must be in alfabetical order.
+    FBEncoded_Info.ListData.Sort(@sort_);//text must be in alphabetical order.
     Result := True;
   except
     Result := False;
@@ -892,7 +892,7 @@ begin//remove the old one and create a new one
     Data := TBEncodedData.Create(Encoded);
     Data.Header := BK_ANNOUNCE;
     FBEncoded.ListData.Add(Data);
-    FBEncoded.ListData.Sort(@sort_);//text must be in alfabetical order.
+    FBEncoded.ListData.Sort(@sort_);//text must be in alphabetical order.
     Result := True;
   except
     Result := False;
@@ -932,7 +932,7 @@ begin
       // add list to the list via TBEncodedData
       EncodedListRoot.ListData.Add(TBEncodedData.Create(EncodedList));
 
-      //String ellement inside the list
+      //String element inside the list
       EncodedString := TBEncoded.Create;
       EncodedString.Format := befString;
       EncodedString.StringData := StringList[i];
@@ -940,7 +940,7 @@ begin
       EncodedList.ListData.Add(TBEncodedData.Create(EncodedString));
     end;
 
-    FBEncoded.ListData.Sort(@sort_);//text must be in alfabetical order.
+    FBEncoded.ListData.Sort(@sort_);//text must be in alphabetical order.
   except
     Result := False;
   end;
@@ -954,7 +954,7 @@ begin
     tv_Hybrid: Result := 'Hybrid (V1&V2)';
     tv_unknown: Result := 'unknown';
     else
-      Result := 'TorrentVersionToString: unkown value';
+      Result := 'TorrentVersionToString: unknown value';
   end;
 end;
 
@@ -1034,7 +1034,7 @@ begin
   end;
 end;
 
-function TDecodeTorrent.GetPieceLenght: int64;
+function TDecodeTorrent.GetPieceLength: int64;
 var
   TempBEncoded: TBEncoded;
 begin

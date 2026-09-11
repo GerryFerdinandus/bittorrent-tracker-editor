@@ -36,7 +36,7 @@ function GetProjectRootFolderWithPathDelimiter: string;
 
 function VerifyTrackerResult(var VerifyTracker: TVerifyTrackerResult): boolean;
 
-procedure RemoveLineSeperation(TrackerList: TStringList);
+procedure RemoveLineSeparation(TrackerList: TStringList);
 
 implementation
 
@@ -84,7 +84,7 @@ begin
   //FirstIndex, LastIndex give information if the list is place in begin or end of the list.
 
   //ItemsFound -> how many of the ListToBeFound are present in the list.
-  //           this is not realy helpfull because the items can be removed via TrackerRemoved
+  //           this is not really helpful because the items can be removed via TrackerRemoved
 
   //TrackerFoundInList
   //                  tf_NotFound -> if this items is also not present in TrackerRemoved
@@ -154,7 +154,7 @@ begin
           TrackerFoundInList := tf_Skip;
       end;
 
-      //keep updating the previeus index
+      //keep updating the previous index
       OldIndex := IndexFound;
     end;
 
@@ -162,7 +162,7 @@ begin
 
 end;
 
-procedure RemoveLineSeperation(TrackerList: TStringList);
+procedure RemoveLineSeparation(TrackerList: TStringList);
 var
   i: integer;
 begin
@@ -198,10 +198,10 @@ begin
     VerifyTrackerResult_Original.TrackerRemoved);
 
   //remove empty lines
-  RemoveLineSeperation(VerifyTrackerResult_copy.TrackerAdded);
-  RemoveLineSeperation(VerifyTrackerResult_copy.TrackerEndResult);
-  RemoveLineSeperation(VerifyTrackerResult_copy.TrackerOriginal);
-  RemoveLineSeperation(VerifyTrackerResult_copy.TrackerRemoved);
+  RemoveLineSeparation(VerifyTrackerResult_copy.TrackerAdded);
+  RemoveLineSeparation(VerifyTrackerResult_copy.TrackerEndResult);
+  RemoveLineSeparation(VerifyTrackerResult_copy.TrackerOriginal);
+  RemoveLineSeparation(VerifyTrackerResult_copy.TrackerRemoved);
 end;
 
 procedure FreeTVerifyTrackerResult(var VerifyTrackerResult: TVerifyTrackerResult);
@@ -545,7 +545,7 @@ begin
     // Console parameter: -U5
     // Append new trackers list BEFORE, the original trackers list inside the torrent file.
     // Keep original tracker list 'of each individual torrent' unchanged and remove nothing.
-    // Every torent may have diferent tracker list!
+    // Every torrent may have different tracker list!
     tloInsertNewBeforeAndKeepOriginalIntactAndRemoveNothing:
     begin
       atBegin_TrackerAdded := True;
@@ -557,7 +557,7 @@ begin
     // Console parameter: -U6
     // Append new trackers list AFTER, the original trackers list inside the torrent file.
     // Keep original tracker list 'of each individual torrent' unchanged and remove nothing.
-    // Every torent may have diferent tracker list!
+    // Every torrent may have different tracker list!
     tloAppendNewAfterAndKeepOriginalIntactAndRemoveNothing:
     begin
       atBegin_TrackerAdded := False;

@@ -128,7 +128,7 @@ end;"/>
         <UnitName Value="BEncode"/>
       </Unit1>
       <Unit2>
-        <Filename Value="..\..\code\controlergridtorrentdata.pas"/>
+        <Filename Value="..\..\code\controllergridtorrentdata.pas"/>
         <IsPartOfProject Value="True"/>
       </Unit2>
       <Unit3>
@@ -148,7 +148,7 @@ end;"/>
         <IsPartOfProject Value="True"/>
       </Unit5>
       <Unit6>
-        <Filename Value="..\..\code\controler_trackerlist_online.pas"/>
+        <Filename Value="..\..\code\controller_trackerlist_online.pas"/>
         <IsPartOfProject Value="True"/>
       </Unit6>
       <Unit7>
@@ -160,7 +160,7 @@ end;"/>
         <IsPartOfProject Value="True"/>
       </Unit8>
       <Unit9>
-        <Filename Value="..\..\code\controler_treeview_torrent_data.pas"/>
+        <Filename Value="..\..\code\controller_treeview_torrent_data.pas"/>
         <IsPartOfProject Value="True"/>
       </Unit9>
       <Unit10>

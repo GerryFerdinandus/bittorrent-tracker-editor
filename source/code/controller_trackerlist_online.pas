@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-unit controler_trackerlist_online;
+unit controller_trackerlist_online;
 
 {
   Show the present status of the trackerURL via TStringGrid
@@ -15,9 +15,9 @@ type
 
   TDefaultChecked = function(const TrackerURL: utf8string): boolean of object;
 
-  { TControlerTrackerListOnline }
+  { TControllerTrackerListOnline }
 
-  TControlerTrackerListOnline = class
+  TControllerTrackerListOnline = class
   private
     FStringGridTorrentURL: TStringGrid;
     FNewTrackon: TNewTrackon;
@@ -25,7 +25,7 @@ type
     FTrackerList: TStringList;
     FDefaultChecked: TDefaultChecked;
 
-    //The collumn must be in this design order.
+    //The column must be in this design order.
     FSelect,               //< 0
     FTorrentURL,           //< 1
     FTorrentURL_Status     //< 2
@@ -62,7 +62,7 @@ implementation
 
 uses Graphics;
 
-{ TControlerTrackerListOnline }
+{ TControllerTrackerListOnline }
 
 
 function IsDarkTheme: boolean;
@@ -76,20 +76,20 @@ begin
   Result := _Level(ColorToRGB(clWindow)) < _Level(ColorToRGB(clWindowText));
 end;
 
-function TControlerTrackerListOnline.DownloadTrackers_All_Live_Stable: boolean;
+function TControllerTrackerListOnline.DownloadTrackers_All_Live_Stable: boolean;
 begin
   Result := FNewTrackon.Download_All_Live_Stable;
   UpdateView;
   ShowTrackerStatus(Result);
 end;
 
-function TControlerTrackerListOnline.SubmitTrackers(TrackerList: TStringList;
+function TControllerTrackerListOnline.SubmitTrackers(TrackerList: TStringList;
   out TrackersSendCount: integer): boolean;
 begin
   Result := FNewTrackon.SubmitTrackers(TrackerList, TrackersSendCount);
 end;
 
-constructor TControlerTrackerListOnline.Create(StringGridTorrentURL: TStringGrid;
+constructor TControllerTrackerListOnline.Create(StringGridTorrentURL: TStringGrid;
   TrackerList: TStringList; DefaultChecked: TDefaultChecked);
 begin
 
@@ -132,33 +132,33 @@ begin
   FTrackerListOnline.TrackerList_Stable := FNewTrackon.TrackerList_Stable;
 end;
 
-destructor TControlerTrackerListOnline.Destroy;
+destructor TControllerTrackerListOnline.Destroy;
 begin
   FTrackerListOnline.Free;
   FNewTrackon.Free;
   inherited Destroy;
 end;
 
-procedure TControlerTrackerListOnline.ShowTrackerStatus(Visible: boolean);
+procedure TControllerTrackerListOnline.ShowTrackerStatus(Visible: boolean);
 begin
   FTorrentURL_Status.Visible := Visible;
 end;
 
-function TControlerTrackerListOnline.GetChecked(index: integer): boolean;
+function TControllerTrackerListOnline.GetChecked(index: integer): boolean;
 begin
   //read the select checkbox. If '1' then it is True
   Result := FStringGridTorrentURL.Cells[0, index +
     FStringGridTorrentURL.FixedRows] = '1';
 end;
 
-procedure TControlerTrackerListOnline.SetChecked(index: integer; AValue: boolean);
+procedure TControllerTrackerListOnline.SetChecked(index: integer; AValue: boolean);
 begin
   FStringGridTorrentURL.Cells[0, index + FStringGridTorrentURL.FixedRows] :=
     BoolToStr(AValue, '1', '0');
 end;
 
 
-procedure TControlerTrackerListOnline.AppendRow(Checked: boolean;
+procedure TControllerTrackerListOnline.AppendRow(Checked: boolean;
   Status: TTrackerListOnlineStatus; const TrackerURL: utf8string);
 var
   CheckedStr, StatusStr: string;
@@ -171,32 +171,32 @@ begin
     [CheckedStr, StatusStr, TrackerURL]);
 end;
 
-function TControlerTrackerListOnline.TrackerURL(index: integer): string;
+function TControllerTrackerListOnline.TrackerURL(index: integer): string;
 begin
   Result := FStringGridTorrentURL.Cells[2, index + FStringGridTorrentURL.FixedRows];
 end;
 
-function TControlerTrackerListOnline.TrackerStatus(index: integer):
+function TControllerTrackerListOnline.TrackerStatus(index: integer):
 TTrackerListOnlineStatus;
 begin
   Result := FTrackerListOnline.TrackerStatus(TrackerURL(index));
 end;
 
-function TControlerTrackerListOnline.Count: integer;
+function TControllerTrackerListOnline.Count: integer;
 begin
   Result := FStringGridTorrentURL.RowCount - FStringGridTorrentURL.FixedRows;
 end;
 
-function TControlerTrackerListOnline.StableTrackers: TStringList;
+function TControllerTrackerListOnline.StableTrackers: TStringList;
 begin
   Result := FNewTrackon.TrackerList_Stable;
 end;
 
-procedure TControlerTrackerListOnline.UpdateView;
+procedure TControllerTrackerListOnline.UpdateView;
 var
   tracker: string;
 begin
-  //Clear all the previeus data in the view
+  //Clear all the previous data in the view
   FStringGridTorrentURL.RowCount := FStringGridTorrentURL.FixedRows;
 
   FStringGridTorrentURL.BeginUpdate;

@@ -143,7 +143,7 @@ begin
 
   X := ' ';
 
-  // get first character to determine the format of the proceeding data
+  // get first character to determine the format of the following data
   if Stream.Read(X, 1) <> 1 then
     raise Exception.Create('Unexpected end of stream while reading bencode value');
 

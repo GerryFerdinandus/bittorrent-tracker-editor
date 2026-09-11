@@ -24,7 +24,7 @@ type
     ntl_URL_Stable,//< Download from internet
     ntl_URL_UDP,//< Download from internet
     ntl_URL_HTTP,//< Download from internet
-    ntl_CREATE_DEAD//< ntl_CREATE_DEAD is NOT download but created by comparing betwean tracker list
+    ntl_CREATE_DEAD//< ntl_CREATE_DEAD is NOT download but created by comparing between tracker list
     );
 
   TNewTrackon = class
@@ -154,7 +154,7 @@ var
   FormData: string;
   Trackers: string;
   HTTPS: TFPHTTPClient;
-  Seperator: string;
+  Separator: string;
 
 const
   URL_POST = 'https://newtrackon.com/api/add';
@@ -184,13 +184,13 @@ begin
         //this is the 'key'
         FormData := 'new_trackers=';
 
-        //This is the 'values' all seperated with one space '+'
-        Seperator := '';
+        //This is the 'values' all separated with one space '+'
+        Separator := '';
         for Trackers in TrackerListToBeSend do
         begin
-          FormData := FormData + Seperator + HTTPEncode(Trackers);
-          if Seperator = '' then
-            Seperator := '+';
+          FormData := FormData + Separator + HTTPEncode(Trackers);
+          if Separator = '' then
+            Separator := '+';
         end;
 
         try

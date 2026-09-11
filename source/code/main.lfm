@@ -349,7 +349,7 @@ object FormTrackerModify: TFormTrackerModify
         Caption = '&Delete all the present trackers'
         OnClick = MenuTrackersKeepOrDeleteAllTrackersClick
       end
-      object MenuTrackersSeperator1: TMenuItem
+      object MenuTrackersSeparator1: TMenuItem
         Caption = '-'
       end
       object MenuTrackersDeleteUnstableTrackers: TMenuItem
@@ -366,7 +366,7 @@ object FormTrackerModify: TFormTrackerModify
         Caption = 'Delete UNKNOWN trackers  (Data from newTrackon)'
         OnClick = MenuTrackersDeleteTrackersWithStatusClick
       end
-      object MenuTrackersSeperator2: TMenuItem
+      object MenuTrackersSeparator2: TMenuItem
         Caption = '-'
       end
       object MenuTrackersAllTorrentArePublic: TMenuItem
@@ -392,9 +392,9 @@ object FormTrackerModify: TFormTrackerModify
           Caption = 'And remove possible duplicated trackers from the NEW trackers list.(-U1)'
           OnClick = MenuUpdateTorrentAddBeforeRemoveNewClick
         end
-        object MenuUpdateTorrentAddBeforeKeepOriginalInstactAndRemoveNothing: TMenuItem
+        object MenuUpdateTorrentAddBeforeKeepOriginalIntactAndRemoveNothing: TMenuItem
           Caption = 'Keep original tracker list unchanged and remove nothing.(-U5)'
-          OnClick = MenuUpdateTorrentAddBeforeKeepOriginalInstactAndRemoveNothingClick
+          OnClick = MenuUpdateTorrentAddBeforeKeepOriginalIntactAndRemoveNothingClick
         end
       end
       object MenuUpdateTorrentAddBefore: TMenuItem
@@ -407,9 +407,9 @@ object FormTrackerModify: TFormTrackerModify
           Caption = 'And remove possible duplicated trackers from the NEW trackers list.(-U3)'
           OnClick = MenuUpdateTorrentAddAfterRemoveNewClick
         end
-        object MenuUpdateTorrentAddAfterKeepOriginalInstactAndRemoveNothing: TMenuItem
+        object MenuUpdateTorrentAddAfterKeepOriginalIntactAndRemoveNothing: TMenuItem
           Caption = 'Keep original tracker list unchanged and remove nothing.(-U6)'
-          OnClick = MenuUpdateTorrentAddAfterKeepOriginalInstactAndRemoveNothingClick
+          OnClick = MenuUpdateTorrentAddAfterKeepOriginalIntactAndRemoveNothingClick
         end
       end
       object MenuUpdateTorrentSort: TMenuItem
@@ -481,7 +481,7 @@ object FormTrackerModify: TFormTrackerModify
         Caption = '&Reporting Issue'
         OnClick = MenuHelpReportingIssueClick
       end
-      object MenuHelpSeperator1: TMenuItem
+      object MenuHelpSeparator1: TMenuItem
         Caption = '-'
       end
       object MenuHelpVisitNewTrackon: TMenuItem

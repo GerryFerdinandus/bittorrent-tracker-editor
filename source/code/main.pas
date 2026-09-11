@@ -17,8 +17,8 @@ interface
 uses
   Classes, SysUtils, Forms, Controls, Graphics, Dialogs, StdCtrls,
   ExtCtrls, CheckLst, DecodeTorrent, LCLType, ActnList, Menus, ComCtrls,
-  Grids, controlergridtorrentdata, torrent_miscellaneous,
-  controler_trackerlist_online, controler_treeview_torrent_data, ngosang_trackerslist;
+  Grids, controllergridtorrentdata, torrent_miscellaneous,
+  controller_trackerlist_online, controller_treeview_torrent_data, ngosang_trackerslist;
 
 type
 
@@ -41,7 +41,7 @@ type
     MenuFileTorrentFolder: TMenuItem;
     MenuFileOpenTrackerList: TMenuItem;
     MenuHelpReportingIssue: TMenuItem;
-    MenuHelpSeperator1: TMenuItem;
+    MenuHelpSeparator1: TMenuItem;
     MenuHelpVisitNewTrackon: TMenuItem;
     MenuItem1: TMenuItem;
     MenuHelpVisitNgosang: TMenuItem;
@@ -58,13 +58,13 @@ type
     MenuTrackersDeleteDeadTrackers: TMenuItem;
     MenuTrackersDeleteUnstableTrackers: TMenuItem;
     MenuTrackersDeleteUnknownTrackers: TMenuItem;
-    MenuTrackersSeperator2: TMenuItem;
-    MenuTrackersSeperator1: TMenuItem;
+    MenuTrackersSeparator2: TMenuItem;
+    MenuTrackersSeparator1: TMenuItem;
     MenuItemOnlineCheckDownloadNewTrackon: TMenuItem;
     MenuOnlineCheck: TMenuItem;
     MenuUpdateRandomize: TMenuItem;
-    MenuUpdateTorrentAddBeforeKeepOriginalInstactAndRemoveNothing: TMenuItem;
-    MenuUpdateTorrentAddAfterKeepOriginalInstactAndRemoveNothing: TMenuItem;
+    MenuUpdateTorrentAddBeforeKeepOriginalIntactAndRemoveNothing: TMenuItem;
+    MenuUpdateTorrentAddAfterKeepOriginalIntactAndRemoveNothing: TMenuItem;
     MenuUpdateTorrentAddBeforeRemoveOriginal: TMenuItem;
     MenuUpdateTorrentAddAfterRemoveOriginal: TMenuItem;
     MenuUpdateTorrentAddBeforeRemoveNew: TMenuItem;
@@ -133,12 +133,12 @@ type
     //Menu update torrent
     procedure MenuUpdateTorrentAddAfterRemoveNewClick(Sender: TObject);
     procedure MenuUpdateTorrentAddAfterRemoveOriginalClick(Sender: TObject);
-    procedure MenuUpdateTorrentAddBeforeKeepOriginalInstactAndRemoveNothingClick(
+    procedure MenuUpdateTorrentAddBeforeKeepOriginalIntactAndRemoveNothingClick(
       Sender: TObject);
     procedure MenuUpdateTorrentAddBeforeRemoveNewClick(Sender: TObject);
     procedure MenuUpdateTorrentAddBeforeRemoveOriginalClick(Sender: TObject);
     procedure MenuUpdateTorrentSortClick(Sender: TObject);
-    procedure MenuUpdateTorrentAddAfterKeepOriginalInstactAndRemoveNothingClick(
+    procedure MenuUpdateTorrentAddAfterKeepOriginalIntactAndRemoveNothingClick(
       Sender: TObject);
     procedure MenuUpdateRandomizeClick(Sender: TObject);
 
@@ -149,8 +149,8 @@ type
     { private declarations }
 
     FTrackerList: TTrackerList;
-    FControlerTrackerListOnline: TControlerTrackerListOnline;
-    FControlerTreeviewTorrentData: TControlerTreeviewTorrentData;
+    FControllerTrackerListOnline: TControllerTrackerListOnline;
+    FControllerTreeviewTorrentData: TControllerTreeviewTorrentData;
     FDownloadStatus: boolean;
 
     FngosangTrackerList: TngosangTrackerList;
@@ -165,7 +165,7 @@ type
     FFolderForTrackerListLoadAndSave: string;
     FLogFile, FTrackerFile: TextFile;
     FProcessTimeStart, FProcessTimeTotal: TDateTime;
-    FControlerGridTorrentData: TControlerGridTorrentData;
+    FControllerGridTorrentData: TControllerGridTorrentData;
     function CheckForAnnounce(const TrackerURL: utf8string): boolean;
     procedure AppendTrackersToMemoNewTrackers(TrackerList: TStringList);
     procedure ShowUserErrorMessage(ErrorText: string; const FormText: string = '');
@@ -207,7 +207,7 @@ implementation
 uses fphttpclient, LCLIntf, lazutf8, LazFileUtils, trackerlist_online, LCLVersion;
 
 const
-  RECOMENDED_TRACKERS: array[0..2] of utf8string =
+  RECOMMENDED_TRACKERS: array[0..2] of utf8string =
     (
     'udp://tracker.coppersurfer.tk:6969/announce',
     'udp://tracker.opentrackr.org:1337/announce',
@@ -268,8 +268,8 @@ begin
   FFolderForTrackerListLoadAndSave := AppendPathDelim(FFolderForTrackerListLoadAndSave);
 
 
-  //Create controler for StringGridTorrentData
-  FControlerGridTorrentData := TControlerGridTorrentData.Create(StringGridTorrentData);
+  //Create controller for StringGridTorrentData
+  FControllerGridTorrentData := TControllerGridTorrentData.Create(StringGridTorrentData);
 
   // Default there is an announce check
   FTrackerList.SkipAnnounceCheck := False;
@@ -286,17 +286,17 @@ begin
   //Must NOT be sorted. Must in sync with CheckListBoxPublicPrivateTorrent.
   FTrackerList.TorrentFileNameList.Sorted := False;
 
-  //Create ban tracker list where the user can manualy add items to it.
+  //Create ban tracker list where the user can manually add items to it.
   FTrackerList.TrackerBanByUserList := TStringList.Create;
   FTrackerList.TrackerBanByUserList.Duplicates := dupIgnore;
   FTrackerList.TrackerBanByUserList.Sorted := False;
 
   //Create deselect tracker list where the user select via user interface CheckBoxRemoveAllSourceTag
-  FTrackerList.TrackerManualyDeselectedByUserList := TStringList.Create;
-  FTrackerList.TrackerManualyDeselectedByUserList.Duplicates := dupIgnore;
-  FTrackerList.TrackerManualyDeselectedByUserList.Sorted := False;
+  FTrackerList.TrackerManuallyDeselectedByUserList := TStringList.Create;
+  FTrackerList.TrackerManuallyDeselectedByUserList.Duplicates := dupIgnore;
+  FTrackerList.TrackerManuallyDeselectedByUserList.Sorted := False;
 
-  //Create tracker list where the user can manualy add items to it
+  //Create tracker list where the user can manually add items to it
   FTrackerList.TrackerAddedByUserList := TStringList.Create;
   FTrackerList.TrackerAddedByUserList.Duplicates := dupIgnore;
   //Trackers List added by user must keep in the same order.
@@ -320,15 +320,15 @@ begin
   FDecodePresentTorrent := TDecodeTorrent.Create;
 
   //Create view for trackerURL with CheckBoxRemoveAllSourceTag
-  FControlerTrackerListOnline :=
-    TControlerTrackerListOnline.Create(StringGridTrackerOnline,
+  FControllerTrackerListOnline :=
+    TControllerTrackerListOnline.Create(StringGridTrackerOnline,
     FTrackerList.TrackerFromInsideTorrentFilesList, @TrackerWithURLAndAnnounce);
 
   //Create view for treeview data of all the torrent files
-  FControlerTreeviewTorrentData :=
-    TControlerTreeviewTorrentData.Create(TabSheetTorrentsContents);
+  FControllerTreeviewTorrentData :=
+    TControllerTreeviewTorrentData.Create(TabSheetTorrentsContents);
 
-  //start the program at mimimum visual size. (this is optional)
+  //start the program at minimum visual size. (this is optional)
   Width := Constraints.MinWidth;
   Height := Constraints.MinHeight;
 
@@ -384,9 +384,9 @@ begin
   FTrackerList.TrackerBanByUserList.Free;
   FTrackerList.TrackerFromInsideTorrentFilesList.Free;
   FTrackerList.TorrentFileNameList.Free;
-  FControlerGridTorrentData.Free;
-  FTrackerList.TrackerManualyDeselectedByUserList.Free;
-  FControlerTrackerListOnline.Free;
+  FControllerGridTorrentData.Free;
+  FTrackerList.TrackerManuallyDeselectedByUserList.Free;
+  FControllerTrackerListOnline.Free;
 end;
 
 procedure TFormTrackerModify.MenuFileTorrentFolderClick(Sender: TObject);
@@ -406,7 +406,7 @@ end;
 
 procedure TFormTrackerModify.MenuHelpVisitWebsiteClick(Sender: TObject);
 begin
-  //There is no help file in this progam. Show user main web site.
+  //There is no help file in this program. Show user main web site.
   OpenURL('https://github.com/GerryFerdinandus/bittorrent-tracker-editor');
 end;
 
@@ -464,7 +464,7 @@ var
 begin
   try
     screen.Cursor := crHourGlass;
-    SendStatus := FControlerTrackerListOnline.SubmitTrackers(
+    SendStatus := FControllerTrackerListOnline.SubmitTrackers(
       FTrackerList.TrackerFromInsideTorrentFilesList, TrackerSendCount);
   finally
     screen.Cursor := crDefault;
@@ -472,7 +472,7 @@ begin
 
   if SendStatus then
   begin
-    //Succesful upload
+    //Successful upload
     PopupStr := format('Successful upload of %d unique tracker URL', [TrackerSendCount]);
     Application.MessageBox(
       PChar(@PopupStr[1]),
@@ -517,7 +517,7 @@ begin
   end;
 
   //Append all the trackers to MemoNewTrackers
-  AppendTrackersToMemoNewTrackers(FControlerTrackerListOnline.StableTrackers);
+  AppendTrackersToMemoNewTrackers(FControllerTrackerListOnline.StableTrackers);
 end;
 
 procedure TFormTrackerModify.MenuItemOnlineCheckDownloadNewTrackonClick(
@@ -525,7 +525,7 @@ procedure TFormTrackerModify.MenuItemOnlineCheckDownloadNewTrackonClick(
 begin
   try
     screen.Cursor := crHourGlass;
-    FDownloadStatus := FControlerTrackerListOnline.DownloadTrackers_All_Live_Stable;
+    FDownloadStatus := FControllerTrackerListOnline.DownloadTrackers_All_Live_Stable;
   finally
     screen.Cursor := crDefault;
   end;
@@ -582,13 +582,13 @@ procedure TFormTrackerModify.MenuTrackersDeleteTrackersWithStatusClick(
   var
     i: integer;
   begin
-    if FControlerTrackerListOnline.Count > 0 then
+    if FControllerTrackerListOnline.Count > 0 then
     begin
-      for i := 0 to FControlerTrackerListOnline.Count - 1 do
+      for i := 0 to FControllerTrackerListOnline.Count - 1 do
       begin
-        if FControlerTrackerListOnline.TrackerStatus(i) = Value then
+        if FControllerTrackerListOnline.TrackerStatus(i) = Value then
         begin
-          FControlerTrackerListOnline.Checked[i] := False;
+          FControllerTrackerListOnline.Checked[i] := False;
         end;
       end;
     end;
@@ -624,17 +624,17 @@ procedure TFormTrackerModify.UpdateTorrent;
 var
   Reply, BoxStyle, i, CountTrackers: integer;
   PopUpMenuStr: string;
-  SomeFilesCannotBeWriten, SomeFilesAreReadOnly, AllFilesAreReadBackCorrectly: boolean;
+  SomeFilesCannotBeWritten, SomeFilesAreReadOnly, AllFilesAreReadBackCorrectly: boolean;
 begin
   //Update all the torrent files.
 
   //The StringGridTorrentData where the comment are place by user
   //    must be in sync again with FTrackerList.TorrentFileNameList.
-  //Undo all posible sort column used by the user. Sort it back to 'begin state'
-  FControlerGridTorrentData.ReorderGrid;
+  //Undo all possible sort column used by the user. Sort it back to 'begin state'
+  FControllerGridTorrentData.ReorderGrid;
 
   //initial value is false, will be set to true if some file fails to write
-  SomeFilesCannotBeWriten := False;
+  SomeFilesCannotBeWritten := False;
 
   try
 
@@ -680,7 +680,7 @@ begin
 
     //In console mode we can ignore this warning
     if not FConsoleMode and (CountTrackers = 0) then
-    begin //Torrent without a tracker is posible. But is this what the user realy want? a DHT torrent.
+    begin //Torrent without a tracker is possible. But is this what the user really want? a DHT torrent.
       BoxStyle := MB_ICONWARNING + MB_OKCANCEL;
       Reply := Application.MessageBox('There are no Trackers selected!' +
         sLineBreak + 'Warning: Create torrent file without any URL of the tracker?',
@@ -767,7 +767,7 @@ begin
       end;
 
       //update the comment item
-      FDecodePresentTorrent.Comment := FControlerGridTorrentData.ReadComment(i + 1);
+      FDecodePresentTorrent.Comment := FControllerGridTorrentData.ReadComment(i + 1);
 
       //Update the source tag for private trackers
       if FTrackerList.RemoveAllSourceTag then
@@ -788,7 +788,7 @@ begin
       //save the torrent file.
       if not FDecodePresentTorrent.SaveTorrent(FTrackerList.TorrentFileNameList[i]) then
       begin
-        SomeFilesCannotBeWriten := True;
+        SomeFilesCannotBeWritten := True;
       end;
 
     end;//for
@@ -809,7 +809,7 @@ begin
 
   if FConsoleMode then
   begin
-    //When succesfull the log file shows, 3 lines,
+    //When successfull the log file shows, 3 lines,
     //     OK + Count torrent files  + Count Trackers
 
     //if there is already a items inside there there must be something wrong.
@@ -864,14 +864,14 @@ begin
     begin
       //add warning if read only files are detected.
       PopUpMenuStr := PopUpMenuStr +
-        ' WARNING: Some torrent files are not updated bacause they are READ-ONLY files.';
+        ' WARNING: Some torrent files are not updated because they are READ-ONLY files.';
     end;
 
-    if SomeFilesCannotBeWriten then
+    if SomeFilesCannotBeWritten then
     begin
-      //add warning if some files writen are failed. Someting is wrong with the disk.
+      //add warning if some files written are failed. Something is wrong with the disk.
       PopUpMenuStr := PopUpMenuStr +
-        ' WARNING: Some torrent files are not updated bacause they failed at write.';
+        ' WARNING: Some torrent files are not updated because they failed at write.';
     end;
 
     //Show the MessageBox
@@ -895,8 +895,8 @@ begin
   begin
     WriteLn(FTrackerFile, TrackerStr);
 
-    //Must create an empty line betwean trackers.
-    //Every tracker must be a seperate tracker group.
+    //Must create an empty line between trackers.
+    //Every tracker must be a separate tracker group.
     //This is what the user probably want.
     //The file content can then be copy/pasted to uTorrent etc.
     WriteLn(FTrackerFile, '');
@@ -919,7 +919,7 @@ begin
   // Two parameter version. Always console mode.
   //    This is later version where there is more selection about the tracker list.
 
-  //Will be set to True when error occure.
+  //Will be set to True when error occurs.
   MustExitWithErrorCode := False;
   ViewUpdateBegin;
 
@@ -1083,7 +1083,7 @@ begin
     i := FTrackerList.TrackerFromInsideTorrentFilesList.IndexOf(UTF8Trim(TrackerStr));
     if i >= 0 then //Found it.
     begin
-      FControlerTrackerListOnline.Checked[i] := False;
+      FControllerTrackerListOnline.Checked[i] := False;
     end;
 
     //remove tracker from user memo text that are listed in FTrackerList.TrackerBanByUserList
@@ -1123,14 +1123,14 @@ begin
   //Copy the trackers found in one torrent file to FTrackerList.TrackerFromInsideTorrentFilesList
   for TrackerStr in FDecodePresentTorrent.TrackerList do
   begin
-    AddButIngnoreDuplicates(FTrackerList.TrackerFromInsideTorrentFilesList, TrackerStr);
+    AddButIgnoreDuplicates(FTrackerList.TrackerFromInsideTorrentFilesList, TrackerStr);
   end;
 end;
 
 procedure TFormTrackerModify.ShowTrackerInsideFileList;
 begin
   //Called after torrent is being loaded.
-  FControlerTrackerListOnline.UpdateView;
+  FControllerTrackerListOnline.UpdateView;
 end;
 
 
@@ -1139,11 +1139,11 @@ var
   i: integer;
 begin
   //Set all the trackers CheckBoxRemoveAllSourceTag ON or OFF
-  if FControlerTrackerListOnline.Count > 0 then
+  if FControllerTrackerListOnline.Count > 0 then
   begin
-    for i := 0 to FControlerTrackerListOnline.Count - 1 do
+    for i := 0 to FControllerTrackerListOnline.Count - 1 do
     begin
-      FControlerTrackerListOnline.Checked[i] := Value;
+      FControllerTrackerListOnline.Checked[i] := Value;
     end;
   end;
 end;
@@ -1190,7 +1190,7 @@ begin
 
     if Result then
     begin
-      AddButIngnoreDuplicates(FTrackerList.TrackerAddedByUserList, TrackerStr);
+      AddButIgnoreDuplicates(FTrackerList.TrackerAddedByUserList, TrackerStr);
     end
     else
     begin
@@ -1217,30 +1217,30 @@ var
   i: integer;
 begin
   //Collect data what the user want to keep
-  //Copy items from FControlerTrackerListOnline to FTrackerList.TrackerFromInsideTorrentFilesList
-  //Copy items from FControlerTrackerListOnline to FTrackerList.TrackerManualyDeselectedByUserList
+  //Copy items from FControllerTrackerListOnline to FTrackerList.TrackerFromInsideTorrentFilesList
+  //Copy items from FControllerTrackerListOnline to FTrackerList.TrackerManuallyDeselectedByUserList
 
   FTrackerList.TrackerFromInsideTorrentFilesList.Clear;
-  FTrackerList.TrackerManualyDeselectedByUserList.Clear;
+  FTrackerList.TrackerManuallyDeselectedByUserList.Clear;
 
-  if FControlerTrackerListOnline.Count > 0 then
+  if FControllerTrackerListOnline.Count > 0 then
   begin
-    for i := 0 to FControlerTrackerListOnline.Count - 1 do
+    for i := 0 to FControllerTrackerListOnline.Count - 1 do
     begin
 
-      if FControlerTrackerListOnline.Checked[i] then
+      if FControllerTrackerListOnline.Checked[i] then
       begin
         //Selected by user
-        AddButIngnoreDuplicates(FTrackerList.TrackerFromInsideTorrentFilesList,
-          FControlerTrackerListOnline.TrackerURL(i)
+        AddButIgnoreDuplicates(FTrackerList.TrackerFromInsideTorrentFilesList,
+          FControllerTrackerListOnline.TrackerURL(i)
           );
       end
       else
       begin
-        //Delected by user
-        AddButIngnoreDuplicates(
-          FTrackerList.TrackerManualyDeselectedByUserList,
-          FControlerTrackerListOnline.TrackerURL(i)
+        //Deselected by user
+        AddButIgnoreDuplicates(
+          FTrackerList.TrackerManuallyDeselectedByUserList,
+          FControllerTrackerListOnline.TrackerURL(i)
           );
       end;
 
@@ -1261,9 +1261,9 @@ begin
     FILE_NAME_ADD_TRACKERS) then
   begin
     MemoNewTrackers.Lines.BeginUpdate;
-    for i := low(RECOMENDED_TRACKERS) to high(RECOMENDED_TRACKERS) do
+    for i := low(RECOMMENDED_TRACKERS) to high(RECOMMENDED_TRACKERS) do
     begin
-      MemoNewTrackers.Lines.Add(RECOMENDED_TRACKERS[i]);
+      MemoNewTrackers.Lines.Add(RECOMMENDED_TRACKERS[i]);
     end;
     MemoNewTrackers.Lines.EndUpdate;
   end;
@@ -1332,7 +1332,7 @@ begin
     '', MB_ICONWARNING + MB_OKCANCEL) <> idOk then
     exit;
 
-  //Set all the trackers publick/private CheckBoxRemoveAllSourceTag ON or OFF
+  //Set all the trackers public/private CheckBoxRemoveAllSourceTag ON or OFF
   if CheckListBoxPublicPrivateTorrent.Count > 0 then
   begin
     for i := 0 to CheckListBoxPublicPrivateTorrent.Count - 1 do
@@ -1384,7 +1384,7 @@ begin
     Result := True;
   except
     Result := False;
-    //suppres all error in reading the file.
+    //suppress all error in reading the file.
   end;
   TrackerFileList.Free;
 
@@ -1398,7 +1398,7 @@ begin
 end;
 
 procedure TFormTrackerModify.
-MenuUpdateTorrentAddAfterKeepOriginalInstactAndRemoveNothingClick(Sender: TObject);
+MenuUpdateTorrentAddAfterKeepOriginalIntactAndRemoveNothingClick(Sender: TObject);
 begin
   //User have selected to add new tracker.
   FTrackerList.TrackerListOrderForUpdatedTorrent :=
@@ -1423,7 +1423,7 @@ begin
 end;
 
 procedure TFormTrackerModify.
-MenuUpdateTorrentAddBeforeKeepOriginalInstactAndRemoveNothingClick(Sender: TObject);
+MenuUpdateTorrentAddBeforeKeepOriginalIntactAndRemoveNothingClick(Sender: TObject);
 begin
   //User have selected to add new tracker.
   FTrackerList.TrackerListOrderForUpdatedTorrent :=
@@ -1493,10 +1493,10 @@ begin
   //Change cursor
   ShowHourGlassCursor(True);
 
-  // Always clear the previeus torrent files selection.
+  // Always clear the previous torrent files selection.
   // keep track if torrent file is detected in drag/drop
   // need this to call ClearAllTorrentFilesNameAndTrackerInside()
-  //    this will clear the previeuse torrent loaded.
+  //    this will clear the previous torrent loaded.
   TorrentFileSelectionDetected := False;
 
 
@@ -1536,7 +1536,7 @@ begin
           TrackerFileNameStringList.LoadFromFile(FileNameOrDirStr);
           MemoNewTrackers.Append(UTF8Trim(TrackerFileNameStringList.Text));
         except
-          //supress any error in loading the file
+          //suppress any error in loading the file
           FileNameOrDirStr := FileNameOrDirStr;
         end;
       end;
@@ -1644,7 +1644,7 @@ begin
       end
       else
       begin
-        //Someting is wrong. Can not decode torrent tracker item.
+        //Something is wrong. Can not decode torrent tracker item.
         //Cancel everything.
         FTrackerList.TorrentFileNameList.Clear;
         FTrackerList.TrackerFromInsideTorrentFilesList.Clear;
@@ -1668,7 +1668,7 @@ begin
   And show that everything is updated and OK
 }
 
-  //will be set to False if error occure
+  //will be set to False if error occurs
   Result := True;
 
   ViewUpdateBegin;
@@ -1705,7 +1705,7 @@ procedure TFormTrackerModify.ViewUpdateBegin;
 begin
   //Called before loading torrent file.
 
-  FControlerTreeviewTorrentData.BeginUpdate;
+  FControllerTreeviewTorrentData.BeginUpdate;
 
   //Do not show being updating till finish updating data.
   StringGridTorrentData.BeginUpdate;
@@ -1715,7 +1715,7 @@ begin
   //Clear all the user data 'View' elements. This will be filled with new data.
   CheckListBoxPublicPrivateTorrent.Clear; //Use in update torrent!
   StringGridTorrentData.Clear;
-  FControlerGridTorrentData.ClearAllImageIndex;
+  FControllerGridTorrentData.ClearAllImageIndex;
   //RowCount is 0 after Clear. But must be 1 to make it work.
   StringGridTorrentData.RowCount := 1;
 
@@ -1733,7 +1733,7 @@ begin
   TorrentFileNameStr := ExtractFileName(FDecodePresentTorrent.FilenameTorrent);
 
   //---------------------  Fill the Tree view with new torrent data
-  FControlerTreeviewTorrentData.AddOneTorrentFileDecoded(FDecodePresentTorrent);
+  FControllerTreeviewTorrentData.AddOneTorrentFileDecoded(FDecodePresentTorrent);
 
   //---------------------   Add it to the checklist box Public/private torrent
   RowIndex := CheckListBoxPublicPrivateTorrent.Items.Add(TorrentFileNameStr);
@@ -1756,42 +1756,42 @@ begin
     PrivateStr := 'no';
 
   //Copy all the torrent info to the grid column.
-  FControlerGridTorrentData.TorrentFile := TorrentFileNameStr;
-  FControlerGridTorrentData.InfoFileName := FDecodePresentTorrent.Name;
-  FControlerGridTorrentData.TorrentVersion :=
+  FControllerGridTorrentData.TorrentFile := TorrentFileNameStr;
+  FControllerGridTorrentData.InfoFileName := FDecodePresentTorrent.Name;
+  FControllerGridTorrentData.TorrentVersion :=
     FDecodePresentTorrent.TorrentVersionToString;
   case FDecodePresentTorrent.TorrentVersion of
     tv_V1:
     begin
-      FControlerGridTorrentData.InfoHash := 'V1: ' + FDecodePresentTorrent.InfoHash_V1;
+      FControllerGridTorrentData.InfoHash := 'V1: ' + FDecodePresentTorrent.InfoHash_V1;
     end;
     tv_V2:
     begin
-      FControlerGridTorrentData.InfoHash := 'V2: ' + FDecodePresentTorrent.InfoHash_V2;
+      FControllerGridTorrentData.InfoHash := 'V2: ' + FDecodePresentTorrent.InfoHash_V2;
     end;
     tv_Hybrid:
     begin // Show only V2 hash. No space for both V1 and V2
-      FControlerGridTorrentData.InfoHash := 'V2: ' + FDecodePresentTorrent.InfoHash_V2;
+      FControllerGridTorrentData.InfoHash := 'V2: ' + FDecodePresentTorrent.InfoHash_V2;
     end;
     else
-      FControlerGridTorrentData.InfoHash := 'N/A'
+      FControllerGridTorrentData.InfoHash := 'N/A'
   end;
-  FControlerGridTorrentData.Padding := FDecodePresentTorrent.PaddingToString;
-  FControlerGridTorrentData.CreatedOn := DateTimeStr;
-  FControlerGridTorrentData.CreatedBy := FDecodePresentTorrent.CreatedBy;
-  FControlerGridTorrentData.Comment := FDecodePresentTorrent.Comment;
-  FControlerGridTorrentData.PrivateTorrent := PrivateStr;
-  FControlerGridTorrentData.InfoSource := FDecodePresentTorrent.InfoSource;
-  FControlerGridTorrentData.PieceLength :=
-    format('%6d', [FDecodePresentTorrent.PieceLenght div 1024]); //Show as KiBytes
-  FControlerGridTorrentData.TotaSize :=
+  FControllerGridTorrentData.Padding := FDecodePresentTorrent.PaddingToString;
+  FControllerGridTorrentData.CreatedOn := DateTimeStr;
+  FControllerGridTorrentData.CreatedBy := FDecodePresentTorrent.CreatedBy;
+  FControllerGridTorrentData.Comment := FDecodePresentTorrent.Comment;
+  FControllerGridTorrentData.PrivateTorrent := PrivateStr;
+  FControllerGridTorrentData.InfoSource := FDecodePresentTorrent.InfoSource;
+  FControllerGridTorrentData.PieceLength :=
+    format('%6d', [FDecodePresentTorrent.PieceLength div 1024]); //Show as KiBytes
+  FControllerGridTorrentData.TotalSize :=
     format('%9d', [FDecodePresentTorrent.TotalFileSize div 1024]); //Show as KiBytes
-  FControlerGridTorrentData.IndexOrder :=
+  FControllerGridTorrentData.IndexOrder :=
     format('%6d', [StringGridTorrentData.RowCount - 1]);
   //Must keep track of order when sorted back
 
   //All the string data are filed. Copy it now to the grid
-  FControlerGridTorrentData.AppendRow;
+  FControllerGridTorrentData.AppendRow;
 
 end;
 
@@ -1802,7 +1802,7 @@ begin
   //Called after finish all torrent file loading.
 
   //Show what we have updated.
-  FControlerTreeviewTorrentData.EndUpdate;
+  FControllerTreeviewTorrentData.EndUpdate;
   StringGridTorrentData.EndUpdate;
   CheckListBoxPublicPrivateTorrent.Items.EndUpdate;
 
@@ -1869,12 +1869,12 @@ begin
     Result := UTF8Trim(ParamStr(1)) = '-TEST_SSL';
     if Result then
     begin
-      // Check if there is SLL connection
+      // Check if there is SSL connection
       try
         TFPCustomHTTPClient.SimpleGet(
           'https://raw.githubusercontent.com/gerryferdinandus/bittorrent-tracker-editor/master/README.md');
       except
-        //No SLL or no internet connection.
+        //No SSL or no internet connection.
         System.ExitCode := 1;
       end;
     end;

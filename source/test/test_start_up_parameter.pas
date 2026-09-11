@@ -74,8 +74,8 @@ type
     procedure TestEmptyTorrentResult;
     procedure CreateFilledTorrent(const StartupParameter: TStartupParameter);
     procedure DownloadNewTrackonTrackers;
-    procedure Test_Paramater_Ux(TrackerListOrder: TTrackerListOrder);
-    procedure Test_Paramater_U5_U6(TrackerListOrder: TTrackerListOrder);
+    procedure Test_Parameter_Ux(TrackerListOrder: TTrackerListOrder);
+    procedure Test_Parameter_U5_U6(TrackerListOrder: TTrackerListOrder);
     procedure Add_One_URL(const StartupParameter: TStartupParameter;
       const tracker_URL: string; TestMustBeSuccess: boolean);
     procedure Verify_SAC_And_SOURCE(UpdateParameterFirst: boolean);
@@ -92,14 +92,14 @@ type
     procedure Test_Parameter_SAC_And_SOURCE_With_Folder_First;
     procedure Test_Parameter_SAC_And_SOURCE_With_Update_Parameter_First;
 
-    procedure Test_Paramater_U0;
-    procedure Test_Paramater_U1;
-    procedure Test_Paramater_U2;
-    procedure Test_Paramater_U3;
-    procedure Test_Paramater_U4;
-    procedure Test_Paramater_U5;
-    procedure Test_Paramater_U6;
-    procedure Test_Paramater_U7;
+    procedure Test_Parameter_U0;
+    procedure Test_Parameter_U1;
+    procedure Test_Parameter_U2;
+    procedure Test_Parameter_U3;
+    procedure Test_Parameter_U4;
+    procedure Test_Parameter_U5;
+    procedure Test_Parameter_U6;
+    procedure Test_Parameter_U7;
 
   end;
 
@@ -108,51 +108,51 @@ implementation
 uses  LazUTF8;
 
 const
-  PROGRAME_TO_BE_TESTED_NAME = 'trackereditor';
+  PROGRAM_TO_BE_TESTED_NAME = 'trackereditor';
   TORRENT_FOLDER = 'test_torrent';
   END_USER_FOLDER = 'enduser';
 
   //there are 5 test torrent files in 'test_torrent' folder.
   TEST_TORRENT_FILES_COUNT = 5;
 
-procedure TTestStartUpParameter.Test_Paramater_U0;
+procedure TTestStartUpParameter.Test_Parameter_U0;
 begin
-  Test_Paramater_Ux(tloInsertNewBeforeAndKeepNewIntact);
+  Test_Parameter_Ux(tloInsertNewBeforeAndKeepNewIntact);
 end;
 
-procedure TTestStartUpParameter.Test_Paramater_U1;
+procedure TTestStartUpParameter.Test_Parameter_U1;
 begin
-  Test_Paramater_Ux(tloInsertNewBeforeAndKeepOriginalIntact);
+  Test_Parameter_Ux(tloInsertNewBeforeAndKeepOriginalIntact);
 end;
 
-procedure TTestStartUpParameter.Test_Paramater_U2;
+procedure TTestStartUpParameter.Test_Parameter_U2;
 begin
-  Test_Paramater_Ux(tloAppendNewAfterAndKeepNewIntact);
+  Test_Parameter_Ux(tloAppendNewAfterAndKeepNewIntact);
 end;
 
-procedure TTestStartUpParameter.Test_Paramater_U3;
+procedure TTestStartUpParameter.Test_Parameter_U3;
 begin
-  Test_Paramater_Ux(tloAppendNewAfterAndKeepOriginalIntact);
+  Test_Parameter_Ux(tloAppendNewAfterAndKeepOriginalIntact);
 end;
 
-procedure TTestStartUpParameter.Test_Paramater_U4;
+procedure TTestStartUpParameter.Test_Parameter_U4;
 begin
-  Test_Paramater_Ux(tloSort);
+  Test_Parameter_Ux(tloSort);
 end;
 
-procedure TTestStartUpParameter.Test_Paramater_U5;
+procedure TTestStartUpParameter.Test_Parameter_U5;
 begin
-  Test_Paramater_U5_U6(tloInsertNewBeforeAndKeepOriginalIntactAndRemoveNothing);
+  Test_Parameter_U5_U6(tloInsertNewBeforeAndKeepOriginalIntactAndRemoveNothing);
 end;
 
-procedure TTestStartUpParameter.Test_Paramater_U6;
+procedure TTestStartUpParameter.Test_Parameter_U6;
 begin
-  Test_Paramater_U5_U6(tloAppendNewAfterAndKeepOriginalIntactAndRemoveNothing);
+  Test_Parameter_U5_U6(tloAppendNewAfterAndKeepOriginalIntactAndRemoveNothing);
 end;
 
-procedure TTestStartUpParameter.Test_Paramater_U7;
+procedure TTestStartUpParameter.Test_Parameter_U7;
 begin
-  Test_Paramater_Ux(tloRandomize);
+  Test_Parameter_Ux(tloRandomize);
 end;
 
 procedure TTestStartUpParameter.Test_Parameter_TEST_SSL;
@@ -225,7 +225,7 @@ begin
     FILE_NAME_EXPORT_TRACKERS);
 
   //remove empty space
-  RemoveLineSeperation(FVerifyTrackerResult.TrackerEndResult);
+  RemoveLineSeparation(FVerifyTrackerResult.TrackerEndResult);
 
 end;
 
@@ -315,7 +315,7 @@ begin
   end;
 end;
 
-procedure TTestStartUpParameter.Test_Paramater_Ux(TrackerListOrder: TTrackerListOrder);
+procedure TTestStartUpParameter.Test_Parameter_Ux(TrackerListOrder: TTrackerListOrder);
 
 var
   OK: boolean;
@@ -358,7 +358,7 @@ begin
   Check(FConsoleLogData.TorrentFilesCount = TEST_TORRENT_FILES_COUNT);
 end;
 
-procedure TTestStartUpParameter.Test_Paramater_U5_U6(TrackerListOrder: TTrackerListOrder);
+procedure TTestStartUpParameter.Test_Parameter_U5_U6(TrackerListOrder: TTrackerListOrder);
 var
   OriginalTrackersPerFile: TStringList;
   DecodeTorrent: TDecodeTorrent;
@@ -724,16 +724,16 @@ begin
                      + '..' + PathDelim;
   FFullPathToEndUser := ExpandFileName(FFullPathToEndUser) + 'trackereditor' + PathDelim;
 
-  //path to the programe we want to test.
+  //path to the program we want to test.
   FFullPathToBinary := FFullPathToRoot + END_USER_FOLDER + PathDelim
-                    + PROGRAME_TO_BE_TESTED_NAME;
+                    + PROGRAM_TO_BE_TESTED_NAME;
 
   {$ELSE DARWIN}
   // Default is to use the same place as the application file
   FFullPathToEndUser := FFullPathToRoot + END_USER_FOLDER + PathDelim;
 
-  //path to the programe we want to test.
-  FFullPathToBinary := FFullPathToEndUser + PROGRAME_TO_BE_TESTED_NAME +
+  //path to the program we want to test.
+  FFullPathToBinary := FFullPathToEndUser + PROGRAM_TO_BE_TESTED_NAME +
     ExtractFileExt(ParamStr(0));
   {$ENDIF DARWIN}
 
@@ -746,7 +746,7 @@ begin
 
 
 
-  //Delete all the previeus test result
+  //Delete all the previous test result
   DeleteFile(FFullPathToEndUser + FILE_NAME_CONSOLE_LOG);
   DeleteFile(FFullPathToEndUser + FILE_NAME_EXPORT_TRACKERS);
   DeleteFile(FFullPathToEndUser + FILE_NAME_ADD_TRACKERS);

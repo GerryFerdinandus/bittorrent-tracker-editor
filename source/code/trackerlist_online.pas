@@ -52,7 +52,7 @@ function TTrackerListOnline.TrackerStatus(
   //var
   //  index: integer;
 begin
-  //look for this tracker in all the posible string list
+  //look for this tracker in all the possible string list
 
   //TrackerList_Stable
   if Assigned(TrackerList_Stable) and (TrackerList_Stable.IndexOf(TrackerURL) >= 0) then
