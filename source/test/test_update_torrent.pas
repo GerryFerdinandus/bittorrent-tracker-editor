@@ -46,7 +46,10 @@ type
 
 implementation
 
-uses bencode;
+{$IFDEF UNIX}
+uses
+  BaseUnix;
+{$ENDIF}
 
 const
   PIECES = '20:AAAAAAAAAAAAAAAAAAAA';
@@ -60,6 +63,43 @@ const
 function BEncodeString(const Str: UTF8String): UTF8String;
 begin
   Result := IntToStr(Length(Str)) + ':' + Str;
+end;
+
+{
+ Make a file read only, or writable again.
+
+ Windows has a read only file attribute, Unix has not. FileSetAttr always fails
+ on Unix, so the file permission must be used there. FPC reports faReadOnly for
+ a Unix file when the owner has no write permission, and that is what the code
+ under test is looking at.
+}
+function SetFileReadOnly(const FileName: string; ReadOnly: boolean): boolean;
+{$IFDEF UNIX}
+const
+  //This test creates the files itself, so the permission can simply be set.
+  MODE_READ_ONLY = &444;
+  MODE_READ_WRITE = &644;
+begin
+  if ReadOnly then
+    Result := FpChmod(FileName, MODE_READ_ONLY) = 0
+  else
+    Result := FpChmod(FileName, MODE_READ_WRITE) = 0;
+{$ELSE}
+var
+  Attributes: longint;
+begin
+  Attributes := FileGetAttr(FileName);
+  Result := Attributes <> -1;
+  if not Result then
+    Exit;
+
+  if ReadOnly then
+    Attributes := Attributes or faReadOnly
+  else
+    Attributes := Attributes and not faReadOnly;
+
+  Result := FileSetAttr(FileName, Attributes) = 0;
+{$ENDIF}
 end;
 
 { TTestUpdateTorrent }
@@ -84,6 +124,14 @@ begin
   TorrentStr := TorrentStr + '4:info' + INFO_ONE_FILE + 'e';
 
   Result := FTempFolder + Name;
+
+  //A read only file left behind by a crashed run would block fmCreate.
+  if FileExists(Result) then
+  begin
+    SetFileReadOnly(Result, False);
+    DeleteFile(Result);
+  end;
+
   Stream := TFileStream.Create(Result, fmCreate);
   try
     Stream.Write(TorrentStr[1], Length(TorrentStr));
@@ -96,6 +144,7 @@ function TTestUpdateTorrent.DefaultFileSettingList: TTorrentFileSettingArray;
 var
   i: integer;
 begin
+  Result := nil;
   SetLength(Result, FTrackerList.TorrentFileNameList.Count);
   for i := 0 to High(Result) do
   begin
@@ -145,10 +194,10 @@ procedure TTestUpdateTorrent.TearDown;
 var
   FileName: string;
 begin
-  //Remove every torrent file created by this test
+  //Windows can not delete a read only file, so clear the flag first.
   for FileName in FTrackerList.TorrentFileNameList do
   begin
-    FileSetAttr(FileName, faNormal);
+    SetFileReadOnly(FileName, False);
     DeleteFile(FileName);
   end;
   RemoveDir(FTempFolder);
@@ -244,7 +293,7 @@ begin
   FTrackerList.TorrentFileNameList.Add(ReadOnlyFile);
   FTrackerList.TorrentFileNameList.Add(CreateTorrentFile('two.torrent', [TRACKER_C]));
 
-  CheckEquals(0, FileSetAttr(ReadOnlyFile, faReadOnly),
+  CheckTrue(SetFileReadOnly(ReadOnlyFile, True),
     'Can not make the torrent file read only');
 
   FTrackerList.TrackerAddedByUserList.Add(TRACKER_A);
