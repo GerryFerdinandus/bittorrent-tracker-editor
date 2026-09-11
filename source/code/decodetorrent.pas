@@ -10,6 +10,11 @@ unit DecodeTorrent;
 
  Modify announce List
 
+ Design choice: 'announce-list' tiers are flattened to one tracker per tier.
+ BEP 12 allows more then one tracker inside a tier, and a client picks one of
+ them at random. This program treats every tracker as equal, so only the first
+ tracker of each tier is read (GetAnnounceList) and every tracker is written
+ back as its own tier (ChangeAnnounceList).
 
  You can use bencode editor and utorrent to verify the output of this program.
  https://sites.google.com/site/ultimasites/bencode-editor
@@ -281,6 +286,7 @@ begin
         for i := 0 to Count - 1 do
         begin
           //there is a list in side a list!
+          //By design only the first tracker of each tier is read. See unit header.
           TrackerStr := TempBEncoded.ListData.Items[
             i].Data.ListData.First.Data.StringData;
 
