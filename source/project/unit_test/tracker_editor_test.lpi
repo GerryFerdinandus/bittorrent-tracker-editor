@@ -107,7 +107,7 @@
         <PackageName Value="FCL"/>
       </Item2>
     </RequiredPackages>
-    <Units Count="9">
+    <Units Count="12">
       <Unit0>
         <Filename Value="tracker_editor_test.lpr"/>
         <IsPartOfProject Value="True"/>
@@ -144,6 +144,20 @@
         <Filename Value="..\..\code\fix_openssl.pas"/>
         <IsPartOfProject Value="True"/>
       </Unit8>
+      <Unit9>
+        <Filename Value="..\..\test\test_decodetorrent.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit9>
+      <Unit10>
+        <Filename Value="..\..\code\decodetorrent.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="DecodeTorrent"/>
+      </Unit10>
+      <Unit11>
+        <Filename Value="..\..\code\bencode.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="BEncode"/>
+      </Unit11>
     </Units>
   </ProjectOptions>
   <CompilerOptions>

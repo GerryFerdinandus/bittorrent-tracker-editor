@@ -64,7 +64,7 @@ type
 
     function DecodeTorrent: boolean; overload;
 
-    function isPresentInfoFiles_V1: boolean;
+    function isPresentInfoPieces_V1: boolean;
     function isPresentInfoFileTree_V2: boolean;
 
     function GetSha256(const Source: utf8string): utf8string;
@@ -172,6 +172,7 @@ const
   BK_SOURCE = 'source';
   BK_META_VERSION = 'meta version';
   BK_PIECE_LENGTH = 'piece length';
+  BK_PIECES = 'pieces';
 
   // File entry bencode dictionary keys
   BK_PATH = 'path';
@@ -536,7 +537,7 @@ begin
       exit; //error
 
     // Is this V1,V2 or hybrid torrent type?
-    if isPresentInfoFiles_V1 then FTorrentVersion := tv_V1;
+    if isPresentInfoPieces_V1 then FTorrentVersion := tv_V1;
     if isPresentInfoFileTree_V2 then
     begin
       if FTorrentVersion = tv_V1 then
@@ -556,15 +557,15 @@ begin
           Result := GetFileList_V1;
           if Result then GetFileList_V2;
         end;
-        else
-          Assert(False, 'Missing torrent version');
       end;
     end;
 
     if not Result then
     begin // There is nothing found in tree list. Maybe this is a Torrent with one file?
       Result := GetOneFileTorrent;
-      if Result then FTorrentVersion := tv_V1;
+      // A V2 torrent always has a 'file tree', so only V1 can have no file list.
+      if Result and (FTorrentVersion = tv_unknown) then
+        FTorrentVersion := tv_V1;
     end;
 
     //    FInfoHash_V1 := GetInfoHash;
@@ -581,14 +582,14 @@ begin
   end;
 end;
 
-function TDecodeTorrent.isPresentInfoFiles_V1: boolean;
+function TDecodeTorrent.isPresentInfoPieces_V1: boolean;
 var
   Info: TBEncoded;
   str: utf8string;
 begin
   try
-    {find 'info.files' }
-    Info := FBEncoded_Info.ListData.FindElement(BK_FILES);
+    // 'info.pieces' is present in every V1 torrent, single file and multi file.
+    Info := FBEncoded_Info.ListData.FindElement(BK_PIECES);
     Result := assigned(info);
     if Result then
     begin

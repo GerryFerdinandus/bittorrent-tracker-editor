@@ -5,7 +5,8 @@ program tracker_editor_test;
 uses
   Classes, consoletestrunner,  fpcunit,
   fpcunitreport, test_newtrackon, test_ngosang_trackers_list, test_start_up_parameter,
-torrent_miscellaneous, test_miscellaneous, ngosang_trackerslist, fix_openssl;
+torrent_miscellaneous, test_miscellaneous, ngosang_trackerslist, fix_openssl,
+test_decodetorrent;
 
 type
 
