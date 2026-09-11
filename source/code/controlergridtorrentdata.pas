@@ -76,7 +76,7 @@ implementation
 
 { TControlerGridTorrentData }
 const
-  COLUMN_COUNT = 11;
+  COLUMN_COUNT = 13;
 
 procedure TControlerGridTorrentData.StringGridTorrentDataColRowMoved(Sender: TObject;
   IsColumn: boolean; sIndex, tIndex: integer);
