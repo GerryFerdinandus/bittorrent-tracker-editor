@@ -117,7 +117,7 @@ end;"/>
         <PackageName Value="LCL"/>
       </Item1>
     </RequiredPackages>
-    <Units Count="15">
+    <Units Count="16">
       <Unit0>
         <Filename Value="trackereditor.lpr"/>
         <IsPartOfProject Value="True"/>
@@ -186,6 +186,10 @@ end;"/>
         <Filename Value="..\..\code\fix_openssl.pas"/>
         <IsPartOfProject Value="True"/>
       </Unit14>
+      <Unit15>
+        <Filename Value="..\..\code\update_torrent.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit15>
     </Units>
   </ProjectOptions>
   <CompilerOptions>

@@ -17,7 +17,7 @@ interface
 uses
   Classes, SysUtils, Forms, Controls, Graphics, Dialogs, StdCtrls,
   ExtCtrls, CheckLst, DecodeTorrent, LCLType, ActnList, Menus, ComCtrls,
-  Grids, controllergridtorrentdata, torrent_miscellaneous,
+  Grids, controllergridtorrentdata, torrent_miscellaneous, update_torrent,
   controller_trackerlist_online, controller_treeview_torrent_data, ngosang_trackerslist;
 
 type
@@ -171,6 +171,7 @@ type
     procedure ShowUserErrorMessage(ErrorText: string; const FormText: string = '');
     function TrackerWithURLAndAnnounce(const TrackerURL: utf8string): boolean;
     procedure UpdateTorrent;
+    function ReadTorrentFileSettingList: TTorrentFileSettingArray;
     procedure ShowHourGlassCursor(HourGlass: boolean);
     procedure ViewUpdateBegin;
     procedure ViewUpdateOneTorrentFileDecoded;
@@ -622,9 +623,10 @@ end;
 
 procedure TFormTrackerModify.UpdateTorrent;
 var
-  Reply, BoxStyle, i, CountTrackers: integer;
+  Reply, BoxStyle, CountTrackers: integer;
   PopUpMenuStr: string;
-  SomeFilesCannotBeWritten, SomeFilesAreReadOnly, AllFilesAreReadBackCorrectly: boolean;
+  AllFilesAreReadBackCorrectly: boolean;
+  UpdateResult: TUpdateTorrentResult;
 begin
   //Update all the torrent files.
 
@@ -634,7 +636,8 @@ begin
   FControllerGridTorrentData.ReorderGrid;
 
   //initial value is false, will be set to true if some file fails to write
-  SomeFilesCannotBeWritten := False;
+  UpdateResult.SomeFilesCannotBeWritten := False;
+  UpdateResult.SomeFilesAreReadOnly := False;
 
   try
 
@@ -694,104 +697,10 @@ begin
       ShowHourGlassCursor(True);
     end;
 
-    //initial value is false, will be set to true if read only files are found
-    SomeFilesAreReadOnly := False;
-
-    if FTrackerList.TrackerListOrderForUpdatedTorrent = tloRandomize then
-    begin
-      Randomize;
-    end;
-
-    //process all the files one by one.
-    //FTrackerList.TorrentFileNameList is not sorted it is still in sync with CheckListBoxPublicPrivateTorrent
-    for i := 0 to FTrackerList.TorrentFileNameList.Count - 1 do
-    begin //read the torrent file in FDecodePresentTorrent and modify it.
-
-      //check for read only files. It can not be updated by tracker editor
-      if (FileGetAttr(FTrackerList.TorrentFileNameList[i]) and faReadOnly) <> 0 then
-      begin
-        SomeFilesAreReadOnly := True;
-        Continue;
-      end;
-
-      //read one torrent file. If error then skip it. (continue)
-      if not FDecodePresentTorrent.DecodeTorrent(
-        FTrackerList.TorrentFileNameList[i]) then
-      begin
-        Continue;
-      end;
-
-      //tloSort it is already process. But if not tloSort then process it.
-      if FTrackerList.TrackerListOrderForUpdatedTorrent <> tloSort then
-      begin
-        //Add the new tracker before of after the original trackers inside the torrent.
-        CombineFiveTrackerListToOne(FTrackerList.TrackerListOrderForUpdatedTorrent,
-          FTrackerList, FDecodePresentTorrent.TrackerList);
-
-        //How many trackers must be put inside each torrent file
-        CountTrackers := FTrackerList.TrackerFinalList.Count;
-      end;
-
-      case CountTrackers of
-        0://if no tracker selected then delete 'announce' and 'announce-list'
-        begin
-          FDecodePresentTorrent.RemoveAnnounce;
-          FDecodePresentTorrent.RemoveAnnounceList;
-        end;
-        1://if one tracker selected then delete 'announce-list'
-        begin
-          //Announce use the only tracker present in the FTrackerFinalList. index 0
-          FDecodePresentTorrent.ChangeAnnounce(FTrackerList.TrackerFinalList[0]);
-          FDecodePresentTorrent.RemoveAnnounceList;
-        end;
-        else//More than 1 trackers selected. Create 'announce-list'
-        begin
-          //Announce use the first tracker from the list. index 0
-          FDecodePresentTorrent.ChangeAnnounce(FTrackerList.TrackerFinalList[0]);
-          FDecodePresentTorrent.ChangeAnnounceList(FTrackerList.TrackerFinalList);
-        end;
-      end;
-
-      //update the torrent public/private flag
-      if CheckListBoxPublicPrivateTorrent.Checked[i] then
-      begin
-        //Create a public torrent
-        //if private torrent then make it public torrent by removing the private flag.
-        if FDecodePresentTorrent.PrivateTorrent then
-          FDecodePresentTorrent.RemovePrivateTorrentFlag;
-      end
-      else
-      begin
-        //Create a private torrent
-        FDecodePresentTorrent.AddPrivateTorrentFlag;
-      end;
-
-      //update the comment item
-      FDecodePresentTorrent.Comment := FControllerGridTorrentData.ReadComment(i + 1);
-
-      //Update the source tag for private trackers
-      if FTrackerList.RemoveAllSourceTag then
-      begin
-        // This will delete info:source item
-        FDecodePresentTorrent.InfoSourceRemove;
-      end
-      else
-      begin
-        // Copy the new source tag, but it must not be empty.
-        // Empty FTrackerList.SourceTag is the same as do not change anything.
-        if FTrackerList.SourceTag <> '' then
-        begin
-          FDecodePresentTorrent.InfoSourceAdd(FTrackerList.SourceTag);
-        end;
-      end;
-
-      //save the torrent file.
-      if not FDecodePresentTorrent.SaveTorrent(FTrackerList.TorrentFileNameList[i]) then
-      begin
-        SomeFilesCannotBeWritten := True;
-      end;
-
-    end;//for
+    //Write the new tracker list and the user settings into all the torrent files.
+    UpdateResult := UpdateTorrentFileList(FTrackerList, FDecodePresentTorrent,
+      ReadTorrentFileSettingList);
+    CountTrackers := UpdateResult.TrackerCount;
 
     // Can not create a file inside the app
     //Create tracker.txt file
@@ -860,14 +769,14 @@ begin
         ' WARNING: Some torrent files can not be read back again after updating.';
     end;
 
-    if SomeFilesAreReadOnly then
+    if UpdateResult.SomeFilesAreReadOnly then
     begin
       //add warning if read only files are detected.
       PopUpMenuStr := PopUpMenuStr +
         ' WARNING: Some torrent files are not updated because they are READ-ONLY files.';
     end;
 
-    if SomeFilesCannotBeWritten then
+    if UpdateResult.SomeFilesCannotBeWritten then
     begin
       //add warning if some files written are failed. Something is wrong with the disk.
       PopUpMenuStr := PopUpMenuStr +
@@ -881,6 +790,20 @@ begin
 
   end;
 
+end;
+
+function TFormTrackerModify.ReadTorrentFileSettingList: TTorrentFileSettingArray;
+var
+  i: integer;
+begin
+  //Collect the user settings of every torrent file from the view.
+  //ReorderGrid must already be called to keep the grid in sync with the file list.
+  SetLength(Result, FTrackerList.TorrentFileNameList.Count);
+  for i := 0 to High(Result) do
+  begin
+    Result[i].PublicTorrent := CheckListBoxPublicPrivateTorrent.Checked[i];
+    Result[i].Comment := FControllerGridTorrentData.ReadComment(i + 1);
+  end;
 end;
 
 

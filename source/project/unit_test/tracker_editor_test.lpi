@@ -107,7 +107,7 @@
         <PackageName Value="FCL"/>
       </Item2>
     </RequiredPackages>
-    <Units Count="12">
+    <Units Count="14">
       <Unit0>
         <Filename Value="tracker_editor_test.lpr"/>
         <IsPartOfProject Value="True"/>
@@ -158,6 +158,14 @@
         <IsPartOfProject Value="True"/>
         <UnitName Value="BEncode"/>
       </Unit11>
+      <Unit12>
+        <Filename Value="..\..\test\test_update_torrent.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit12>
+      <Unit13>
+        <Filename Value="..\..\code\update_torrent.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit13>
     </Units>
   </ProjectOptions>
   <CompilerOptions>
