@@ -659,9 +659,8 @@ begin
         Result := DecodeConsoleUpdateParameter(ParamStr(1), TrackerList);
         // second parameter is the file/folder
         FileNameOrDirStr := UTF8Trim(ParamStr(2));
-        Exit;
-      end;
-
+      end
+      else
       //Check for '-U' contruction as second parameter
       if (Pos('-U', ParamStr(2)) = 1) then
       begin
@@ -671,7 +670,8 @@ begin
         FileNameOrDirStr := UTF8Trim(ParamStr(1));
       end;
 
-      //Check for parameter -SAC and -SOURCE
+      //Check for parameter -SAC and -SOURCE.
+      //Must be done for both '-Ux' parameter positions.
       for i := 2 to ParamCount do
       begin
         if ParamStr(i) = '-SAC' then

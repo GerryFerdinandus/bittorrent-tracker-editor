@@ -61,6 +61,9 @@ type
     FCommandLine: string;
     FConsoleLogData: TConsoleLogData;
 
+    //'-Ux' may be placed before or after the torrent folder parameter
+    FUpdateParameterFirst: boolean;
+
     function ReadConsoleLogFile: boolean;
     procedure TestParameter(const StartupParameter: TStartupParameter);
     procedure DownloadPreTestTrackerList;
@@ -75,6 +78,7 @@ type
     procedure Test_Paramater_U5_U6(TrackerListOrder: TTrackerListOrder);
     procedure Add_One_URL(const StartupParameter: TStartupParameter;
       const tracker_URL: string; TestMustBeSuccess: boolean);
+    procedure Verify_SAC_And_SOURCE(UpdateParameterFirst: boolean);
 
   protected
     procedure SetUp; override;
@@ -84,6 +88,9 @@ type
     procedure Test_Tracker_UserInput_All_Different_URL;
     procedure Test_Tracker_UserInput_All_Different_URL_And_SAC;
     procedure Test_Create_Empty_Torrent_And_Then_Filled_It_All_List_Order_Mode;
+
+    procedure Test_Parameter_SAC_And_SOURCE_With_Folder_First;
+    procedure Test_Parameter_SAC_And_SOURCE_With_Update_Parameter_First;
 
     procedure Test_Paramater_U0;
     procedure Test_Paramater_U1;
@@ -163,8 +170,13 @@ begin
   FVerifyTrackerResult.StartupParameter := StartupParameter;
 
   //Fill in the command line parameter '-Ux', x = number
-  FCommandLine := format('%s -U%d', [FFullPathToTorrent,
-    Ord(StartupParameter.TrackerListOrder)]);
+  //Both parameter orders must be supported.
+  if FUpdateParameterFirst then
+    FCommandLine := format('-U%d %s', [Ord(StartupParameter.TrackerListOrder),
+      FFullPathToTorrent])
+  else
+    FCommandLine := format('%s -U%d', [FFullPathToTorrent,
+      Ord(StartupParameter.TrackerListOrder)]);
 
   if StartupParameter.SkipAnnounceCheck then
   begin
@@ -475,6 +487,54 @@ begin
 end;
 
 
+procedure TTestStartUpParameter.Verify_SAC_And_SOURCE(UpdateParameterFirst: boolean);
+const
+  SOURCE_TAG = 'PARAMETER_ORDER_TEST';
+  TRACKER_WITHOUT_ANNOUNCE = 'udp://parameter.order.test';
+var
+  StartupParameter: TStartupParameter;
+  DecodeTorrent: TDecodeTorrent;
+  i: integer;
+begin
+  //'-SAC' and '-SOURCE' must be decoded for both '-Ux' parameter positions.
+  FUpdateParameterFirst := UpdateParameterFirst;
+
+  StartupParameter.TrackerListOrder := tloSort;
+  StartupParameter.SkipAnnounceCheck := True;
+  StartupParameter.SourcePresent := True;
+  StartupParameter.SourceText := SOURCE_TAG;
+
+  //A tracker URL without '/announce' is only accepted when -SAC is decoded.
+  Add_One_URL(StartupParameter, TRACKER_WITHOUT_ANNOUNCE, True);
+
+  //-SOURCE must have written the source tag into every torrent file.
+  DecodeTorrent := TDecodeTorrent.Create;
+  try
+    Check(FTorrentFilesNameStringList.Count > 0, 'No torrent files found');
+    for i := 0 to FTorrentFilesNameStringList.Count - 1 do
+    begin
+      Check(DecodeTorrent.DecodeTorrent(FTorrentFilesNameStringList[i]),
+        'Failed to decode torrent: ' + FTorrentFilesNameStringList[i]);
+      CheckEquals(SOURCE_TAG, DecodeTorrent.InfoSource,
+        FTorrentFilesNameStringList[i]);
+    end;
+  finally
+    DecodeTorrent.Free;
+  end;
+end;
+
+procedure TTestStartUpParameter.Test_Parameter_SAC_And_SOURCE_With_Folder_First;
+begin
+  // "path_to_folder" -U4 -SAC -SOURCE "xxx"
+  Verify_SAC_And_SOURCE(False);
+end;
+
+procedure TTestStartUpParameter.Test_Parameter_SAC_And_SOURCE_With_Update_Parameter_First;
+begin
+  // -U4 "path_to_folder" -SAC -SOURCE "xxx"
+  Verify_SAC_And_SOURCE(True);
+end;
+
 procedure TTestStartUpParameter.Test_Tracker_UserInput_All_Different_URL;
 var
   TrackerListOrder: TTrackerListOrder;
@@ -647,6 +707,9 @@ begin
   FVerifyTrackerResult.TrackerAdded := TStringList.Create;
   FVerifyTrackerResult.TrackerRemoved := TStringList.Create;
   FVerifyTrackerResult.TrackerEndResult := TStringList.Create;
+
+  //Default parameter order: "path_to_folder" -Ux
+  FUpdateParameterFirst := False;
 
   //Create some full path link
   FFullPathToRoot := GetProjectRootFolderWithPathDelimiter;
