@@ -593,18 +593,20 @@ begin
 
     //Must keep TrackerList.TrackerManuallyDeselectedByUserList intact. Copy it to TrackerDeselectTempList
     TrackerDeselectTempList := TStringList.Create;
-    TrackerDeselectTempList.Text :=
-      TrackerList.TrackerManuallyDeselectedByUserList.Text;
-    RemoveTrackersFromList(TrackerList.TrackerAddedByUserList,
-      TrackerDeselectTempList);
+    try
+      TrackerDeselectTempList.Text :=
+        TrackerList.TrackerManuallyDeselectedByUserList.Text;
+      RemoveTrackersFromList(TrackerList.TrackerAddedByUserList,
+        TrackerDeselectTempList);
 
-    //Remove the trackers that we do not want in FTrackerFinalList must be the last step.
-    RemoveTrackersFromList(TrackerList.TrackerBanByUserList,
-      TrackerList.TrackerFinalList);
-    RemoveTrackersFromList(TrackerDeselectTempList, TrackerList.TrackerFinalList);
-
-    //No longer needed
-    TrackerDeselectTempList.Free;
+      //Remove the trackers that we do not want in FTrackerFinalList must be the last step.
+      RemoveTrackersFromList(TrackerList.TrackerBanByUserList,
+        TrackerList.TrackerFinalList);
+      RemoveTrackersFromList(TrackerDeselectTempList, TrackerList.TrackerFinalList);
+    finally
+      //No longer needed
+      TrackerDeselectTempList.Free;
+    end;
 
   finally
     //No longer needed
