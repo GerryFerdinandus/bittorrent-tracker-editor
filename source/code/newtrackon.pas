@@ -167,9 +167,9 @@ begin
 
   if Result then
   begin
+    HTTPS := TFPHTTPClient.Create(nil);
+    TrackerListToBeSend := TStringList.Create;
     try
-      HTTPS := TFPHTTPClient.Create(nil);
-      TrackerListToBeSend := TStringList.Create;
       TrackerListToBeSend.Assign(TrackerList);
 
       //remove all duplicate trackers before sending,
