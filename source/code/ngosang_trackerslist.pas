@@ -87,7 +87,7 @@ function TngosangTrackerList.DownloadTracker(ngosang_List: Tngosang_List): TStri
 begin
   try
     //download via URL and put the data in the TrackerList
-    FTRackerList[ngosang_List].DelimitedText :=
+    FTRackerList[ngosang_List].Text :=
       TFPCustomHTTPClient.SimpleGet(URL[ngosang_List]);
 
     //Clean up the tracker list

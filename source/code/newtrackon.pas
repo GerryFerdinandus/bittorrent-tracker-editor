@@ -103,7 +103,7 @@ begin
     begin
       //download via URL and put the data in the TrackerList
       //will create exception if something is wrong
-      FTRackerList[NewTrackon_List].DelimitedText :=
+      FTRackerList[NewTrackon_List].Text :=
         TFPCustomHTTPClient.SimpleGet(URL[NewTrackon_List]);
     end;
 
