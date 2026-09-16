@@ -209,11 +209,12 @@ var
   i: integer;
 begin
   //The order of the string list must be randomize
+  //Fisher-Yates shuffle, so every permutation is equally likely
   if StringList.Count > 1 then
   begin
-    for i := 0 to StringList.Count - 1 do
+    for i := StringList.Count - 1 downto 1 do
     begin
-      StringList.Exchange(i, Random(StringList.Count));
+      StringList.Exchange(i, Random(i + 1));
     end;
   end;
 end;
