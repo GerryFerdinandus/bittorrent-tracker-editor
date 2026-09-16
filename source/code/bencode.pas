@@ -94,9 +94,7 @@ end;
 
 destructor TBEncoded.Destroy;
 begin
-  if ListData <> nil then
-    ListData.Free;
-
+  ListData.Free;
   inherited Destroy;
 end;
 
@@ -279,7 +277,10 @@ end;
 procedure TBEncoded.SetFormat(Format: TBEncodedFormat);
 begin
   if Format in [befList, befDictionary] then
+  begin
+    ListData.Free;
     ListData := TBEncodedDataList.Create;
+  end;
   FFormat := Format;
 end;
 
