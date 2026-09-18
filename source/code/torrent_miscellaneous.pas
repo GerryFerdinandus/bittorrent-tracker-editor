@@ -127,6 +127,8 @@ function DecodeConsoleUpdateParameter(const ConsoleUpdateParameter: UTF8String;
 function TrackerURLWithAnnounce(const TrackerURL: UTF8String): boolean;
 
 const
+  //Index [3] and [4] must stay the WebTorrent ws:// and wss:// prefixes, in this order.
+  //WebTorrentTrackerURL() relies on this fixed layout - do not reorder.
   VALID_TRACKERS_URL: array[0..4] of UTF8String =
     (
     'udp://',
@@ -392,15 +394,35 @@ begin
 end;
 
 function ValidTrackerURL(const TrackerURL: UTF8String): boolean;
+var
+  i: integer;
 begin
   //TrackerURL should be cleanup with UTF8trim()
-  Result := (Pos('udp://', TrackerURL) = 1) or (Pos('http://', TrackerURL) = 1) or
-    (Pos('https://', TrackerURL) = 1) or WebTorrentTrackerURL(TrackerURL);
+  Result := False;
+  for i := low(VALID_TRACKERS_URL) to high(VALID_TRACKERS_URL) do
+  begin
+    if Pos(VALID_TRACKERS_URL[i], TrackerURL) = 1 then
+    begin
+      Result := True;
+      exit;
+    end;
+  end;
 end;
 
 function WebTorrentTrackerURL(const TrackerURL: UTF8String): boolean;
+var
+  i: integer;
 begin
-  Result := (Pos('ws://', TrackerURL) = 1) or (Pos('wss://', TrackerURL) = 1);
+  //VALID_TRACKERS_URL[3] and [4] are the WebTorrent ws:// and wss:// prefixes
+  Result := False;
+  for i := 3 to 4 do
+  begin
+    if Pos(VALID_TRACKERS_URL[i], TrackerURL) = 1 then
+    begin
+      Result := True;
+      exit;
+    end;
+  end;
 end;
 
 procedure CombineFiveTrackerListToOne(TrackerListOrder: TTrackerListOrder;
