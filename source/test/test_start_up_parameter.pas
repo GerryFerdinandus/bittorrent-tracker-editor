@@ -721,10 +721,23 @@ procedure TTestStartUpParameter.SetUp;
 begin
   WriteLn('TTestStartUpParameter.SetUp');
   //Create all the TStringList items
-  FVerifyTrackerResult.TrackerOriginal := TStringList.Create;
-  FVerifyTrackerResult.TrackerAdded := TStringList.Create;
-  FVerifyTrackerResult.TrackerRemoved := TStringList.Create;
-  FVerifyTrackerResult.TrackerEndResult := TStringList.Create;
+  FVerifyTrackerResult.TrackerOriginal := nil;
+  FVerifyTrackerResult.TrackerAdded := nil;
+  FVerifyTrackerResult.TrackerRemoved := nil;
+  FVerifyTrackerResult.TrackerEndResult := nil;
+  try
+    FVerifyTrackerResult.TrackerOriginal := TStringList.Create;
+    FVerifyTrackerResult.TrackerAdded := TStringList.Create;
+    FVerifyTrackerResult.TrackerRemoved := TStringList.Create;
+    FVerifyTrackerResult.TrackerEndResult := TStringList.Create;
+  except
+    //TTestCase.RunBare does not call TearDown when SetUp raises, so free here
+    FVerifyTrackerResult.TrackerOriginal.Free;
+    FVerifyTrackerResult.TrackerAdded.Free;
+    FVerifyTrackerResult.TrackerRemoved.Free;
+    FVerifyTrackerResult.TrackerEndResult.Free;
+    raise;
+  end;
 
   //Default parameter order: "path_to_folder" -Ux
   FUpdateParameterFirst := False;
