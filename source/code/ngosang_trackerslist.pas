@@ -69,6 +69,10 @@ implementation
 uses fphttpclient, LazUTF8, torrent_miscellaneous;
 
 const
+  //Prevent the UI from freezing indefinitely on a stalled/unresponsive server
+  HTTP_CONNECT_TIMEOUT_MS = 10000;
+  HTTP_IO_TIMEOUT_MS = 15000;
+
   URL: array [Tngosang_List] of string =
     (//Warning: the URL strings must be in the same order as Tngosang_List
     'https://raw.githubusercontent.com/ngosang/trackerslist/master/blacklist.txt',
@@ -84,11 +88,20 @@ const
 
 { TngosangTrackerList }
 function TngosangTrackerList.DownloadTracker(ngosang_List: Tngosang_List): TStringList;
+var
+  HTTPClient: TFPHTTPClient;
 begin
   try
-    //download via URL and put the data in the TrackerList
-    FTRackerList[ngosang_List].Text :=
-      TFPCustomHTTPClient.SimpleGet(URL[ngosang_List]);
+    HTTPClient := TFPHTTPClient.Create(nil);
+    try
+      HTTPClient.ConnectTimeout := HTTP_CONNECT_TIMEOUT_MS;
+      HTTPClient.IOTimeout := HTTP_IO_TIMEOUT_MS;
+
+      //download via URL and put the data in the TrackerList
+      FTRackerList[ngosang_List].Text := HTTPClient.Get(URL[ngosang_List]);
+    finally
+      HTTPClient.Free;
+    end;
 
     //Clean up the tracker list
     SanitizeTrackerList(FTRackerList[ngosang_List]);

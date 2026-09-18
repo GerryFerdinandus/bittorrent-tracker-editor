@@ -74,6 +74,10 @@ implementation
 uses fphttpclient, LazUTF8, torrent_miscellaneous, httpdefs;
 
 const
+  //Prevent the UI from freezing indefinitely on a stalled/unresponsive server
+  HTTP_CONNECT_TIMEOUT_MS = 10000;
+  HTTP_IO_TIMEOUT_MS = 15000;
+
   URL: array [TNewTrackon_List] of string =
     (//Warning: the URL strings must be in the same order as TNewTrackon_List
     'https://newtrackon.com/api/all',
@@ -95,16 +99,25 @@ begin
 end;
 
 function TNewTrackon.DownloadTracker(NewTrackon_List: TNewTrackon_List): boolean;
+var
+  HTTPClient: TFPHTTPClient;
 begin
 
   try
     //there is no Dead tracker list to be downloaded. so it can be skip
     if NewTrackon_List <> ntl_CREATE_DEAD then
     begin
-      //download via URL and put the data in the TrackerList
-      //will create exception if something is wrong
-      FTRackerList[NewTrackon_List].Text :=
-        TFPCustomHTTPClient.SimpleGet(URL[NewTrackon_List]);
+      HTTPClient := TFPHTTPClient.Create(nil);
+      try
+        HTTPClient.ConnectTimeout := HTTP_CONNECT_TIMEOUT_MS;
+        HTTPClient.IOTimeout := HTTP_IO_TIMEOUT_MS;
+
+        //download via URL and put the data in the TrackerList
+        //will create exception if something is wrong
+        FTRackerList[NewTrackon_List].Text := HTTPClient.Get(URL[NewTrackon_List]);
+      finally
+        HTTPClient.Free;
+      end;
     end;
 
     Result := True;
@@ -168,6 +181,8 @@ begin
   if Result then
   begin
     HTTPS := TFPHTTPClient.Create(nil);
+    HTTPS.ConnectTimeout := HTTP_CONNECT_TIMEOUT_MS;
+    HTTPS.IOTimeout := HTTP_IO_TIMEOUT_MS;
     TrackerListToBeSend := TStringList.Create;
     try
       TrackerListToBeSend.Assign(TrackerList);
