@@ -242,35 +242,51 @@ begin
 end;
 
 class procedure TBEncoded.Encode(Encoded: TBEncoded; var Output: UTF8String);
-var
-  i: integer;
-begin
-  with Encoded do
+
+  //Recurse into a growing stream buffer instead of "Output := Output + ..."
+  //which reallocates and copies the whole accumulated string on every node (O(n^2)).
+  procedure EncodeToStream(Encoded: TBEncoded; Stream: TStringStream);
+  var
+    i: integer;
   begin
-    // what type of member is it?
-    case Format of
-      befString: Output := Output + IntToStr(Length(StringData)) + ':' +
-        StringData;
-      befInteger: Output := Output + 'i' + IntToStr(IntegerData) + 'e';
-      befList:
-      begin
-        Output := Output + 'l';
-        for i := 0 to ListData.Count - 1 do
-          Encode(TBEncoded(ListData[i].Data), Output);
-        Output := Output + 'e';
-      end;
-      befDictionary:
-      begin
-        Output := Output + 'd';
-        for i := 0 to ListData.Count - 1 do
+    with Encoded do
+    begin
+      // what type of member is it?
+      case Format of
+        befString: Stream.WriteString(IntToStr(Length(StringData)) + ':' +
+            StringData);
+        befInteger: Stream.WriteString('i' + IntToStr(IntegerData) + 'e');
+        befList:
         begin
-          Output := Output + IntToStr(Length(ListData[i].Header)) + ':' +
-            ListData[i].Header;
-          Encode(TBEncoded(ListData[i].Data), Output);
+          Stream.WriteString('l');
+          for i := 0 to ListData.Count - 1 do
+            EncodeToStream(TBEncoded(ListData[i].Data), Stream);
+          Stream.WriteString('e');
         end;
-        Output := Output + 'e';
+        befDictionary:
+        begin
+          Stream.WriteString('d');
+          for i := 0 to ListData.Count - 1 do
+          begin
+            Stream.WriteString(IntToStr(Length(ListData[i].Header)) + ':' +
+              ListData[i].Header);
+            EncodeToStream(TBEncoded(ListData[i].Data), Stream);
+          end;
+          Stream.WriteString('e');
+        end;
       end;
     end;
+  end;
+
+var
+  Stream: TStringStream;
+begin
+  Stream := TStringStream.Create('');
+  try
+    EncodeToStream(Encoded, Stream);
+    Output := Output + Stream.DataString;
+  finally
+    Stream.Free;
   end;
 end;
 
