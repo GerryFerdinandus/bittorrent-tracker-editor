@@ -755,20 +755,6 @@ begin
 
 end;
 
-{
-try
-    Encoded := TBEncoded.Create;
-    Encoded.Format := befString;
-    Encoded.StringData := TrackerURL;
-    Data := TBEncodedData.Create(Encoded);
-    Data.Header := 'announce';
-    FBEncoded.ListData.Add(Data);
-    FBEncoded.ListData.Sort(@sort_);//text must be in alphabetical order.
-except
-end;
-
-}
-
 function TDecodeTorrent.RemovePrivateTorrentFlag: boolean;
 begin
   try
