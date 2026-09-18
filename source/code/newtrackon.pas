@@ -157,7 +157,8 @@ begin
     end;
   end;
 
-  CreateTrackerList_Dead;
+  if Result then
+    CreateTrackerList_Dead;
 end;
 
 function TNewTrackon.SubmitTrackers(TrackerList: TStringList;
