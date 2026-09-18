@@ -649,7 +649,7 @@ begin
         sLineBreak + 'Warning: There is no undo.', '', BoxStyle);
       if Reply <> idOk then
       begin
-        ShowHourGlassCursor(True);
+        //finally block already resets the cursor
         exit;
       end;
     end;
@@ -659,7 +659,7 @@ begin
     if (FTrackerList.TorrentFileNameList.Count = 0) then
     begin
       ShowUserErrorMessage('ERROR: No torrent file selected');
-      ShowHourGlassCursor(True);
+      //finally block already resets the cursor
       exit;
     end;
 
@@ -690,7 +690,7 @@ begin
         '', BoxStyle);
       if Reply <> idOk then
       begin
-        ShowHourGlassCursor(False);
+        //finally block already resets the cursor
         exit;
       end;
       //Reset process timer
