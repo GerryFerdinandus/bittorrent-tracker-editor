@@ -814,17 +814,21 @@ begin
   //Create the tracker text file. The old one will be overwritten
   AssignFile(FTrackerFile, FFolderForTrackerListLoadAndSave + FILE_NAME_EXPORT_TRACKERS);
   ReWrite(FTrackerFile);
-  for TrackerStr in FTrackerList.TrackerFinalList do
-  begin
-    WriteLn(FTrackerFile, TrackerStr);
+  try
+    for TrackerStr in FTrackerList.TrackerFinalList do
+    begin
+      WriteLn(FTrackerFile, TrackerStr);
 
-    //Must create an empty line between trackers.
-    //Every tracker must be a separate tracker group.
-    //This is what the user probably want.
-    //The file content can then be copy/pasted to uTorrent etc.
-    WriteLn(FTrackerFile, '');
+      //Must create an empty line between trackers.
+      //Every tracker must be a separate tracker group.
+      //This is what the user probably want.
+      //The file content can then be copy/pasted to uTorrent etc.
+      WriteLn(FTrackerFile, '');
+    end;
+  finally
+    //Close the file even if writing fails, or else the handle stays open/locked.
+    CloseFile(FTrackerFile);
   end;
-  CloseFile(FTrackerFile);
 end;
 
 procedure TFormTrackerModify.ConsoleModeOrDragAndDropStartupMode;
