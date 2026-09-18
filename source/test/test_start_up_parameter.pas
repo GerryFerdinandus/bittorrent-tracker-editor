@@ -101,6 +101,8 @@ type
     procedure Test_Parameter_U6;
     procedure Test_Parameter_U7;
 
+    procedure Test_Parameter_Invalid_No_Dash_U;
+
   end;
 
 implementation
@@ -162,6 +164,22 @@ begin
   CallExecutableFile;
   // Exit code should be zero
   CheckEquals(0, FExitCode);
+end;
+
+procedure TTestStartUpParameter.Test_Parameter_Invalid_No_Dash_U;
+begin
+  //Neither parameter starts with '-U'. Decoding must fail with a clear error,
+  //not silently continue with an unassigned FileNameOrDirStr.
+  FCommandLine := FFullPathToTorrent + ' -BOGUS';
+  CallExecutableFile;
+
+  //exit code must indicate failure
+  CheckEquals(1, FExitCode);
+
+  //the console log must report the decode failure
+  Check(ReadConsoleLogFile, 'Log data is not present');
+  Check(not FConsoleLogData.StatusOK,
+    'Status should indicate failure when no -U parameter is given');
 end;
 
 //procedure TTestStartUpParameter.TestParameter(TrackerListOrder: TTrackerListOrder);

@@ -693,6 +693,15 @@ begin
         Result := DecodeConsoleUpdateParameter(ParamStr(2), TrackerList);
         // first parameter MUST be the file/folder
         FileNameOrDirStr := UTF8Trim(ParamStr(1));
+      end
+      else
+      begin
+        //Neither parameter starts with '-U': parameters can not be decoded.
+        FileNameOrDirStr := '';
+        TrackerList.LogStringList.Add(
+          'ERROR: Can not find update parameter -U in the given parameters.');
+        Result := False;
+        exit;
       end;
 
       //Check for parameter -SAC and -SOURCE.
