@@ -750,7 +750,8 @@ begin
     end;
 
   except
-    FComment := AValue;
+    //Bencode update failed, so the comment was not actually stored.
+    FComment := '';
   end;
 
 end;
