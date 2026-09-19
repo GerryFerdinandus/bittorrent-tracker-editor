@@ -54,7 +54,9 @@ jobs:
         # remove file created by unit test
         rm -f enduser/console_log.txt
         rm -f enduser/export_trackers.txt
-        git reset --hard
+        # restore any other files modified by the unit test
+        git restore enduser/add_trackers.txt
+        git restore enduser/remove_trackers.txt
       shell: bash
 
     - name: Create a zip file for Windows release.

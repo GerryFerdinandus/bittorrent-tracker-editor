@@ -97,8 +97,8 @@ jobs:
       shell: bash
 
     - name: Build Unit Test on Linux
-      # Build trackereditor project (Release mode) and run tests
-      run: lazbuild --build-all --build-mode=Release ${{ matrix.LAZ_OPT }} source/project/unit_test/tracker_editor_test.lpi
+      # Build trackereditor project (Debug mode) and run tests
+      run: lazbuild --build-all --build-mode=Debug ${{ matrix.LAZ_OPT }} source/project/unit_test/tracker_editor_test.lpi
       shell: bash
 
     - name: test non-AppImage
@@ -115,7 +115,9 @@ jobs:
         # remove file created by unit test
         rm -f enduser/console_log.txt
         rm -f enduser/export_trackers.txt
-        git reset --hard
+        # restore any other files modified by the unit test
+        git restore enduser/add_trackers.txt
+        git restore enduser/remove_trackers.txt
       shell: bash
 
     - name: Copy libQtpas.so before releasing the Qt5/Qt6 zip file format.
