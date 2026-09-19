@@ -1,7 +1,8 @@
-name: CI/CD on Linux systems.
+# CI/CD workflow for Linux systems.
+# AppImages must be built on the oldest still-supported Ubuntu release for maximum portability.
+# Keep the AppImage runners on the oldest supported Ubuntu version unless its support ends.
 
-permissions:
-  contents: write
+name: CI/CD on Linux systems.
 
 on:
     push:
@@ -25,19 +26,19 @@ jobs:
           - BUILD_TARGET: gtk2_amd64
             RELEASE_FILE_NAME: trackereditor_linux_amd64_gtk2.zip
             LAZ_OPT: --widgetset=gtk2
-            RUNS_ON: ubuntu-24.04
+            RUNS_ON: ubuntu-latest
 
           - BUILD_TARGET: qt5_amd64
             RELEASE_FILE_NAME: trackereditor_linux_amd64_qt5.zip
             LAZ_OPT: --widgetset=qt5
             QT_VERSION_CI: '5'
-            RUNS_ON: ubuntu-24.04
+            RUNS_ON: ubuntu-latest
 
           - BUILD_TARGET: qt6_amd64
             RELEASE_FILE_NAME: trackereditor_linux_amd64_qt6.zip
             LAZ_OPT: --widgetset=qt6
             QT_VERSION_CI: '6'
-            RUNS_ON: ubuntu-24.04
+            RUNS_ON: ubuntu-latest
 
           - BUILD_TARGET: AppImage_amd64
             RELEASE_FILE_NAME: trackereditor_linux_amd64_qt6.AppImage
@@ -45,7 +46,7 @@ jobs:
             QT_VERSION_CI: '6'
             LINUX_DEPLOY_FILE_CPU: x86_64
             APPIMAGE_BUILD: true
-            RUNS_ON: ubuntu-22.04
+            RUNS_ON: ubuntu-24.04
 
           - BUILD_TARGET: AppImage_arm64
             RELEASE_FILE_NAME: trackereditor_linux_arm64_qt6.AppImage
@@ -53,7 +54,7 @@ jobs:
             QT_VERSION_CI: '6'
             LINUX_DEPLOY_FILE_CPU: aarch64
             APPIMAGE_BUILD: true
-            RUNS_ON: ubuntu-22.04-arm
+            RUNS_ON: ubuntu-24.04-arm
 
     name: ${{ matrix.BUILD_TARGET }}
     runs-on: ${{ matrix.RUNS_ON }}
@@ -181,8 +182,42 @@ jobs:
         compression-level: 0 # no compression. Content is already a compress file
         if-no-files-found: error
 
+  check-tag:
+    if: startsWith(github.ref, 'refs/tags/')
+    runs-on: ubuntu-slim
+    outputs:
+      is_release_tag: ${{ steps.check_tag.outputs.match }}
+
+    steps:
+    - name: Check if ref is a release tag in the format V1.33.0
+      id: check_tag
+      run: |
+        if [[ "${{ github.ref }}" =~ ^refs/tags/V[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+          echo "match=true" >> "$GITHUB_OUTPUT"
+        else
+          echo "match=false" >> "$GITHUB_OUTPUT"
+        fi
+      shell: bash
+
+  release:
+    needs: [build, check-tag]
+    if: needs.check-tag.outputs.is_release_tag == 'true'
+    runs-on: ubuntu-slim
+    permissions:
+      contents: write
+
+    steps:
+    - name: Download build artifacts
+      uses: actions/download-artifact@v8
+      with:
+        path: release_files
+        merge-multiple: true
+
+    - name: Display downloaded artifact files
+      run: ls -R release_files
+      shell: bash
+
     - name: File release to end user
       uses: softprops/action-gh-release@v3
-      if: startsWith(github.ref, 'refs/tags/')
       with:
-        files: ${{ matrix.RELEASE_FILE_NAME }}
+        files: release_files/*

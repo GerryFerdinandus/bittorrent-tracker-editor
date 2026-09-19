@@ -20,9 +20,6 @@
 
 name: CI/CD on macOS systems.
 
-permissions:
-  contents: write
-
 on:
     push:
     pull_request:
@@ -331,8 +328,51 @@ jobs:
         compression-level: 0 # no compression. Content is already a zip file
         if-no-files-found: error
 
-    - name: Notarize file release to end user. If certificate is present.
+  check-tag:
+    if: startsWith(github.ref, 'refs/tags/')
+    runs-on: ubuntu-slim
+    outputs:
+      is_release_tag: ${{ steps.check_tag.outputs.match }}
+      has_certificate: ${{ steps.check_cert.outputs.match }}
+
+    steps:
+    - name: Check if ref is a release tag in the format V1.33.0
+      id: check_tag
+      run: |
+        if [[ "${{ github.ref }}" =~ ^refs/tags/V[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+          echo "match=true" >> "$GITHUB_OUTPUT"
+        else
+          echo "match=false" >> "$GITHUB_OUTPUT"
+        fi
+      shell: bash
+
+    - name: Check if macOS signing certificate secret is present
+      id: check_cert
+      env:
+        CERT_NAME: ${{ secrets.PROD_MACOS_CERTIFICATE_NAME }}
+      run: |
+        if [[ -n "$CERT_NAME" ]]; then
+          echo "match=true" >> "$GITHUB_OUTPUT"
+        else
+          echo "match=false" >> "$GITHUB_OUTPUT"
+        fi
+      shell: bash
+
+  release:
+    needs: [create_universal_macOS_binary, check-tag]
+    if: needs.check-tag.outputs.is_release_tag == 'true' && needs.check-tag.outputs.has_certificate == 'true'
+    runs-on: ubuntu-slim
+    permissions:
+      contents: write
+
+    steps:
+    - name: Download build artifact
+      uses: actions/download-artifact@v8
+      with:
+        name: artifact-macOS
+        path: .
+
+    - name: Notarize file release to end user
       uses: softprops/action-gh-release@v3
-      if: startsWith(github.ref, 'refs/tags/') && (env.BUILD_WITH_CERTIFICATE != '')
       with:
         files: ${{ env.RELEASE_DMG_FILE }}
