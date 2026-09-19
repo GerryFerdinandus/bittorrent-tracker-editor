@@ -69,8 +69,8 @@ type
 
     function DecodeTorrent: boolean; overload;
 
-    function isPresentInfoPieces_V1: boolean;
-    function isPresentInfoFileTree_V2: boolean;
+    function isPresentInfoPieces_V1(const EncodedInfo: utf8string): boolean;
+    function isPresentInfoFileTree_V2(const EncodedInfo: utf8string): boolean;
 
     function GetSha256(const Source: utf8string): utf8string;
     function GetMetaVersion: int64;
@@ -510,6 +510,8 @@ begin
 end;
 
 function TDecodeTorrent.DecodeTorrent: boolean;
+var
+  EncodedInfo: utf8string;
 begin
   Result := False;
   try
@@ -543,8 +545,12 @@ begin
       exit; //error
 
     // Is this V1,V2 or hybrid torrent type?
-    if isPresentInfoPieces_V1 then FTorrentVersion := tv_V1;
-    if isPresentInfoFileTree_V2 then
+    // Encode 'info' once and reuse it for both hashes: a hybrid torrent's
+    // 'pieces' data can be huge, so encoding it twice just to hash it is wasteful.
+    EncodedInfo := '';
+    TBEncoded.Encode(FBEncoded_Info, EncodedInfo);
+    if isPresentInfoPieces_V1(EncodedInfo) then FTorrentVersion := tv_V1;
+    if isPresentInfoFileTree_V2(EncodedInfo) then
     begin
       if FTorrentVersion = tv_V1 then
         FTorrentVersion := tv_Hybrid
@@ -588,10 +594,9 @@ begin
   end;
 end;
 
-function TDecodeTorrent.isPresentInfoPieces_V1: boolean;
+function TDecodeTorrent.isPresentInfoPieces_V1(const EncodedInfo: utf8string): boolean;
 var
   Info: TBEncoded;
-  str: utf8string;
 begin
   try
     // 'info.pieces' is present in every V1 torrent, single file and multi file.
@@ -599,9 +604,7 @@ begin
     Result := assigned(info);
     if Result then
     begin
-      str := '';
-      TBEncoded.Encode(FBEncoded_Info, str);
-      FInfoHash_V1 := UpperCase(SHA1Print(SHA1String(str)));
+      FInfoHash_V1 := UpperCase(SHA1Print(SHA1String(EncodedInfo)));
     end
     else
     begin
@@ -612,10 +615,9 @@ begin
   end;
 end;
 
-function TDecodeTorrent.isPresentInfoFileTree_V2: boolean;
+function TDecodeTorrent.isPresentInfoFileTree_V2(const EncodedInfo: utf8string): boolean;
 var
   Info: TBEncoded;
-  str: utf8string;
 begin
   try
     {find 'info.file tree' }
@@ -623,9 +625,7 @@ begin
     Result := assigned(info);
     if Result then
     begin
-      str := '';
-      TBEncoded.Encode(FBEncoded_Info, str);
-      FInfoHash_V2 := UpperCase(GetSha256(str));
+      FInfoHash_V2 := UpperCase(GetSha256(EncodedInfo));
     end
     else
     begin
