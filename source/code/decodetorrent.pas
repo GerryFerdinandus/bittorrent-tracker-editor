@@ -575,7 +575,7 @@ begin
         tv_Hybrid:
         begin // Only V2 is actually used. V1 need to be read to look for padding.
           Result := GetFileList_V1;
-          if Result then GetFileList_V2;
+          if Result then Result := GetFileList_V2;
         end;
       end;
     end;

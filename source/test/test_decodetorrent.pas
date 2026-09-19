@@ -32,6 +32,7 @@ type
     procedure Test_Multi_File_V1_InfoHash;
     procedure Test_Multi_File_V1_Entry_Missing_Length_Is_Rejected;
     procedure Test_Multi_File_V1_Entry_Missing_Path_Is_Rejected;
+    procedure Test_Hybrid_Malformed_V2_FileTree_Fails_Decode;
     procedure Test_Torrent_Without_Pieces_Has_No_InfoHash;
     procedure Test_Comment_Remove_Then_Add_Again;
   end;
@@ -59,6 +60,12 @@ const
   //Second file entry has no 'path', it must not inherit the first entry's name
   INFO_MULTI_FILE_MISSING_PATH =
     'd5:filesld6:lengthi100e4:pathl5:a.txteed6:lengthi200eee' +
+    '4:name4:root12:piece lengthi16384e6:pieces' + PIECES + 'e';
+
+  //Both 'info.pieces' (V1) and 'info.file tree' (V2) are present, but the
+  //V2 tree is empty, so GetFileList_V2 finds no files (a malformed hybrid torrent).
+  INFO_HYBRID_MALFORMED_V2 =
+    'd9:file treede5:filesld6:lengthi100e4:pathl5:a.txteee' +
     '4:name4:root12:piece lengthi16384e6:pieces' + PIECES + 'e';
 
   //Neither V1 'info.pieces' nor V2 'info.file tree' is present
@@ -174,6 +181,14 @@ begin
     'Wrong file name');
   CheckEquals(100, FDecodeTorrent.TotalFileSize,
     'Total size must not include the rejected entry');
+end;
+
+procedure TTestDecodeTorrent.Test_Hybrid_Malformed_V2_FileTree_Fails_Decode;
+begin
+  //V1 succeeds ('files' has one entry), but the V2 'file tree' is empty.
+  //DecodeTorrent must not report success while the V2 file model is empty.
+  Check(not DecodeTorrentString(BuildTorrent(INFO_HYBRID_MALFORMED_V2)),
+    'Decoding must fail when the V2 file tree has no files');
 end;
 
 procedure TTestDecodeTorrent.Test_Torrent_Without_Pieces_Has_No_InfoHash;
