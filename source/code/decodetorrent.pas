@@ -334,6 +334,10 @@ begin
       begin // Every file need to be process one by one
 
         ThisIsFileWithPadding := False;
+        //Reset per file entry: a malformed entry missing 'path' or 'length'
+        //must not silently inherit the values of the previous entry.
+        FilenameWithPathStr := '';
+        FileLength := -1;
         for P_Item in TBEncodedData(P_File).Data.ListData do
         begin // Every item inside the file must be process one by one
           NodeData := TBEncodedData(P_Item);
@@ -368,6 +372,10 @@ begin
             end;
           end;
         end; // Every item inside the file
+
+        //An entry without 'path' or without 'length' is malformed, skip it.
+        if (FilenameWithPathStr = '') or (FileLength < 0) then
+          Continue;
 
         // one file is decoded. Now add it to the list
         DecodeTorrentFileName := TDecodeTorrentFileNameAndLength.Create;

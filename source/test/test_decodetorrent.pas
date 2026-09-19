@@ -30,6 +30,8 @@ type
     procedure Test_Single_File_V1_InfoHash;
     procedure Test_Single_File_V1_FileList;
     procedure Test_Multi_File_V1_InfoHash;
+    procedure Test_Multi_File_V1_Entry_Missing_Length_Is_Rejected;
+    procedure Test_Multi_File_V1_Entry_Missing_Path_Is_Rejected;
     procedure Test_Torrent_Without_Pieces_Has_No_InfoHash;
     procedure Test_Comment_Remove_Then_Add_Again;
   end;
@@ -47,6 +49,16 @@ const
   //Torrent with more then one file has 'info.files' and no 'info.length'
   INFO_MULTI_FILE =
     'd5:filesld6:lengthi100e4:pathl5:a.txteed6:lengthi200e4:pathl3:dir5:b.txteee' +
+    '4:name4:root12:piece lengthi16384e6:pieces' + PIECES + 'e';
+
+  //Second file entry has no 'length', it must not inherit the first entry's 100
+  INFO_MULTI_FILE_MISSING_LENGTH =
+    'd5:filesld6:lengthi100e4:pathl5:a.txteed4:pathl5:b.txteee' +
+    '4:name4:root12:piece lengthi16384e6:pieces' + PIECES + 'e';
+
+  //Second file entry has no 'path', it must not inherit the first entry's name
+  INFO_MULTI_FILE_MISSING_PATH =
+    'd5:filesld6:lengthi100e4:pathl5:a.txteed6:lengthi200eee' +
     '4:name4:root12:piece lengthi16384e6:pieces' + PIECES + 'e';
 
   //Neither V1 'info.pieces' nor V2 'info.file tree' is present
@@ -136,6 +148,32 @@ begin
 
   CheckEquals(2, FDecodeTorrent.InfoFilesCount, 'Wrong file count');
   CheckEquals(300, FDecodeTorrent.TotalFileSize, 'Wrong total file size');
+end;
+
+procedure TTestDecodeTorrent.Test_Multi_File_V1_Entry_Missing_Length_Is_Rejected;
+begin
+  Check(DecodeTorrentString(BuildTorrent(INFO_MULTI_FILE_MISSING_LENGTH)),
+    'Can not decode a torrent with a malformed file entry');
+
+  CheckEquals(1, FDecodeTorrent.InfoFilesCount,
+    'The entry without ''length'' must be rejected, not added with a stale length');
+  CheckEquals(DirectorySeparator + 'a.txt', FDecodeTorrent.InfoFilesNameIndex(0),
+    'Wrong file name');
+  CheckEquals(100, FDecodeTorrent.TotalFileSize,
+    'Total size must not include the rejected entry');
+end;
+
+procedure TTestDecodeTorrent.Test_Multi_File_V1_Entry_Missing_Path_Is_Rejected;
+begin
+  Check(DecodeTorrentString(BuildTorrent(INFO_MULTI_FILE_MISSING_PATH)),
+    'Can not decode a torrent with a malformed file entry');
+
+  CheckEquals(1, FDecodeTorrent.InfoFilesCount,
+    'The entry without ''path'' must be rejected, not added with a stale name');
+  CheckEquals(DirectorySeparator + 'a.txt', FDecodeTorrent.InfoFilesNameIndex(0),
+    'Wrong file name');
+  CheckEquals(100, FDecodeTorrent.TotalFileSize,
+    'Total size must not include the rejected entry');
 end;
 
 procedure TTestDecodeTorrent.Test_Torrent_Without_Pieces_Has_No_InfoHash;
