@@ -37,6 +37,7 @@ type
     procedure Test_Decode_Dictionary;
     procedure Test_Decode_Nested_List_In_Dictionary;
     procedure Test_Decode_Round_Trip_Matches_Original;
+    procedure Test_Decode_Round_Trip_Preserves_Binary_Bytes;
     procedure Test_FindElement_Is_Case_Insensitive;
     procedure Test_FindElement_Returns_Nil_When_Missing;
     procedure Test_RemoveElement_Removes_Matching_Item;
@@ -164,6 +165,26 @@ begin
   TBEncoded.Encode(FEncoded, Output);
 
   CheckEquals(ORIGINAL, Output, 'Encoding a decoded value must reproduce the original');
+end;
+
+procedure TTestBEncode.Test_Decode_Round_Trip_Preserves_Binary_Bytes;
+var
+  BinaryData, Original, Output: UTF8String;
+  i: integer;
+begin
+  //fields like 'pieces' hold arbitrary bytes (e.g. SHA1 hashes), not text
+  SetLength(BinaryData, 256);
+  for i := 0 to 255 do
+    BinaryData[i + 1] := Chr(i);
+
+  Original := IntToStr(Length(BinaryData)) + ':' + BinaryData;
+  FEncoded := Decode(Original);
+
+  Output := '';
+  TBEncoded.Encode(FEncoded, Output);
+
+  CheckEquals(Length(Original), Length(Output), 'Encoded byte length must match the original');
+  CheckEquals(Original, Output, 'Encoding a decoded binary string must reproduce every byte exactly');
 end;
 
 procedure TTestBEncode.Test_FindElement_Is_Case_Insensitive;
