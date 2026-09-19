@@ -31,6 +31,7 @@ type
     procedure Test_Single_File_V1_FileList;
     procedure Test_Multi_File_V1_InfoHash;
     procedure Test_Torrent_Without_Pieces_Has_No_InfoHash;
+    procedure Test_Comment_Remove_Then_Add_Again;
   end;
 
 implementation
@@ -145,6 +146,35 @@ begin
 
   CheckEquals(NO_INFO_HASH, FDecodeTorrent.InfoHash_V1, 'There must be no V1 info hash');
   CheckEquals(NO_INFO_HASH, FDecodeTorrent.InfoHash_V2, 'There must be no V2 info hash');
+end;
+
+procedure TTestDecodeTorrent.Test_Comment_Remove_Then_Add_Again;
+var
+  TempFileName: string;
+  ReloadedTorrent: TDecodeTorrent;
+begin
+  //Removing the comment frees its bencode element. Setting a new comment
+  //afterwards must not write through the now-dangling FBEncoded_Comment pointer.
+  Check(DecodeTorrentString(BuildTorrent(INFO_SINGLE_FILE)),
+    'Can not decode a torrent with one file');
+
+  FDecodeTorrent.Comment := 'first comment';
+  FDecodeTorrent.Comment := '';
+  FDecodeTorrent.Comment := 'second comment';
+
+  TempFileName := GetTempDir + 'test_decodetorrent_comment.torrent';
+  Check(FDecodeTorrent.SaveTorrent(TempFileName), 'Can not save torrent');
+
+  ReloadedTorrent := TDecodeTorrent.Create;
+  try
+    Check(ReloadedTorrent.DecodeTorrent(TempFileName),
+      'Can not decode the saved torrent');
+    CheckEquals('second comment', ReloadedTorrent.Comment,
+      'Comment must be the last value set after remove and re-add');
+  finally
+    ReloadedTorrent.Free;
+    DeleteFile(TempFileName);
+  end;
 end;
 
 initialization

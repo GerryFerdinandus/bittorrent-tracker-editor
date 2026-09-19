@@ -731,6 +731,7 @@ begin
     if FComment = '' then
     begin
       FBEncoded.ListData.RemoveElement(BK_COMMENT);
+      FBEncoded_Comment := nil; //RemoveElement already freed it
       exit;
     end;
 
