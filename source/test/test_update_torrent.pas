@@ -28,6 +28,9 @@ type
     //Write a torrent file with one file inside and the given trackers
     function CreateTorrentFile(const Name: string; TrackerList: array of string): string;
 
+    //Write a file that is not valid bencode, so DecodeTorrent must fail on it
+    function CreateCorruptTorrentFile(const Name: string): string;
+
     //Every torrent file is public and has no comment
     function DefaultFileSettingList: TTorrentFileSettingArray;
 
@@ -41,6 +44,7 @@ type
     procedure Test_Append_After_Keeps_Original_Tracker_Of_Each_File;
     procedure Test_No_Trackers_Removes_Announce;
     procedure Test_ReadOnly_File_Is_Reported_And_Not_Changed;
+    procedure Test_Undecodable_File_Is_Reported_And_Not_Changed;
     procedure Test_Private_Flag_Comment_And_SourceTag;
   end;
 
@@ -135,6 +139,29 @@ begin
   Stream := TFileStream.Create(Result, fmCreate);
   try
     Stream.Write(TorrentStr[1], Length(TorrentStr));
+  finally
+    Stream.Free;
+  end;
+end;
+
+function TTestUpdateTorrent.CreateCorruptTorrentFile(const Name: string): string;
+const
+  //Not valid bencode: a dictionary must start with 'd' and end with 'e'
+  CORRUPT_CONTENT = 'this is not bencode';
+var
+  Stream: TFileStream;
+begin
+  Result := FTempFolder + Name;
+
+  if FileExists(Result) then
+  begin
+    SetFileReadOnly(Result, False);
+    DeleteFile(Result);
+  end;
+
+  Stream := TFileStream.Create(Result, fmCreate);
+  try
+    Stream.Write(CORRUPT_CONTENT[1], Length(CORRUPT_CONTENT));
   finally
     Stream.Free;
   end;
@@ -308,6 +335,29 @@ begin
 
   //The read only file must still have its original tracker
   CheckTrackerListInFile(ReadOnlyFile, [TRACKER_C]);
+  CheckTrackerListInFile(FTrackerList.TorrentFileNameList[1], [TRACKER_A]);
+end;
+
+procedure TTestUpdateTorrent.Test_Undecodable_File_Is_Reported_And_Not_Changed;
+var
+  UpdateResult: TUpdateTorrentResult;
+  CorruptFile: string;
+begin
+  CorruptFile := CreateCorruptTorrentFile('corrupt.torrent');
+  FTrackerList.TorrentFileNameList.Add(CorruptFile);
+  FTrackerList.TorrentFileNameList.Add(CreateTorrentFile('two.torrent', [TRACKER_C]));
+
+  FTrackerList.TrackerAddedByUserList.Add(TRACKER_A);
+  FTrackerList.TrackerListOrderForUpdatedTorrent := tloSort;
+  CombineFiveTrackerListToOne(tloSort, FTrackerList, FDecodeTorrent.TrackerList);
+
+  UpdateResult := UpdateTorrentFileList(FTrackerList, FDecodeTorrent,
+    DefaultFileSettingList);
+
+  CheckTrue(UpdateResult.SomeFilesCanNotBeDecoded, 'Undecodable file must be reported');
+  CheckEquals(1, UpdateResult.FilesUpdated, 'Only the valid file can be updated');
+
+  //The other, valid, file must still be updated normally
   CheckTrackerListInFile(FTrackerList.TorrentFileNameList[1], [TRACKER_A]);
 end;
 

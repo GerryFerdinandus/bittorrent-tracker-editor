@@ -638,6 +638,7 @@ begin
   //initial value is false, will be set to true if some file fails to write
   UpdateResult.SomeFilesCannotBeWritten := False;
   UpdateResult.SomeFilesAreReadOnly := False;
+  UpdateResult.SomeFilesCanNotBeDecoded := False;
 
   try
 
@@ -720,6 +721,14 @@ begin
   begin
     //When successfull the log file shows, 3 lines,
     //     OK + Count torrent files  + Count Trackers
+
+    //Partial failures must not be reported as success.
+    if UpdateResult.SomeFilesAreReadOnly then
+      ShowUserErrorMessage('ERROR: Some torrent files are READ-ONLY and were not updated.');
+    if UpdateResult.SomeFilesCannotBeWritten then
+      ShowUserErrorMessage('ERROR: Some torrent files failed to write and were not updated.');
+    if UpdateResult.SomeFilesCanNotBeDecoded then
+      ShowUserErrorMessage('ERROR: Some torrent files could not be decoded and were skipped.');
 
     //if there is already a items inside there there must be something wrong.
     //Do not add 'OK'

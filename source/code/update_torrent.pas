@@ -36,6 +36,7 @@ type
 
     SomeFilesAreReadOnly: boolean;
     SomeFilesCannotBeWritten: boolean;
+    SomeFilesCanNotBeDecoded: boolean;
   end;
 
 {
@@ -117,6 +118,7 @@ begin
   Result.FilesUpdated := 0;
   Result.SomeFilesAreReadOnly := False;
   Result.SomeFilesCannotBeWritten := False;
+  Result.SomeFilesCanNotBeDecoded := False;
 
   Assert(Length(FileSettingList) = TrackerList.TorrentFileNameList.Count,
     'Every torrent file must have one TTorrentFileSetting');
@@ -133,9 +135,12 @@ begin
       Continue;
     end;
 
-    //read one torrent file. If error then skip it. (continue)
+    //read one torrent file. If error then skip it, but report it.
     if not DecodeTorrent.DecodeTorrent(TrackerList.TorrentFileNameList[i]) then
+    begin
+      Result.SomeFilesCanNotBeDecoded := True;
       Continue;
+    end;
 
     //tloSort is already combined by the caller. All other modes are per torrent file.
     if TrackerList.TrackerListOrderForUpdatedTorrent <> tloSort then
