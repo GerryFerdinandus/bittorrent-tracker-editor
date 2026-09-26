@@ -18,7 +18,8 @@ uses
   Classes, SysUtils, Forms, Controls, Graphics, Dialogs, StdCtrls,
   ExtCtrls, CheckLst, DecodeTorrent, LCLType, ActnList, Menus, ComCtrls,
   Grids, controllergridtorrentdata, torrent_miscellaneous, update_torrent,
-  controller_trackerlist_online, controller_treeview_torrent_data, ngosang_trackerslist;
+  controller_trackerlist_online, controller_treeview_torrent_data, ngosang_trackerslist,
+  main_common;
 
 type
 
@@ -163,7 +164,7 @@ type
     : boolean;
 
     FFolderForTrackerListLoadAndSave: string;
-    FLogFile, FTrackerFile: TextFile;
+    FTrackerFile: TextFile;
     FProcessTimeStart, FProcessTimeTotal: TDateTime;
     FControllerGridTorrentData: TControllerGridTorrentData;
     function CheckForAnnounce(const TrackerURL: utf8string): boolean;
@@ -189,7 +190,6 @@ type
     procedure UpdateTrackerInsideFileList;
     procedure UpdateTorrentTrackerList;
     procedure ShowTrackerInsideFileList;
-    function TestConnectionSSL: boolean;
 
     procedure CheckedOnOffAllTrackers(Value: boolean);
     function CopyUserInputNewTrackersToList(Temporary_SkipAnnounceCheck: boolean =
@@ -205,7 +205,7 @@ var
 
 implementation
 
-uses fphttpclient, LCLIntf, lazutf8, LazFileUtils, trackerlist_online, LCLVersion;
+uses LCLIntf, lazutf8, LazFileUtils, trackerlist_online, LCLVersion, fphttpclient;
 
 const
   RECOMMENDED_TRACKERS: array[0..2] of utf8string =
@@ -228,46 +228,41 @@ const
 
 { TFormTrackerModify }
 
+//True when this run is the '-TEST_SSL' diagnostic (single parameter). Sets ExitCode on failure.
+//GUI-only: the console CLI has no networking code and does not support this parameter.
+function CheckTestSSLParameter: boolean;
+begin
+  Result := ParamCount = 1;
+  if Result then
+  begin
+    // Check for the correct parameter.
+    Result := UTF8Trim(ParamStr(1)) = '-TEST_SSL';
+    if Result then
+    begin
+      // Check if there is SSL connection
+      try
+        TFPCustomHTTPClient.SimpleGet(
+          'https://raw.githubusercontent.com/gerryferdinandus/bittorrent-tracker-editor/master/README.md');
+      except
+        //No SSL or no internet connection.
+        System.ExitCode := 1;
+      end;
+    end;
+  end;
+end;
+
 procedure TFormTrackerModify.FormCreate(Sender: TObject);
 begin
   //Test the working for SSL connection
-  if TestConnectionSSL then
+  if CheckTestSSLParameter then
   begin
     // shutdown the GUI program
     Application.terminate;
     Exit;
   end;
 
-  {$IFDEF LINUX}
-  // If it is a Ubuntu snap program, save it a special folder
-   FFolderForTrackerListLoadAndSave := GetEnvironmentVariable('SNAP_USER_COMMON');
-  // If it is a flatpak program, save it in a special folder
-   if GetEnvironmentVariable('container') = 'flatpak' then
-   begin
-     FFolderForTrackerListLoadAndSave := GetEnvironmentVariable('XDG_DATA_HOME');
-   end;
-   // If it is a appimage program, save it in a present folder.
-   if GetEnvironmentVariable('APPIMAGE') <> '' then
-   begin // OWD = Path to working directory at the time the AppImage is called
-     FFolderForTrackerListLoadAndSave := GetEnvironmentVariable('OWD');
-   end;
-  {$ENDIF LINUX}
-
-  {$IFDEF DARWIN}
-  // PATH: ~/.config/trackereditor/
-  FFolderForTrackerListLoadAndSave := GetAppConfigDir(False);
-  if not DirectoryExists(FFolderForTrackerListLoadAndSave) then
-    CreateDirUTF8(FFolderForTrackerListLoadAndSave);
-  {$ENDIF DARWIN}
-
-  if FFolderForTrackerListLoadAndSave = '' then
-  begin
-    // Default is to use the same place as the application file
-    FFolderForTrackerListLoadAndSave := ExtractFilePath(Application.ExeName);
-  end;
-  // variable must have PathDelim
-  FFolderForTrackerListLoadAndSave := AppendPathDelim(FFolderForTrackerListLoadAndSave);
-
+  FFolderForTrackerListLoadAndSave :=
+    main_common.DetermineTrackerListFolder(Application.ExeName);
 
   //Create controller for StringGridTorrentData
   FControllerGridTorrentData := TControllerGridTorrentData.Create(StringGridTorrentData);
@@ -388,6 +383,7 @@ begin
   FControllerGridTorrentData.Free;
   FTrackerList.TrackerManuallyDeselectedByUserList.Free;
   FControllerTrackerListOnline.Free;
+  FControllerTreeviewTorrentData.Free;
 end;
 
 procedure TFormTrackerModify.MenuFileTorrentFolderClick(Sender: TObject);
@@ -849,24 +845,25 @@ begin
   // There are two options
   //-
   // One parameter only. Program startup via DragAndDrop
-  //    The first parameter[1] is path to file or dir.
+  //    The first parameter[1] is path to file or dir. The window stays visible.
 
   //-
   // Two parameter version. Always console mode.
-  //    This is later version where there is more selection about the tracker list.
+  //    Runs fully headless, sharing the pipeline with trackereditor_cli via main_common.
+  if FConsoleMode then
+  begin
+    if not main_common.RunConsoleMode(FFolderForTrackerListLoadAndSave) then
+      System.ExitCode := 1;
+    //Always shutdown the program when in console mode.
+    Application.terminate;
+    exit;
+  end;
 
   //Will be set to True when error occurs.
   MustExitWithErrorCode := False;
   ViewUpdateBegin;
 
   try
-    if FConsoleMode then
-    begin
-      //Create the log file. The old one will be overwritten
-      AssignFile(FLogFile, FFolderForTrackerListLoadAndSave + FILE_NAME_CONSOLE_LOG);
-      ReWrite(FLogFile);
-    end;
-
     //Get the startup command lime parameters.
     if ConsoleModeDecodeParameter(FileNameOrDirStr, FTrackerList) then
     begin
@@ -880,13 +877,6 @@ begin
           ShowTrackerInsideFileList;
           //Some tracker must be removed. Console and windows mode.
           UpdateViewRemoveTracker;
-
-          if FConsoleMode then
-          begin
-            //update torrent
-            UpdateTorrent;
-          end;
-
         end
         else
         begin
@@ -911,13 +901,6 @@ begin
               ShowTrackerInsideFileList;
               //Some tracker must be removed. Console and windows mode.
               UpdateViewRemoveTracker;
-
-              if FConsoleMode then
-              begin
-                //update torrent
-                UpdateTorrent;
-              end;
-
             end
             else
             begin
@@ -936,22 +919,6 @@ begin
       end;
     end;
 
-    if FConsoleMode then
-    begin
-      //Write to log file. And close the file.
-      WriteLn(FLogFile, FTrackerList.LogStringList.Text);
-      CloseFile(FLogFile);
-
-      //check if log data is success full
-      //if (no data) or (not CONSOLE_SUCCESS_STATUS) then error
-      MustExitWithErrorCode := FTrackerList.LogStringList.Count = 0;
-      if not MustExitWithErrorCode then
-      begin
-        MustExitWithErrorCode := FTrackerList.LogStringList[0] <> CONSOLE_SUCCESS_STATUS;
-      end;
-    end;
-
-
   except
     //Shutdown the console program.
     //This is needed or else the program will keep running forever.
@@ -965,12 +932,6 @@ begin
   begin
     //exit with error code
     System.ExitCode := 1;
-  end;
-
-  if FConsoleMode then
-  begin
-    //Always shutdown the program when in console mode.
-    Application.terminate;
   end;
 end;
 
@@ -1794,27 +1755,6 @@ begin
     FProcessTimeTotal := now - FProcessTimeStart;
   end;
 
-end;
-
-function TFormTrackerModify.TestConnectionSSL: boolean;
-begin
-  Result := ParamCount = 1;
-  if Result then
-  begin
-    // Check for the correct parameter.
-    Result := UTF8Trim(ParamStr(1)) = '-TEST_SSL';
-    if Result then
-    begin
-      // Check if there is SSL connection
-      try
-        TFPCustomHTTPClient.SimpleGet(
-          'https://raw.githubusercontent.com/gerryferdinandus/bittorrent-tracker-editor/master/README.md');
-      except
-        //No SSL or no internet connection.
-        System.ExitCode := 1;
-      end;
-    end;
-  end;
 end;
 
 end.

@@ -37,6 +37,13 @@ jobs:
       run: lazbuild --build-all --build-mode=Release ${{ env.LAZ_OPT }} source/project/tracker_editor/trackereditor.lpi
       shell: bash
 
+    - name: Build trackereditor_cli
+      # Console-only: no widgetset needed. Always built (even on GUI targets): the full
+      # unit test suite ('test non-AppImage'/'Test AppImage', which run '-a') exercises
+      # TTestStartUpParameterCli and needs this binary to be present too.
+      run: lazbuild --build-all --build-mode=Release source/project/tracker_editor/trackereditor_cli.lpi
+      shell: bash
+
     - name: Build Unit Test on Windows
       # Build unit test project (Debug mode)
       run: lazbuild --build-all --build-mode=Debug ${{ env.LAZ_OPT }} source/project/unit_test/tracker_editor_test.lpi
@@ -61,7 +68,7 @@ jobs:
 
     - name: Create a zip file for Windows release.
       run: |
-        Compress-Archive -Path enduser\*.txt, enduser\*.svg, enduser\trackereditor.exe, enduser\*.dll -DestinationPath $Env:RELEASE_ZIP_FILE
+        Compress-Archive -Path enduser\*.txt, enduser\*.svg, enduser\*.exe, enduser\*.dll -DestinationPath $Env:RELEASE_ZIP_FILE
       shell: pwsh
 
     - name: Upload Artifact

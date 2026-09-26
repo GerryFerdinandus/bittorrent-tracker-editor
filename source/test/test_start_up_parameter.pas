@@ -81,6 +81,7 @@ type
     procedure Verify_SAC_And_SOURCE(UpdateParameterFirst: boolean);
 
   protected
+    function GetProgramName: string; virtual;
     procedure SetUp; override;
     procedure TearDown; override;
   published
@@ -719,6 +720,11 @@ begin
   end;
 end;
 
+function TTestStartUpParameter.GetProgramName: string;
+begin
+  Result := PROGRAM_TO_BE_TESTED_NAME;
+end;
+
 procedure TTestStartUpParameter.SetUp;
 begin
   WriteLn('TTestStartUpParameter.SetUp');
@@ -759,14 +765,14 @@ begin
 
   //path to the program we want to test.
   FFullPathToBinary := FFullPathToRoot + END_USER_FOLDER + PathDelim
-                    + PROGRAM_TO_BE_TESTED_NAME;
+                    + GetProgramName;
 
   {$ELSE DARWIN}
   // Default is to use the same place as the application file
   FFullPathToEndUser := FFullPathToRoot + END_USER_FOLDER + PathDelim;
 
   //path to the program we want to test.
-  FFullPathToBinary := FFullPathToEndUser + PROGRAM_TO_BE_TESTED_NAME +
+  FFullPathToBinary := FFullPathToEndUser + GetProgramName +
     ExtractFileExt(ParamStr(0));
   {$ENDIF DARWIN}
 
@@ -808,7 +814,77 @@ begin
     FConsoleLogData.TrackersCount);
 end;
 
+  {$IFNDEF DARWIN}
+type
+
+  { TTestStartUpParameterCli }
+
+  //Runs every TTestStartUpParameter test against trackereditor_cli instead of trackereditor.
+  //Excluded on macOS: the macOS build does not produce a trackereditor_cli binary.
+  TTestStartUpParameterCli = class(TTestStartUpParameter)
+  protected
+    function GetProgramName: string; override;
+  published
+    //trackereditor_cli has no networking code and does not support '-TEST_SSL': it is treated
+    //like any other invalid single argument, i.e. an unresolvable torrent path/folder.
+    procedure Test_Parameter_TEST_SSL;
+
+    //Safe only for trackereditor_cli: unlike the GUI, it never shows a window and always
+    //terminates, so a bare 1-parameter invocation can't hang a blocking ExecuteProcess call.
+    procedure Test_Parameter_Single_Path_Only;
+  end;
+  {$ENDIF DARWIN}
+
+{$IFNDEF DARWIN}
+function TTestStartUpParameterCli.GetProgramName: string;
+begin
+  Result := 'trackereditor_cli';
+end;
+
+procedure TTestStartUpParameterCli.Test_Parameter_TEST_SSL;
+begin
+  //'-TEST_SSL' is not a recognized CLI parameter, so it's decoded as a non-existent
+  //torrent path/folder and must fail like any other invalid single argument.
+  FCommandLine := '-TEST_SSL';
+  CallExecutableFile;
+  CheckEquals(1, FExitCode);
+end;
+
+procedure TTestStartUpParameterCli.Test_Parameter_Single_Path_Only;
+var
+  StartupParameter: TStartupParameter;
+begin
+  //Bare 1-parameter form (just a path, no -Ux) must default to sort order.
+  StartupParameter.TrackerListOrder := tloSort;
+  StartupParameter.SkipAnnounceCheck := False;
+  StartupParameter.SourcePresent := False;
+  CreateFilledTorrent(StartupParameter);
+
+  DownloadPreTestTrackerList;
+  LoadTrackerListAddAndRemoved;
+
+  //No -Ux at all - just the torrent path.
+  FCommandLine := FFullPathToTorrent;
+  CallExecutableFile;
+
+  CopyTrackerEndResultToVerifyTrackerResult;
+
+  FVerifyTrackerResult.StartupParameter := StartupParameter;
+  Check(VerifyTrackerResult(FVerifyTrackerResult), FVerifyTrackerResult.ErrorString);
+
+  CheckEquals(0, FExitCode);
+
+  Check(ReadConsoleLogFile, 'Log data is not present');
+  Check(FConsoleLogData.StatusOK);
+  Check(FConsoleLogData.TrackersCount > 0);
+  Check(FConsoleLogData.TorrentFilesCount = TEST_TORRENT_FILES_COUNT);
+end;
+  {$ENDIF DARWIN}
+
 initialization
   RegisterTest(TTestStartUpParameter);
+  {$IFNDEF DARWIN}
+  RegisterTest(TTestStartUpParameterCli);
+  {$ENDIF DARWIN}
 
 end.

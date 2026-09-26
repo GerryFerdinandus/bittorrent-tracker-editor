@@ -1,0 +1,458 @@
+// SPDX-License-Identifier: MIT
+unit main_common;
+
+{
+ Headless console-mode engine, shared by the GUI (trackereditor, console-mode branch)
+ and the console-only program (trackereditor_cli). No Forms/Controls/Grids allowed here.
+}
+
+{$mode objfpc}{$H+}
+
+interface
+
+uses
+  Classes, SysUtils, DecodeTorrent, torrent_miscellaneous, update_torrent;
+
+//Resolve the folder used to load/save add_trackers.txt, remove_trackers.txt, etc.
+//Mirrors the Snap/Flatpak/AppImage/macOS/default rules from the GUI's FormCreate.
+function DetermineTrackerListFolder(const ExeFileName: string): string;
+
+//Runs the full console pipeline (decodes ParamStr/ParamCount itself). Writes console_log.txt
+//and export_trackers.txt into FolderForTrackerListLoadAndSave. Returns True on success.
+function RunConsoleMode(const FolderForTrackerListLoadAndSave: string): boolean;
+
+implementation
+
+uses LazUTF8, LazFileUtils;
+
+const
+  //Used when add_trackers.txt is missing or can not be read.
+  RECOMMENDED_TRACKERS: array[0..2] of UTF8String =
+    (
+    'udp://tracker.coppersurfer.tk:6969/announce',
+    'udp://tracker.opentrackr.org:1337/announce',
+    'wss://tracker.openwebtorrent.com'
+    );
+
+function DetermineTrackerListFolder(const ExeFileName: string): string;
+begin
+  Result := '';
+
+  {$IFDEF LINUX}
+  // If it is a Ubuntu snap program, save it a special folder
+  Result := GetEnvironmentVariable('SNAP_USER_COMMON');
+  // If it is a flatpak program, save it in a special folder
+  if GetEnvironmentVariable('container') = 'flatpak' then
+  begin
+    Result := GetEnvironmentVariable('XDG_DATA_HOME');
+  end;
+  // If it is a appimage program, save it in a present folder.
+  if GetEnvironmentVariable('APPIMAGE') <> '' then
+  begin // OWD = Path to working directory at the time the AppImage is called
+    Result := GetEnvironmentVariable('OWD');
+  end;
+  {$ENDIF LINUX}
+
+  {$IFDEF DARWIN}
+  // PATH: ~/.config/trackereditor/
+  Result := GetAppConfigDir(False);
+  if not DirectoryExists(Result) then
+    CreateDirUTF8(Result);
+  {$ENDIF DARWIN}
+
+  if Result = '' then
+  begin
+    // Default is to use the same place as the application file
+    Result := ExtractFilePath(ExeFileName);
+  end;
+
+  // variable must have PathDelim
+  Result := AppendPathDelim(Result);
+end;
+
+procedure CreateTrackerList(out TrackerList: TTrackerList);
+begin
+  TrackerList.TrackerListOrderForUpdatedTorrent := tloSort;
+
+  TrackerList.TrackerAddedByUserList := TStringList.Create;
+  TrackerList.TrackerAddedByUserList.Duplicates := dupIgnore;
+  TrackerList.TrackerAddedByUserList.Sorted := False;
+
+  TrackerList.TrackerBanByUserList := TStringList.Create;
+  TrackerList.TrackerBanByUserList.Duplicates := dupIgnore;
+  TrackerList.TrackerBanByUserList.Sorted := False;
+
+  TrackerList.TrackerManuallyDeselectedByUserList := TStringList.Create;
+  TrackerList.TrackerManuallyDeselectedByUserList.Duplicates := dupIgnore;
+  TrackerList.TrackerManuallyDeselectedByUserList.Sorted := False;
+
+  TrackerList.TrackerFromInsideTorrentFilesList := TStringList.Create;
+  TrackerList.TrackerFromInsideTorrentFilesList.Duplicates := dupIgnore;
+  TrackerList.TrackerFromInsideTorrentFilesList.Sorted := True;
+
+  TrackerList.TrackerFinalList := TStringList.Create;
+  TrackerList.TrackerFinalList.Duplicates := dupIgnore;
+  TrackerList.TrackerFinalList.Sorted := False;
+
+  TrackerList.TorrentFileNameList := TStringList.Create;
+  TrackerList.TorrentFileNameList.Duplicates := dupIgnore;
+  TrackerList.TorrentFileNameList.Sorted := False;
+
+  TrackerList.LogStringList := TStringList.Create;
+
+  TrackerList.SkipAnnounceCheck := False;
+  TrackerList.SourceTag := '';
+  TrackerList.RemoveAllSourceTag := False;
+end;
+
+procedure FreeTrackerList(var TrackerList: TTrackerList);
+begin
+  TrackerList.TrackerAddedByUserList.Free;
+  TrackerList.TrackerBanByUserList.Free;
+  TrackerList.TrackerManuallyDeselectedByUserList.Free;
+  TrackerList.TrackerFromInsideTorrentFilesList.Free;
+  TrackerList.TrackerFinalList.Free;
+  TrackerList.TorrentFileNameList.Free;
+  TrackerList.LogStringList.Free;
+end;
+
+procedure LogConsoleError(var TrackerList: TTrackerList; const ErrorText: string;
+  const FormText: string = '');
+begin
+  if FormText = '' then
+    TrackerList.LogStringList.Add(ErrorText)
+  else
+    TrackerList.LogStringList.Add(FormText + ' : ' + ErrorText);
+end;
+
+//Validates RawLines (the console equivalent of the GUI's MemoNewTrackers.Lines) and rebuilds
+//TrackerList.TrackerAddedByUserList from it. On success RawLines is rewritten sanitized.
+function ValidateAndSanitizeTrackers(RawLines: TStringList; var TrackerList: TTrackerList;
+  Temporary_SkipAnnounceCheck: boolean): boolean;
+var
+  TrackerStrLoop, TrackerStr, ErrorStr: UTF8String;
+begin
+  TrackerList.TrackerAddedByUserList.Clear;
+  Result := True;
+  ErrorStr := '';
+  TrackerStr := '';
+
+  for TrackerStrLoop in RawLines do
+  begin
+    TrackerStr := UTF8Trim(TrackerStrLoop);
+    if TrackerStr = '' then
+      continue;
+
+    Result := ValidTrackerURL(TrackerStr);
+    if Result then
+    begin
+      if (not TrackerList.SkipAnnounceCheck) and (not Temporary_SkipAnnounceCheck) and
+        (not WebTorrentTrackerURL(TrackerStr)) then
+      begin
+        Result := TrackerURLWithAnnounce(TrackerStr);
+        if not Result then
+          ErrorStr := 'ERROR: Tracker URL must end with /announce or /announce.php';
+      end;
+    end
+    else
+      ErrorStr := 'ERROR: Tracker URL must begin with http://, http:// or udp://';
+
+    if Result then
+      AddButIgnoreDuplicates(TrackerList.TrackerAddedByUserList, TrackerStr)
+    else
+      break;
+  end;
+
+  if Result then
+    RawLines.Text := TrackerList.TrackerAddedByUserList.Text
+  else
+    LogConsoleError(TrackerList, ErrorStr, TrackerStr);
+end;
+
+procedure LoadAddTrackersRaw(const Folder: string; RawList: TStringList);
+var
+  TrackerFileList: TStringList;
+  i: integer;
+begin
+  TrackerFileList := TStringList.Create;
+  try
+    try
+      TrackerFileList.LoadFromFile(Folder + FILE_NAME_ADD_TRACKERS);
+      SanitizeTrackerList(TrackerFileList);
+      RawList.Text := UTF8Trim(TrackerFileList.Text);
+    except
+      //No file found (or unreadable). Fall back to the recommended trackers.
+      RawList.Clear;
+      for i := low(RECOMMENDED_TRACKERS) to high(RECOMMENDED_TRACKERS) do
+        RawList.Add(RECOMMENDED_TRACKERS[i]);
+    end;
+  finally
+    TrackerFileList.Free;
+  end;
+end;
+
+procedure LoadRemoveTrackers(const Folder: string; var TrackerList: TTrackerList;
+  out FilePresentBanByUserList: boolean);
+var
+  FileName: UTF8String;
+begin
+  FileName := Folder + FILE_NAME_REMOVE_TRACKERS;
+  try
+    FilePresentBanByUserList := FileExistsUTF8(FileName);
+    if FilePresentBanByUserList then
+      TrackerList.TrackerBanByUserList.LoadFromFile(FileName);
+  except
+    FilePresentBanByUserList := False;
+  end;
+
+  SanitizeTrackerList(TrackerList.TrackerBanByUserList);
+end;
+
+//Decodes every torrent file in TorrentFileNameStringList, collecting the trackers found inside
+//and one TTorrentFileSetting (public/private + comment) per file, same order as the file list.
+function ConsoleDecodeTorrentFiles(TorrentFileNameStringList: TStringList;
+  var TrackerList: TTrackerList; DecodeTorrentObj: TDecodeTorrent;
+  var FileSettingList: TTorrentFileSettingArray): boolean;
+var
+  Count, SettingIndex: integer;
+  TorrentFileNameStr, TrackerStr: UTF8String;
+begin
+  Result := True;
+
+  for Count := 0 to TorrentFileNameStringList.Count - 1 do
+  begin
+    TorrentFileNameStr := TorrentFileNameStringList[Count];
+
+    if DecodeTorrentObj.DecodeTorrent(TorrentFileNameStr) then
+    begin
+      for TrackerStr in DecodeTorrentObj.TrackerList do
+        AddButIgnoreDuplicates(TrackerList.TrackerFromInsideTorrentFilesList, TrackerStr);
+
+      TrackerList.TorrentFileNameList.Add(TorrentFileNameStr);
+
+      SettingIndex := Length(FileSettingList);
+      SetLength(FileSettingList, SettingIndex + 1);
+      //Public/private and comment are never edited in console mode - use the decoded originals.
+      FileSettingList[SettingIndex].PublicTorrent := not DecodeTorrentObj.PrivateTorrent;
+      FileSettingList[SettingIndex].Comment := DecodeTorrentObj.Comment;
+    end
+    else
+    begin
+      //Something is wrong. Can not decode torrent tracker item. Cancel everything.
+      TrackerList.TorrentFileNameList.Clear;
+      TrackerList.TrackerFromInsideTorrentFilesList.Clear;
+      SetLength(FileSettingList, 0);
+      LogConsoleError(TrackerList, 'Error: Can not read torrent.', TorrentFileNameStr);
+      Result := False;
+      exit;
+    end;
+  end;
+end;
+
+function ConsoleDecodeTorrentFolder(const Dir: UTF8String; var TrackerList: TTrackerList;
+  DecodeTorrentObj: TDecodeTorrent; var FileSettingList: TTorrentFileSettingArray): boolean;
+var
+  TorrentFilesNameStringList: TStringList;
+begin
+  TorrentFilesNameStringList := TStringList.Create;
+  try
+    torrent_miscellaneous.LoadTorrentViaDir(Dir, TorrentFilesNameStringList);
+    Result := ConsoleDecodeTorrentFiles(TorrentFilesNameStringList, TrackerList,
+      DecodeTorrentObj, FileSettingList);
+  finally
+    TorrentFilesNameStringList.Free;
+  end;
+end;
+
+function ConsoleDecodeSingleTorrentFile(const FileName: UTF8String;
+  var TrackerList: TTrackerList; DecodeTorrentObj: TDecodeTorrent;
+  var FileSettingList: TTorrentFileSettingArray): boolean;
+var
+  TorrentFilesNameStringList: TStringList;
+begin
+  TorrentFilesNameStringList := TStringList.Create;
+  try
+    TorrentFilesNameStringList.Add(FileName);
+    Result := ConsoleDecodeTorrentFiles(TorrentFilesNameStringList, TrackerList,
+      DecodeTorrentObj, FileSettingList);
+  finally
+    TorrentFilesNameStringList.Free;
+  end;
+end;
+
+//Console equivalent of the GUI's UpdateViewRemoveTracker, without any per-tracker Checked grid:
+//CombineFiveTrackerListToOne already removes TrackerManuallyDeselectedByUserList unconditionally,
+//so "remove everything already inside the torrent" only needs a straight list copy.
+procedure ApplyBanListRemoval(var TrackerList: TTrackerList; AddedTrackersRawList: TStringList;
+  FilePresentBanByUserList: boolean);
+begin
+  //'Remove nothing' modes (-U5, -U6) must never remove or uncheck any tracker.
+  if (TrackerList.TrackerListOrderForUpdatedTorrent =
+    tloInsertNewBeforeAndKeepOriginalIntactAndRemoveNothing) or
+    (TrackerList.TrackerListOrderForUpdatedTorrent =
+    tloAppendNewAfterAndKeepOriginalIntactAndRemoveNothing) then
+    exit;
+
+  //If file remove_trackers.txt is present but empty then remove all tracker inside torrent.
+  if FilePresentBanByUserList and (UTF8Trim(TrackerList.TrackerBanByUserList.Text) = '') then
+    TrackerList.TrackerManuallyDeselectedByUserList.Assign(
+      TrackerList.TrackerFromInsideTorrentFilesList);
+
+  if not ValidateAndSanitizeTrackers(AddedTrackersRawList, TrackerList, False) then
+    exit;
+
+  //remove all the trackers that are ban from the user's 'add' list.
+  RemoveTrackersFromList(TrackerList.TrackerBanByUserList, AddedTrackersRawList);
+
+  ValidateAndSanitizeTrackers(AddedTrackersRawList, TrackerList, False);
+end;
+
+procedure SaveTrackerFinalListToFile(const Folder: string; TrackerFinalList: TStringList);
+var
+  TrackerFile: TextFile;
+  TrackerStr: UTF8String;
+begin
+  AssignFile(TrackerFile, Folder + FILE_NAME_EXPORT_TRACKERS);
+  ReWrite(TrackerFile);
+  try
+    for TrackerStr in TrackerFinalList do
+    begin
+      WriteLn(TrackerFile, TrackerStr);
+      //Every tracker must be a separate tracker group, one empty line between each.
+      WriteLn(TrackerFile, '');
+    end;
+  finally
+    CloseFile(TrackerFile);
+  end;
+end;
+
+//Console equivalent of the GUI's UpdateTorrent (minus confirmation dialogs/view refresh).
+procedure RunUpdateTorrentPipeline(var TrackerList: TTrackerList; DecodeTorrentObj: TDecodeTorrent;
+  const FileSettingList: TTorrentFileSettingArray; AddedTrackersRawList: TStringList;
+  const FolderForTrackerListLoadAndSave: string);
+var
+  CountTrackers: integer;
+  UpdateResult: TUpdateTorrentResult;
+begin
+  if TrackerList.TorrentFileNameList.Count = 0 then
+  begin
+    LogConsoleError(TrackerList, 'ERROR: No torrent file selected');
+    exit;
+  end;
+
+  //Must revalidate unconditionally: ApplyBanListRemoval skips validation for -U5/-U6.
+  if not ValidateAndSanitizeTrackers(AddedTrackersRawList, TrackerList, False) then
+    exit;
+
+  //Must use 'sort' for correct initial FTrackerFinalList.Count
+  CombineFiveTrackerListToOne(tloSort, TrackerList, DecodeTorrentObj.TrackerList);
+  CountTrackers := TrackerList.TrackerFinalList.Count;
+
+  UpdateResult := UpdateTorrentFileList(TrackerList, DecodeTorrentObj, FileSettingList);
+  CountTrackers := UpdateResult.TrackerCount;
+
+  SaveTrackerFinalListToFile(FolderForTrackerListLoadAndSave, TrackerList.TrackerFinalList);
+
+  //Partial failures must not be reported as success.
+  if UpdateResult.SomeFilesAreReadOnly then
+    LogConsoleError(TrackerList, 'ERROR: Some torrent files are READ-ONLY and were not updated.');
+  if UpdateResult.SomeFilesCannotBeWritten then
+    LogConsoleError(TrackerList,
+      'ERROR: Some torrent files failed to write and were not updated.');
+  if UpdateResult.SomeFilesCanNotBeDecoded then
+    LogConsoleError(TrackerList,
+      'ERROR: Some torrent files could not be decoded and were skipped.');
+
+  //if there is already an item inside there then there must be something wrong. Do not add 'OK'
+  if TrackerList.LogStringList.Count = 0 then
+  begin
+    TrackerList.LogStringList.Add(CONSOLE_SUCCESS_STATUS);
+    TrackerList.LogStringList.Add(IntToStr(TrackerList.TorrentFileNameList.Count));
+    TrackerList.LogStringList.Add(IntToStr(CountTrackers));
+  end;
+end;
+
+function RunConsoleMode(const FolderForTrackerListLoadAndSave: string): boolean;
+var
+  TrackerList: TTrackerList;
+  DecodeTorrentObj: TDecodeTorrent;
+  FileSettingList: TTorrentFileSettingArray;
+  AddedTrackersRawList: TStringList;
+  LogFile: TextFile;
+  FileNameOrDirStr: UTF8String;
+  FilePresentBanByUserList: boolean;
+  MustExitWithErrorCode: boolean;
+begin
+  CreateTrackerList(TrackerList);
+  DecodeTorrentObj := TDecodeTorrent.Create;
+  AddedTrackersRawList := TStringList.Create;
+  FileSettingList := nil;
+  MustExitWithErrorCode := False;
+
+  try
+    try
+      LoadAddTrackersRaw(FolderForTrackerListLoadAndSave, AddedTrackersRawList);
+      //Initial load must never fail on the announce check, only on a malformed URL scheme.
+      if not ValidateAndSanitizeTrackers(AddedTrackersRawList, TrackerList, True) then
+        AddedTrackersRawList.Clear;
+
+      LoadRemoveTrackers(FolderForTrackerListLoadAndSave, TrackerList, FilePresentBanByUserList);
+
+      //Create the log file. The old one will be overwritten
+      AssignFile(LogFile, FolderForTrackerListLoadAndSave + FILE_NAME_CONSOLE_LOG);
+      ReWrite(LogFile);
+
+      if ConsoleModeDecodeParameter(FileNameOrDirStr, TrackerList) then
+      begin
+        if ExtractFileExt(FileNameOrDirStr) = '' then
+        begin //There is no file extension. It must be a folder.
+          if ConsoleDecodeTorrentFolder(FileNameOrDirStr, TrackerList, DecodeTorrentObj,
+            FileSettingList) then
+          begin
+            ApplyBanListRemoval(TrackerList, AddedTrackersRawList, FilePresentBanByUserList);
+            RunUpdateTorrentPipeline(TrackerList, DecodeTorrentObj, FileSettingList,
+              AddedTrackersRawList, FolderForTrackerListLoadAndSave);
+          end
+          else
+            LogConsoleError(TrackerList, 'Can not load torrent via folder');
+        end
+        else if ExtractFileExt(FileNameOrDirStr) = '.torrent' then
+        begin
+          if ConsoleDecodeSingleTorrentFile(FileNameOrDirStr, TrackerList, DecodeTorrentObj,
+            FileSettingList) then
+          begin
+            ApplyBanListRemoval(TrackerList, AddedTrackersRawList, FilePresentBanByUserList);
+            RunUpdateTorrentPipeline(TrackerList, DecodeTorrentObj, FileSettingList,
+              AddedTrackersRawList, FolderForTrackerListLoadAndSave);
+          end
+          else
+            LogConsoleError(TrackerList, 'Can not load torrent file.');
+        end
+        else
+          LogConsoleError(TrackerList, 'ERROR: No torrent file selected.');
+      end;
+
+      //Write to log file. And close the file.
+      WriteLn(LogFile, TrackerList.LogStringList.Text);
+      CloseFile(LogFile);
+
+      //if (no data) or (not CONSOLE_SUCCESS_STATUS) then error
+      MustExitWithErrorCode := TrackerList.LogStringList.Count = 0;
+      if not MustExitWithErrorCode then
+        MustExitWithErrorCode := TrackerList.LogStringList[0] <> CONSOLE_SUCCESS_STATUS;
+
+    except
+      //This is needed or else the program will keep running forever.
+      MustExitWithErrorCode := True;
+    end;
+
+  finally
+    AddedTrackersRawList.Free;
+    DecodeTorrentObj.Free;
+    FreeTrackerList(TrackerList);
+  end;
+
+  Result := not MustExitWithErrorCode;
+end;
+
+end.

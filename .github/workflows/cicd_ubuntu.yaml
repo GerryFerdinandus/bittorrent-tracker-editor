@@ -56,6 +56,16 @@ jobs:
             APPIMAGE_BUILD: true
             RUNS_ON: ubuntu-24.04-arm
 
+          - BUILD_TARGET: cli_amd64
+            RELEASE_FILE_NAME: trackereditor_linux_amd64_cli.zip
+            CLI_BUILD: true
+            RUNS_ON: ubuntu-24.04
+
+          - BUILD_TARGET: cli_arm64
+            RELEASE_FILE_NAME: trackereditor_linux_arm64_cli.zip
+            CLI_BUILD: true
+            RUNS_ON: ubuntu-24.04-arm
+
     name: ${{ matrix.BUILD_TARGET }}
     runs-on: ${{ matrix.RUNS_ON }}
 
@@ -70,6 +80,8 @@ jobs:
         qt_version_ci: ${{ matrix.QT_VERSION_CI }}
 
     - name: Install dependency for all build
+      # trackereditor_cli is a real console app and needs no display server.
+      if: matrix.CLI_BUILD != true
       run: |
         sudo apt-get update
         sudo apt-get install -y xvfb
@@ -89,10 +101,19 @@ jobs:
 
     - name: Build trackereditor
       # Build trackereditor project (Release mode)
+      if: matrix.CLI_BUILD != true
       run: lazbuild --build-all --build-mode=Release ${{ matrix.LAZ_OPT }} source/project/tracker_editor/trackereditor.lpi
       shell: bash
 
+    - name: Build trackereditor_cli
+      # Console-only: no widgetset needed. Always built (even on GUI targets): the full
+      # unit test suite ('test non-AppImage'/'Test AppImage', which run '-a') exercises
+      # TTestStartUpParameterCli and needs this binary to be present too.
+      run: lazbuild --build-all --build-mode=Release source/project/tracker_editor/trackereditor_cli.lpi
+      shell: bash
+
     - name: Test if OpenSSL works on Linux CI
+      if: matrix.CLI_BUILD != true
       run: xvfb-run --auto-servernum enduser/trackereditor -TEST_SSL
       shell: bash
 
@@ -102,8 +123,8 @@ jobs:
       shell: bash
 
     - name: test non-AppImage
-      # Run unit tests only for non-AppImage build targets
-      if: ${{ !matrix.APPIMAGE_BUILD }}
+      # Run unit tests only for non-AppImage, non-CLI build targets
+      if: ${{ !matrix.APPIMAGE_BUILD && matrix.CLI_BUILD != true }}
       # Also remove all the extra file created by test.
       # We do not what it in the ZIP release files.
       # Undo all changes made by testing.
@@ -116,6 +137,21 @@ jobs:
         rm -f enduser/console_log.txt
         rm -f enduser/export_trackers.txt
         # restore any other files modified by the unit test
+        git restore enduser/add_trackers.txt
+        git restore enduser/remove_trackers.txt
+      shell: bash
+
+    - name: test CLI build
+      # No trackereditor GUI binary exists in this job, so only run the CLI's own suite here;
+      # the full suite (incl. TTestStartUpParameter) already runs on the GUI build targets above.
+      if: matrix.CLI_BUILD == true
+      run: |
+        set -e
+        enduser/test_trackereditor --suite=TTestStartUpParameterCli --format=plain
+        set +e
+
+        rm -f enduser/console_log.txt
+        rm -f enduser/export_trackers.txt
         git restore enduser/add_trackers.txt
         git restore enduser/remove_trackers.txt
       shell: bash
@@ -136,8 +172,13 @@ jobs:
       shell: bash
 
     - name: Create a gtk2 or Qt5/Qt6 release in zip file format.
-      if: ${{ !matrix.APPIMAGE_BUILD }}
+      if: ${{ !matrix.APPIMAGE_BUILD && matrix.CLI_BUILD != true }}
       run: zip -j ${{ matrix.RELEASE_FILE_NAME }} enduser/*.txt enduser/*.svg enduser/libQt* enduser/trackereditor
+      shell: bash
+
+    - name: Create a trackereditor_cli release in zip file format.
+      if: matrix.CLI_BUILD == true
+      run: zip -j ${{ matrix.RELEASE_FILE_NAME }} enduser/*.txt enduser/*.svg enduser/trackereditor_cli
       shell: bash
 
     - name: Create AppImage
