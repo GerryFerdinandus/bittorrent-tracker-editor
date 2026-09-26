@@ -8,6 +8,11 @@ unit test_update_torrent;
 }
 
 {$mode objfpc}{$H+}
+//Needed because this unit has non-Latin string literals in source; without it FPC tags
+//them with the default AnsiString codepage and double-encodes them on assignment to
+//UTF8String. Not needed in trackereditor/trackereditor_cli: their non-Latin text is always
+//runtime data (file bytes, ParamStr, LCL widgets), never a compiled string literal.
+{$codepage utf8}
 
 interface
 
@@ -28,6 +33,9 @@ type
     //Write a torrent file with one file inside and the given trackers
     function CreateTorrentFile(const Name: string; TrackerList: array of string): string;
 
+    //Write a torrent file at an explicit full path, so it can be placed in any folder
+    function CreateTorrentFileAt(const FullPath: string; TrackerList: array of string): string;
+
     //Write a file that is not valid bencode, so DecodeTorrent must fail on it
     function CreateCorruptTorrentFile(const Name: string): string;
 
@@ -46,6 +54,8 @@ type
     procedure Test_ReadOnly_File_Is_Reported_And_Not_Changed;
     procedure Test_Undecodable_File_Is_Reported_And_Not_Changed;
     procedure Test_Private_Flag_Comment_And_SourceTag;
+    procedure Test_NonLatin_Torrent_FileName;
+    procedure Test_NonLatin_Folder_Path;
   end;
 
 implementation
@@ -110,6 +120,12 @@ end;
 
 function TTestUpdateTorrent.CreateTorrentFile(const Name: string;
   TrackerList: array of string): string;
+begin
+  Result := CreateTorrentFileAt(FTempFolder + Name, TrackerList);
+end;
+
+function TTestUpdateTorrent.CreateTorrentFileAt(const FullPath: string;
+  TrackerList: array of string): string;
 var
   TorrentStr: UTF8String;
   Stream: TFileStream;
@@ -127,7 +143,7 @@ begin
   end;
   TorrentStr := TorrentStr + '4:info' + INFO_ONE_FILE + 'e';
 
-  Result := FTempFolder + Name;
+  Result := FullPath;
 
   //A read only file left behind by a crashed run would block fmCreate.
   if FileExists(Result) then
@@ -393,6 +409,53 @@ begin
   CheckFalse(FDecodeTorrent.PrivateTorrent, 'Torrent must be public');
   CheckEquals('a public torrent', FDecodeTorrent.Comment, 'Wrong comment');
   CheckEquals('SOURCE_TAG', FDecodeTorrent.InfoSource, 'Wrong info source');
+end;
+
+procedure TTestUpdateTorrent.Test_NonLatin_Torrent_FileName;
+var
+  UpdateResult: TUpdateTorrentResult;
+begin
+  //CJK + Cyrillic torrent file name, to verify Unicode file names are read/written correctly.
+  FTrackerList.TorrentFileNameList.Add(CreateTorrentFile('测试_трекер.torrent', [TRACKER_C]));
+
+  FTrackerList.TrackerAddedByUserList.Add(TRACKER_A);
+  FTrackerList.TrackerListOrderForUpdatedTorrent :=
+    tloAppendNewAfterAndKeepOriginalIntactAndRemoveNothing;
+  CombineFiveTrackerListToOne(tloSort, FTrackerList, FDecodeTorrent.TrackerList);
+
+  UpdateResult := UpdateTorrentFileList(FTrackerList, FDecodeTorrent,
+    DefaultFileSettingList);
+
+  CheckEquals(1, UpdateResult.FilesUpdated, 'The torrent file must be updated');
+  CheckFalse(UpdateResult.SomeFilesCannotBeWritten, 'File must be written');
+
+  //The original tracker stays first, the new one is appended
+  CheckTrackerListInFile(FTrackerList.TorrentFileNameList[0], [TRACKER_C, TRACKER_A]);
+end;
+
+procedure TTestUpdateTorrent.Test_NonLatin_Folder_Path;
+var
+  NonLatinFolder, TorrentFileName: string;
+  FoundFiles: TStringList;
+begin
+  //CJK + Cyrillic folder name, to verify a torrent inside it is found and decoded.
+  //Cleaned up locally, this folder is not part of SetUp/TearDown.
+  NonLatinFolder := FTempFolder + '文件夹_папка' + PathDelim;
+  ForceDirectories(NonLatinFolder);
+  TorrentFileName := CreateTorrentFileAt(NonLatinFolder + 'one.torrent', [TRACKER_A]);
+  FoundFiles := TStringList.Create;
+  try
+    Check(LoadTorrentViaDir(NonLatinFolder, FoundFiles),
+      'Can not find torrent files inside the non-Latin folder');
+    CheckEquals(1, FoundFiles.Count, 'Wrong torrent file count in non-Latin folder');
+
+    Check(FDecodeTorrent.DecodeTorrent(FoundFiles[0]),
+      'Can not decode torrent found inside a non-Latin folder');
+  finally
+    FoundFiles.Free;
+    DeleteFile(TorrentFileName);
+    RemoveDir(NonLatinFolder);
+  end;
 end;
 
 initialization

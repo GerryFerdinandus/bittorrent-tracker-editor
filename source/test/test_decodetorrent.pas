@@ -7,6 +7,11 @@ unit test_decodetorrent;
 }
 
 {$mode objfpc}{$H+}
+//Needed because this unit has non-Latin string literals in source; without it FPC tags
+//them with the default AnsiString codepage and double-encodes them on assignment to
+//UTF8String. Not needed in trackereditor/trackereditor_cli: their non-Latin text is always
+//runtime data (file bytes, ParamStr, LCL widgets), never a compiled string literal.
+{$codepage utf8}
 
 interface
 
@@ -35,6 +40,7 @@ type
     procedure Test_Hybrid_Malformed_V2_FileTree_Fails_Decode;
     procedure Test_Torrent_Without_Pieces_Has_No_InfoHash;
     procedure Test_Comment_Remove_Then_Add_Again;
+    procedure Test_NonLatin_FileName_And_Comment_Inside_Torrent;
   end;
 
 implementation
@@ -80,6 +86,11 @@ const
   INFO_HASH_MULTI_FILE = '2575ADB45B1E904ADF75726BFD5C27FD76897C2B';
 
   NO_INFO_HASH = 'N/A';
+
+function BEncodeString(const Str: UTF8String): UTF8String;
+begin
+  Result := IntToStr(Length(Str)) + ':' + Str;
+end;
 
 function BuildTorrent(const InfoStr: UTF8String): UTF8String;
 begin
@@ -224,6 +235,45 @@ begin
       'Can not decode the saved torrent');
     CheckEquals('second comment', ReloadedTorrent.Comment,
       'Comment must be the last value set after remove and re-add');
+  finally
+    ReloadedTorrent.Free;
+    DeleteFile(TempFileName);
+  end;
+end;
+
+procedure TTestDecodeTorrent.Test_NonLatin_FileName_And_Comment_Inside_Torrent;
+const
+  //CJK + Cyrillic mix
+  NON_LATIN_NAME = '文件_трекер.bin';
+  NON_LATIN_COMMENT = '注释_комментарий';
+var
+  InfoStr: UTF8String;
+  TempFileName: string;
+  ReloadedTorrent: TDecodeTorrent;
+begin
+  InfoStr := 'd5:filesld6:lengthi100e4:pathl' + BEncodeString('a.txt') + 'eed' +
+    '6:lengthi200e4:pathl' + BEncodeString(NON_LATIN_NAME) + 'eee' +
+    '4:name4:root12:piece lengthi16384e6:pieces' + PIECES + 'e';
+
+  Check(DecodeTorrentString(BuildTorrent(InfoStr)),
+    'Can not decode a torrent with a non-Latin file name');
+
+  CheckEquals(2, FDecodeTorrent.InfoFilesCount, 'Wrong file count');
+  CheckEquals(DirectorySeparator + NON_LATIN_NAME, FDecodeTorrent.InfoFilesNameIndex(1),
+    'Non-Latin file name must survive decode unchanged');
+
+  //Comment round-trip: set, save to disk, reload, and compare.
+  FDecodeTorrent.Comment := NON_LATIN_COMMENT;
+
+  TempFileName := GetTempDir + 'test_decodetorrent_nonlatin_comment.torrent';
+  Check(FDecodeTorrent.SaveTorrent(TempFileName), 'Can not save torrent');
+
+  ReloadedTorrent := TDecodeTorrent.Create;
+  try
+    Check(ReloadedTorrent.DecodeTorrent(TempFileName),
+      'Can not decode the saved torrent');
+    CheckEquals(NON_LATIN_COMMENT, ReloadedTorrent.Comment,
+      'Non-Latin comment must survive save/reload unchanged');
   finally
     ReloadedTorrent.Free;
     DeleteFile(TempFileName);
