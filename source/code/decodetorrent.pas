@@ -157,7 +157,36 @@ type
 
 implementation
 
-uses dateutils, SHA1, DCPsha256, FileUtil, LazUTF8;
+uses dateutils, SHA1, DCPsha256, FileUtil, LazUTF8, LazFileUtils
+  {$IFDEF WINDOWS}, Windows{$ENDIF}
+  {$IFDEF UNIX}, BaseUnix{$ENDIF};
+
+//The replacement file must keep the owner, group and permissions of the original.
+procedure CopyFileOwnerAndMode(const Source, Dest: utf8string);
+{$IFDEF UNIX}
+var
+  Info: Stat;
+begin
+  if FpStat(Source, Info) = 0 then
+  begin
+    //chown can fail for a non-root user, ignore it. It must run before chmod: chown clears setuid/setgid.
+    FpChown(Dest, Info.st_uid, Info.st_gid);
+    FpChmod(Dest, Info.st_mode and &7777);
+  end;
+{$ELSE}
+begin
+{$ENDIF}
+end;
+//Atomically replace Dest with Source. RenameFileUTF8 will not overwrite an existing file on Windows.
+function ReplaceFile(const Source, Dest: utf8string): boolean;
+begin
+  {$IFDEF WINDOWS}
+  Result := MoveFileExW(PWideChar(UTF8ToUTF16(Source)), PWideChar(UTF8ToUTF16(Dest)),
+    MOVEFILE_REPLACE_EXISTING);
+  {$ELSE}
+  Result := RenameFileUTF8(Source, Dest);
+  {$ENDIF}
+end;
 
 const
   // Root-level bencode dictionary keys
@@ -856,21 +885,31 @@ function TDecodeTorrent.SaveTorrent(const Filename: utf8string): boolean;
 var
   str: utf8string;
   S: TFileStream;
+  TempFilename: utf8string;
 begin
+  Result := False;
+  TempFilename := Filename + '.tmp';
   try
     //Encode it to string format
     str := '';
     TBEncoded.Encode(FBEncoded, str);
-    //Write string to file. Support filename with unicode.
-    S := TFileStream.Create(FileName, fmCreate);
+    //Write to a temp file first, so a failed write can never damage the original torrent.
+    S := TFileStream.Create(TempFilename, fmCreate);
     try
       Result := s.Write(Str[1], length(Str)) = length(Str);
     finally
       S.Free;
     end;
+    if Result then
+    begin
+      CopyFileOwnerAndMode(Filename, TempFilename);
+      Result := ReplaceFile(TempFilename, Filename);
+    end;
   except
     Result := False;
   end;
+  if not Result then
+    DeleteFileUTF8(TempFilename);
 end;
 
 

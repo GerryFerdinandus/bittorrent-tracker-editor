@@ -41,10 +41,19 @@ type
     procedure Test_Torrent_Without_Pieces_Has_No_InfoHash;
     procedure Test_Comment_Remove_Then_Add_Again;
     procedure Test_NonLatin_FileName_And_Comment_Inside_Torrent;
+    procedure Test_SaveTorrent_Overwrites_Existing_File_Without_Temp_Leftover;
+    procedure Test_SaveTorrent_Failure_Leaves_No_Temp_File;
+    {$IFDEF UNIX}
+    procedure Test_SaveTorrent_Keeps_Permissions_Of_Original;
+    {$ENDIF}
   end;
 
 implementation
 
+{$IFDEF UNIX}
+uses
+  BaseUnix;
+{$ENDIF}
 const
   //20 bytes of 'pieces', this is one SHA1 piece hash.
   PIECES = '20:AAAAAAAAAAAAAAAAAAAA';
@@ -279,6 +288,81 @@ begin
     DeleteFile(TempFileName);
   end;
 end;
+
+procedure TTestDecodeTorrent.Test_SaveTorrent_Overwrites_Existing_File_Without_Temp_Leftover;
+var
+  TempFileName: string;
+  ReloadedTorrent: TDecodeTorrent;
+begin
+  Check(DecodeTorrentString(BuildTorrent(INFO_SINGLE_FILE)),
+    'Can not decode a torrent with one file');
+
+  TempFileName := GetTempDir + 'test_decodetorrent_overwrite.torrent';
+  Check(FDecodeTorrent.SaveTorrent(TempFileName), 'Can not save torrent the first time');
+
+  FDecodeTorrent.Comment := 'changed';
+  Check(FDecodeTorrent.SaveTorrent(TempFileName),
+    'Can not overwrite the existing torrent file');
+  Check(not FileExists(TempFileName + '.tmp'), 'Temp file must not be left behind');
+
+  ReloadedTorrent := TDecodeTorrent.Create;
+  try
+    Check(ReloadedTorrent.DecodeTorrent(TempFileName),
+      'Can not decode the overwritten torrent');
+    CheckEquals('changed', ReloadedTorrent.Comment, 'Overwrite must contain the new data');
+  finally
+    ReloadedTorrent.Free;
+    DeleteFile(TempFileName);
+  end;
+end;
+
+procedure TTestDecodeTorrent.Test_SaveTorrent_Failure_Leaves_No_Temp_File;
+var
+  TargetFolder: string;
+begin
+  Check(DecodeTorrentString(BuildTorrent(INFO_SINGLE_FILE)),
+    'Can not decode a torrent with one file');
+
+  //A file can not replace an existing folder, so the final rename must fail.
+  TargetFolder := GetTempDir + 'test_decodetorrent_save_fail';
+  ForceDirectories(TargetFolder);
+  try
+    Check(not FDecodeTorrent.SaveTorrent(TargetFolder),
+      'Saving over a folder must fail');
+    Check(not FileExists(TargetFolder + '.tmp'),
+      'Temp file must be removed after a failed save');
+    Check(DirectoryExists(TargetFolder), 'The existing target must be untouched');
+  finally
+    RemoveDir(TargetFolder);
+  end;
+end;
+
+{$IFDEF UNIX}
+procedure TTestDecodeTorrent.Test_SaveTorrent_Keeps_Permissions_Of_Original;
+const
+  MODE_OTHER_THAN_DEFAULT = &640;
+var
+  TempFileName: string;
+  Info: Stat;
+begin
+  Check(DecodeTorrentString(BuildTorrent(INFO_SINGLE_FILE)),
+    'Can not decode a torrent with one file');
+
+  TempFileName := GetTempDir + 'test_decodetorrent_permissions.torrent';
+  Check(FDecodeTorrent.SaveTorrent(TempFileName), 'Can not save torrent the first time');
+  try
+    Check(FpChmod(TempFileName, MODE_OTHER_THAN_DEFAULT) = 0, 'Can not change permissions');
+
+    Check(FDecodeTorrent.SaveTorrent(TempFileName), 'Can not overwrite the torrent');
+
+    Check(FpStat(TempFileName, Info) = 0, 'Can not read file permissions');
+    CheckEquals(MODE_OTHER_THAN_DEFAULT, Info.st_mode and &777,
+      'Saving must keep the permissions of the original');
+  finally
+    DeleteFile(TempFileName);
+  end;
+end;
+{$ENDIF}
 
 initialization
   RegisterTest(TTestDecodeTorrent);
