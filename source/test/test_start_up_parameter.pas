@@ -108,7 +108,7 @@ type
 
 implementation
 
-uses  LazUTF8;
+uses  LazUTF8, FileUtil;
 
 const
   PROGRAM_TO_BE_TESTED_NAME = 'trackereditor';
@@ -832,6 +832,9 @@ type
     //Safe only for trackereditor_cli: unlike the GUI, it never shows a window and always
     //terminates, so a bare 1-parameter invocation can't hang a blocking ExecuteProcess call.
     procedure Test_Parameter_Single_Path_Only;
+
+    //An exception inside the console mode must be written to console_log.txt.
+    procedure Test_Exception_Is_Written_To_Console_Log;
   end;
   {$ENDIF DARWIN}
 
@@ -878,6 +881,42 @@ begin
   Check(FConsoleLogData.StatusOK);
   Check(FConsoleLogData.TrackersCount > 0);
   Check(FConsoleLogData.TorrentFilesCount = TEST_TORRENT_FILES_COUNT);
+end;
+
+procedure TTestStartUpParameterCli.Test_Exception_Is_Written_To_Console_Log;
+var
+  Folder, ExeCopy, TorrentCopy, LogFileName: string;
+  Log: TStringList;
+begin
+  //Everything happens in a temp folder, a copy of the program writes its files next to itself.
+  Folder := IncludeTrailingPathDelimiter(GetTempDir) + 'test_cli_exception' + PathDelim;
+  ForceDirectories(Folder);
+  ExeCopy := Folder + ExtractFileName(FFullPathToBinary);
+  TorrentCopy := Folder + 'a.torrent';
+  LogFileName := Folder + FILE_NAME_CONSOLE_LOG;
+  Log := TStringList.Create;
+  try
+    Check(CopyFile(FFullPathToBinary, ExeCopy), 'Can not copy the program');
+    Check(CopyFile(FFullPathToTorrent + 'bittorrent-v2-test.torrent', TorrentCopy),
+      'Can not copy the torrent');
+
+    //A folder with this name makes writing the export file fail with an exception.
+    ForceDirectories(Folder + FILE_NAME_EXPORT_TRACKERS);
+
+    FExitCode := SysUtils.ExecuteProcess(UTF8ToSys(ExeCopy), TorrentCopy + ' -U4', []);
+
+    CheckEquals(1, FExitCode, 'An exception must give an error exit code');
+    Log.LoadFromFile(LogFileName);
+    Check(Log.Count > 0, 'The console log must not be empty');
+    Check(Pos('ERROR: ', Log[0]) = 1, 'The exception must be the first line of the log');
+  finally
+    Log.Free;
+    DeleteFile(LogFileName);
+    DeleteFile(TorrentCopy);
+    DeleteFile(ExeCopy);
+    RemoveDir(Folder + FILE_NAME_EXPORT_TRACKERS);
+    RemoveDir(Folder);
+  end;
 end;
   {$ENDIF DARWIN}
 

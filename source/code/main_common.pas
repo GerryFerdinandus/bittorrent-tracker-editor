@@ -381,13 +381,14 @@ var
   LogFile: TextFile;
   FileNameOrDirStr: UTF8String;
   FilePresentBanByUserList: boolean;
-  MustExitWithErrorCode: boolean;
+  MustExitWithErrorCode, LogFileIsOpen: boolean;
 begin
   CreateTrackerList(TrackerList);
   DecodeTorrentObj := TDecodeTorrent.Create;
   AddedTrackersRawList := TStringList.Create;
   FileSettingList := nil;
   MustExitWithErrorCode := False;
+  LogFileIsOpen := False;
 
   try
     try
@@ -401,6 +402,7 @@ begin
       //Create the log file. The old one will be overwritten
       AssignFile(LogFile, FolderForTrackerListLoadAndSave + FILE_NAME_CONSOLE_LOG);
       ReWrite(LogFile);
+      LogFileIsOpen := True;
 
       if ConsoleModeDecodeParameter(FileNameOrDirStr, TrackerList) then
       begin
@@ -432,10 +434,6 @@ begin
           LogConsoleError(TrackerList, 'ERROR: No torrent file selected.');
       end;
 
-      //Write to log file. And close the file.
-      WriteLn(LogFile, TrackerList.LogStringList.Text);
-      CloseFile(LogFile);
-
       //if (no data) or (not CONSOLE_SUCCESS_STATUS) then error
       MustExitWithErrorCode := TrackerList.LogStringList.Count = 0;
       if not MustExitWithErrorCode then
@@ -443,7 +441,26 @@ begin
 
     except
       //This is needed or else the program will keep running forever.
-      MustExitWithErrorCode := True;
+      on E: Exception do
+      begin
+        MustExitWithErrorCode := True;
+        //First line: an 'OK' that was already logged must not make this look like a success.
+        TrackerList.LogStringList.Insert(0, 'ERROR: ' + E.Message);
+      end;
+    end;
+
+    //Write to log file. And close the file, also after an exception.
+    if LogFileIsOpen then
+    begin
+      try
+        try
+          WriteLn(LogFile, TrackerList.LogStringList.Text);
+        finally
+          CloseFile(LogFile);
+        end;
+      except
+        MustExitWithErrorCode := True;
+      end;
     end;
 
   finally
