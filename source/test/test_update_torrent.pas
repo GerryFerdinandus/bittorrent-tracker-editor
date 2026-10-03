@@ -59,6 +59,7 @@ type
     procedure Test_RemoveNothing_Keeps_Ban_Lists_Intact;
     procedure Test_Folder_Name_With_Dot_Is_A_Folder;
     procedure Test_Missing_File_Is_Reported_As_Undecodable_Not_ReadOnly;
+    procedure Test_SanitizeTrackerList_Removes_Comments_And_Spaces;
     procedure Test_LoadTorrentViaDir_Uppercase_Extension_And_Skips_Folders;
   end;
 
@@ -559,6 +560,28 @@ begin
   CheckTrue(UpdateResult.SomeFilesCanNotBeDecoded, 'A missing file must be reported');
   CheckEquals(1, UpdateResult.FilesUpdated, 'Only the existing file can be updated');
   CheckTrackerListInFile(FTrackerList.TorrentFileNameList[1], [TRACKER_A]);
+end;
+
+procedure TTestUpdateTorrent.Test_SanitizeTrackerList_Removes_Comments_And_Spaces;
+var
+  Lines: TStringList;
+begin
+  //A tracker list file may have a comment after the URL. It must not reach the URL validation.
+  Lines := TStringList.Create;
+  try
+    Lines.Add('  ' + TRACKER_A + '  # comment');
+    Lines.Add(TRACKER_B);
+    Lines.Add('');
+
+    SanitizeTrackerList(Lines);
+
+    CheckEquals(3, Lines.Count, 'Line count must not change');
+    CheckEquals(TRACKER_A, Lines[0], 'Comment and spaces must be removed');
+    CheckEquals(TRACKER_B, Lines[1], 'A clean URL must stay unchanged');
+    CheckEquals('', Lines[2], 'An empty line must stay empty');
+  finally
+    Lines.Free;
+  end;
 end;
 
 initialization

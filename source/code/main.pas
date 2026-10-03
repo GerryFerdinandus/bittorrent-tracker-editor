@@ -1451,6 +1451,8 @@ begin
       begin
         try
           TrackerFileNameStringList.LoadFromFile(FileNameOrDirStr);
+          //Remove comments after the URL. Else the validation fails and the memo is cleared.
+          SanitizeTrackerList(TrackerFileNameStringList);
           MemoNewTrackers.Append(UTF8Trim(TrackerFileNameStringList.Text));
         except
           //suppress any error in loading the file
