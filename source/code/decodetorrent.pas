@@ -55,6 +55,8 @@ type
 
     FInfoHash_V1: utf8string;
     FInfoHash_V2: utf8string;
+    //'info' was changed after the hashes were calculated
+    FInfoHashDirty: boolean;
     FCreatedBy: utf8string;
     FCreatedDate: TDateTime;
     FComment: utf8string;
@@ -74,6 +76,9 @@ type
     function isPresentInfoFileTree_V2(const EncodedInfo: utf8string): boolean;
 
     function GetSha256(const Source: utf8string): utf8string;
+    function GetInfoHash_V1: utf8string;
+    function GetInfoHash_V2: utf8string;
+    procedure RefreshInfoHashes;
     function GetMetaVersion: int64;
     function GetAnnounceList: boolean;
     function GetFileList_V1: boolean;
@@ -101,8 +106,8 @@ type
     property TotalFileSize: int64 read FTotalFileSize;
 
     //Info hash
-    property InfoHash_V1: utf8string read FInfoHash_V1;
-    property InfoHash_V2: utf8string read FInfoHash_V2;
+    property InfoHash_V1: utf8string read GetInfoHash_V1;
+    property InfoHash_V2: utf8string read GetInfoHash_V2;
 
     //Created by
     property CreatedBy: utf8string read FCreatedBy;
@@ -271,6 +276,7 @@ begin
   FTorrentVersion := tv_unknown;
   FInfoHash_V1 := '';
   FInfoHash_V2 := '';
+  FInfoHashDirty := False;
   FCreatedBy := '';
   FCreatedDate := 0;
   FComment := '';
@@ -719,6 +725,34 @@ begin
   end;
 end;
 
+procedure TDecodeTorrent.RefreshInfoHashes;
+var
+  EncodedInfo: utf8string;
+begin
+  //'info' was changed (private flag, source). Calculate the hashes again, only when they are read.
+  if not FInfoHashDirty then
+    Exit;
+  FInfoHashDirty := False;
+  if not assigned(FBEncoded_Info) then
+    Exit;
+  EncodedInfo := '';
+  TBEncoded.Encode(FBEncoded_Info, EncodedInfo);
+  isPresentInfoPieces_V1(EncodedInfo);
+  isPresentInfoFileTree_V2(EncodedInfo);
+end;
+
+function TDecodeTorrent.GetInfoHash_V1: utf8string;
+begin
+  RefreshInfoHashes;
+  Result := FInfoHash_V1;
+end;
+
+function TDecodeTorrent.GetInfoHash_V2: utf8string;
+begin
+  RefreshInfoHashes;
+  Result := FInfoHash_V2;
+end;
+
 function TDecodeTorrent.GetMetaVersion: int64;
 var
   TempBEncoded: TBEncoded;
@@ -824,6 +858,7 @@ end;
 
 function TDecodeTorrent.RemovePrivateTorrentFlag: boolean;
 begin
+  FInfoHashDirty := True;
   try
     FBEncoded_Info.ListData.RemoveElement(BK_PRIVATE);
     Result := True;
@@ -871,6 +906,7 @@ end;
 
 function TDecodeTorrent.InfoSourceRemove: boolean;
 begin
+  FInfoHashDirty := True;
   try
     FBEncoded_Info.ListData.RemoveElement(BK_SOURCE);
     Result := True;

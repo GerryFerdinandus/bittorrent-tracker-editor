@@ -51,7 +51,9 @@ type
     procedure Test_Private_And_Source_Already_Present_Keep_Info_Unchanged;
     procedure Test_Private_Flag_With_Value_Zero_Is_Replaced_Not_Duplicated;
     procedure Test_Empty_AnnounceList_Tier_Is_Skipped;
-    procedure Test_Failed_Decode_Clears_Previous_Torrent_State;    {$IFDEF UNIX}
+    procedure Test_Failed_Decode_Clears_Previous_Torrent_State;
+    procedure Test_InfoHash_Is_Recalculated_After_Private_Flag_And_Source_Change;
+    procedure Test_InfoHash_V1_And_V2_Are_Recalculated_For_Hybrid;    {$IFDEF UNIX}
     procedure Test_SaveTorrent_Keeps_Permissions_Of_Original;
     {$ENDIF}
   end;
@@ -501,6 +503,57 @@ begin
     CheckFalse(FileExists(GetTempDir + 'test_decodetorrent_not_saved.torrent'),
       'No file may be written');
   end;
+end;
+
+procedure TTestDecodeTorrent.Test_InfoHash_Is_Recalculated_After_Private_Flag_And_Source_Change;
+var
+  Original, Private_, WithSource: UTF8String;
+begin
+  Check(DecodeTorrentString(BuildTorrent(INFO_SINGLE_FILE)),
+    'Can not decode a torrent with one file');
+  Original := FDecodeTorrent.InfoHash_V1;
+
+  Check(FDecodeTorrent.AddPrivateTorrentFlag, 'Can not add the private flag');
+  Private_ := FDecodeTorrent.InfoHash_V1;
+  CheckNotEquals(Original, Private_, 'The hash must change with the private flag');
+
+  Check(FDecodeTorrent.InfoSourceAdd('SRC'), 'Can not add the source');
+  WithSource := FDecodeTorrent.InfoHash_V1;
+  CheckNotEquals(Private_, WithSource, 'The hash must change with the source');
+
+  //The shown hash must be the hash that a client calculates from the saved file
+  Check(DecodeTorrentString(SaveAndReadBack), 'Can not decode the saved torrent');
+  CheckEquals(WithSource, FDecodeTorrent.InfoHash_V1, 'Hash must match the saved file');
+
+  //Removing both gives the original info dictionary and the original hash
+  FDecodeTorrent.InfoSourceRemove;
+  FDecodeTorrent.RemovePrivateTorrentFlag;
+  CheckEquals(Original, FDecodeTorrent.InfoHash_V1, 'Hash must be the original again');
+end;
+
+procedure TTestDecodeTorrent.Test_InfoHash_V1_And_V2_Are_Recalculated_For_Hybrid;
+const
+  //V1 'files' and V2 'file tree' are both present
+  INFO_HYBRID = 'd9:file treed5:a.txtd0:d6:lengthi100eeee5:filesld6:lengthi100e' +
+    '4:pathl5:a.txteee4:name4:root12:piece lengthi16384e6:pieces' + PIECES + 'e';
+var
+  OriginalV1, OriginalV2, ChangedV1, ChangedV2: UTF8String;
+begin
+  Check(DecodeTorrentString(BuildTorrent(INFO_HYBRID)), 'Can not decode a hybrid torrent');
+  CheckEquals(Ord(tv_Hybrid), Ord(FDecodeTorrent.TorrentVersion), 'Must be hybrid');
+  OriginalV1 := FDecodeTorrent.InfoHash_V1;
+  OriginalV2 := FDecodeTorrent.InfoHash_V2;
+
+  Check(FDecodeTorrent.AddPrivateTorrentFlag, 'Can not add the private flag');
+  ChangedV1 := FDecodeTorrent.InfoHash_V1;
+  ChangedV2 := FDecodeTorrent.InfoHash_V2;
+  CheckNotEquals(OriginalV1, ChangedV1, 'V1 hash must change');
+  CheckNotEquals(OriginalV2, ChangedV2, 'V2 hash must change');
+
+  //The shown hashes must be the hashes of the saved file
+  Check(DecodeTorrentString(SaveAndReadBack), 'Can not decode the saved torrent');
+  CheckEquals(ChangedV1, FDecodeTorrent.InfoHash_V1, 'Saved V1 hash must match');
+  CheckEquals(ChangedV2, FDecodeTorrent.InfoHash_V2, 'Saved V2 hash must match');
 end;
 
 {$IFDEF UNIX}
