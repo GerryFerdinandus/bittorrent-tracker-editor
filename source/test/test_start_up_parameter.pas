@@ -108,7 +108,8 @@ type
 
 implementation
 
-uses  LazUTF8, FileUtil;
+uses  LazUTF8, FileUtil
+  {$IFDEF UNIX}, BaseUnix{$ENDIF};
 
 const
   PROGRAM_TO_BE_TESTED_NAME = 'trackereditor';
@@ -897,6 +898,10 @@ begin
   Log := TStringList.Create;
   try
     Check(CopyFile(FFullPathToBinary, ExeCopy), 'Can not copy the program');
+    {$IFDEF UNIX}
+    //CopyFile does not keep the execute permission.
+    Check(FpChmod(ExeCopy, &755) = 0, 'Can not make the program executable');
+    {$ENDIF}
     Check(CopyFile(FFullPathToTorrent + 'bittorrent-v2-test.torrent', TorrentCopy),
       'Can not copy the torrent');
 
