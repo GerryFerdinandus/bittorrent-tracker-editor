@@ -56,6 +56,7 @@ type
     procedure Test_Private_Flag_Comment_And_SourceTag;
     procedure Test_NonLatin_Torrent_FileName;
     procedure Test_NonLatin_Folder_Path;
+    procedure Test_RemoveNothing_Keeps_Ban_Lists_Intact;
   end;
 
 implementation
@@ -455,6 +456,35 @@ begin
     FoundFiles.Free;
     DeleteFile(TorrentFileName);
     RemoveDir(NonLatinFolder);
+  end;
+end;
+
+procedure TTestUpdateTorrent.Test_RemoveNothing_Keeps_Ban_Lists_Intact;
+var
+  Present: TStringList;
+begin
+  Present := TStringList.Create;
+  try
+    Present.Add(TRACKER_A);
+    Present.Add(TRACKER_B);
+    FTrackerList.TrackerAddedByUserList.Add(TRACKER_C);
+    FTrackerList.TrackerBanByUserList.Add(TRACKER_A);
+    FTrackerList.TrackerManuallyDeselectedByUserList.Add(TRACKER_B);
+
+    CombineFiveTrackerListToOne(
+      tloAppendNewAfterAndKeepOriginalIntactAndRemoveNothing, FTrackerList, Present);
+    CheckEquals(3, FTrackerList.TrackerFinalList.Count, 'Nothing may be removed');
+    CheckEquals(1, FTrackerList.TrackerBanByUserList.Count,
+      'The ban list of the caller must not be cleared');
+    CheckEquals(1, FTrackerList.TrackerManuallyDeselectedByUserList.Count,
+      'The deselected list of the caller must not be cleared');
+
+    //The same lists must still remove trackers in a mode that removes
+    CombineFiveTrackerListToOne(tloAppendNewAfterAndKeepNewIntact, FTrackerList, Present);
+    CheckEquals(1, FTrackerList.TrackerFinalList.Count, 'Banned trackers must be removed');
+    CheckEquals(TRACKER_C, FTrackerList.TrackerFinalList[0], 'Wrong remaining tracker');
+  finally
+    Present.Free;
   end;
 end;
 

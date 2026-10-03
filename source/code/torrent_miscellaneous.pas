@@ -454,10 +454,6 @@ begin
         //original tracker list is second place (Keep original intact)
         for TrackerStr in TrackerFromInsideOneTorrentFile do
           AddButIgnoreDuplicates(TrackerList.TrackerFinalList, TrackerStr);
-
-        //Nothing should be removed
-        TrackerList.TrackerManuallyDeselectedByUserList.Clear;
-        TrackerList.TrackerBanByUserList.Clear;
       end;
 
 
@@ -472,10 +468,6 @@ begin
         //Must be place as second TrackerList.TrackerAddedByUserList.
         for TrackerStr in TrackerList.TrackerAddedByUserList do
           AddButIgnoreDuplicates(TrackerList.TrackerFinalList, TrackerStr);
-
-        //Nothing should be removed
-        TrackerList.TrackerManuallyDeselectedByUserList.Clear;
-        TrackerList.TrackerBanByUserList.Clear;
       end;
 
       tloRandomize:
@@ -497,6 +489,11 @@ begin
         Assert(False, 'case else: Should never been called. CombineFiveTrackerListToOne');
       end;
     end;
+
+    //'Remove nothing' modes must not remove anything. The caller's lists stay untouched.
+    if TrackerListOrder in [tloInsertNewBeforeAndKeepOriginalIntactAndRemoveNothing,
+      tloAppendNewAfterAndKeepOriginalIntactAndRemoveNothing] then
+      Exit;
 
     //Trackers from TrackerList.TrackerAddedByUserList overrule the one from TrackerList.TrackerManuallyDeselectedByUserList
     //This is when there is a conflict between 'add' and 'remove manual selection'
