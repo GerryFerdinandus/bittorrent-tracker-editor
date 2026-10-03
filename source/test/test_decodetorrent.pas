@@ -50,7 +50,8 @@ type
     procedure Test_Root_Keys_Are_Sorted_By_Byte_Order;
     procedure Test_Private_And_Source_Already_Present_Keep_Info_Unchanged;
     procedure Test_Private_Flag_With_Value_Zero_Is_Replaced_Not_Duplicated;
-    procedure Test_Empty_AnnounceList_Tier_Is_Skipped;    {$IFDEF UNIX}
+    procedure Test_Empty_AnnounceList_Tier_Is_Skipped;
+    procedure Test_Failed_Decode_Clears_Previous_Torrent_State;    {$IFDEF UNIX}
     procedure Test_SaveTorrent_Keeps_Permissions_Of_Original;
     {$ENDIF}
   end;
@@ -451,6 +452,55 @@ begin
   CheckEquals('udp://tracker.test/announce', FDecodeTorrent.TrackerList[0],
     'Wrong first tracker');
   CheckEquals(TRACKER_B, FDecodeTorrent.TrackerList[1], 'Wrong second tracker');
+end;
+
+procedure TTestDecodeTorrent.Test_Failed_Decode_Clears_Previous_Torrent_State;
+const
+  //Root is not a dictionary / root has no 'info' / not bencode at all
+  BAD_TORRENTS: array[0..2] of UTF8String = ('i42e', 'd3:cow3:mooe', 'not bencode');
+var
+  i: integer;
+begin
+  for i := Low(BAD_TORRENTS) to High(BAD_TORRENTS) do
+  begin
+    //A valid torrent with metadata is decoded first
+    Check(DecodeTorrentString('d' + ANNOUNCE + '7:comment3:old10:created by2:me4:info' +
+      'd6:lengthi1024e4:name8:test.bin12:piece lengthi16384e6:pieces' + PIECES +
+      '7:private' + 'i1e6:source3:abce' + 'e'),
+      'Can not decode the valid torrent');
+    CheckEquals('old', FDecodeTorrent.Comment, 'Wrong comment');
+    CheckEquals('me', FDecodeTorrent.CreatedBy, 'Wrong created by');
+    CheckEquals('abc', FDecodeTorrent.InfoSource, 'Wrong source');
+    CheckTrue(FDecodeTorrent.PrivateTorrent, 'Torrent must be private');
+
+    CheckFalse(DecodeTorrentString(BAD_TORRENTS[i]), 'Bad torrent must fail: ' +
+      BAD_TORRENTS[i]);
+
+    //Nothing of the previous torrent may be left
+    CheckEquals(Ord(tv_unknown), Ord(FDecodeTorrent.TorrentVersion), 'Version');
+    CheckEquals('', FDecodeTorrent.InfoHash_V1, 'InfoHash_V1');
+    CheckEquals('', FDecodeTorrent.InfoHash_V2, 'InfoHash_V2');
+    CheckEquals('', FDecodeTorrent.Name, 'Name');
+    CheckEquals('', FDecodeTorrent.Comment, 'Comment');
+    CheckEquals('', FDecodeTorrent.CreatedBy, 'CreatedBy');
+    CheckEquals('', FDecodeTorrent.InfoSource, 'InfoSource');
+    CheckEquals(0, FDecodeTorrent.PieceLength, 'PieceLength');
+    CheckEquals(0, FDecodeTorrent.TotalFileSize, 'TotalFileSize');
+    CheckEquals(0, FDecodeTorrent.InfoFilesCount, 'InfoFilesCount');
+    CheckEquals(0, FDecodeTorrent.TrackerList.Count, 'TrackerList');
+    CheckFalse(FDecodeTorrent.PrivateTorrent, 'PrivateTorrent');
+
+    //Changing a torrent that is not decoded must fail, not use freed memory
+    CheckFalse(FDecodeTorrent.AddPrivateTorrentFlag, 'AddPrivateTorrentFlag');
+    CheckFalse(FDecodeTorrent.InfoSourceAdd('x'), 'InfoSourceAdd');
+    FDecodeTorrent.Comment := 'new';
+    CheckEquals('', FDecodeTorrent.Comment, 'A comment can not be set without a torrent');
+    CheckFalse(FDecodeTorrent.ChangeAnnounce('udp://x.test/announce'), 'ChangeAnnounce');
+    CheckFalse(FDecodeTorrent.SaveTorrent(GetTempDir + 'test_decodetorrent_not_saved.torrent'),
+      'SaveTorrent');
+    CheckFalse(FileExists(GetTempDir + 'test_decodetorrent_not_saved.torrent'),
+      'No file may be written');
+  end;
 end;
 
 {$IFDEF UNIX}

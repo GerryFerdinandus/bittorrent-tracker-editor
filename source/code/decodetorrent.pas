@@ -68,6 +68,7 @@ type
     FInfoFilesVersion: integer;
 
     function DecodeTorrent: boolean; overload;
+    procedure ResetDecodedState;
 
     function isPresentInfoPieces_V1(const EncodedInfo: utf8string): boolean;
     function isPresentInfoFileTree_V2(const EncodedInfo: utf8string): boolean;
@@ -255,10 +256,39 @@ begin
   inherited;
 end;
 
+procedure TDecodeTorrent.ResetDecodedState;
+begin
+  //A failed decode must not leave the data of the previous torrent, or pointers into its freed tree.
+  FreeAndNil(FBEncoded);
+  FBEncoded_Info := nil;
+  FBEncoded_Comment := nil;
+
+  TrackerList.Clear;
+  FObjectListFileNameAndLength.Clear;
+
+  FFilenameTorrent := '';
+  FTotalFileSize := 0;
+  FTorrentVersion := tv_unknown;
+  FInfoHash_V1 := '';
+  FInfoHash_V2 := '';
+  FCreatedBy := '';
+  FCreatedDate := 0;
+  FComment := '';
+  FInfoSource := '';
+  FName := '';
+  FPieceLength := 0;
+  FMetaVersion := 0;
+  FPrivateTorrent := False;
+  FPaddingPresent_V1 := False;
+  FPaddingPresent_V2 := False;
+  FInfoFilesVersion := 0;
+end;
+
 function TDecodeTorrent.DecodeTorrent(const Filename: utf8string): boolean;
 var
   S: TFileStream;
 begin
+  ResetDecodedState;
   FFilenameTorrent := Filename;
   //Load torrent file in FMemoryStream. This will be process by DecodeTorrent();
   try
@@ -273,10 +303,14 @@ begin
   except
     Result := False;
   end;
+  //Nothing of a torrent that failed to decode may be used or saved.
+  if not Result then
+    ResetDecodedState;
 end;
 
 function TDecodeTorrent.DecodeTorrent(Stream: TStream): boolean;
 begin
+  ResetDecodedState;
   //copy Stream -> FMemoryStream
   try
     FMemoryStream.Clear;
@@ -286,6 +320,8 @@ begin
   except;
     Result := False;
   end;
+  if not Result then
+    ResetDecodedState;
 end;
 
 function TDecodeTorrent.GetAnnounceList: boolean;
@@ -556,22 +592,6 @@ var
 begin
   Result := False;
   try
-    //Free the old one before creating a new one
-    if assigned(FBEncoded) then
-    begin
-      FreeAndNil(FBEncoded);
-    end;
-
-    // Clear List that will be filed later.
-    TrackerList.Clear;
-    FObjectListFileNameAndLength.Clear;
-
-    // Reset to default value
-    FTotalFileSize := 0;
-    FTorrentVersion := tv_unknown;
-    FPaddingPresent_V1 := False;
-    FPaddingPresent_V2 := False;
-
     //the torrent file inside FMemoryStream -> BEnencode it
     FMemoryStream.Position := 0;
     FBEncoded := TBEncoded.Create(FMemoryStream);
@@ -764,6 +784,9 @@ procedure TDecodeTorrent.SetComment(const AValue: utf8string);
 var
   Data: TBEncodedData;
 begin
+  //No torrent is decoded.
+  if not assigned(FBEncoded) then
+    Exit;
   if FComment = AValue then
     Exit;
   FComment := AValue;
@@ -816,6 +839,12 @@ var
   Encoded: TBEncoded;
   Data: TBEncodedData;
 begin//remove the old one and create a new one
+  //No torrent is decoded.
+  if not assigned(FBEncoded_Info) then
+  begin
+    Result := False;
+    Exit;
+  end;
   //Already private: do not touch 'info', re-sorting it could change the info hash.
   if GetPrivateTorrent then
   begin
@@ -857,6 +886,12 @@ var
   Encoded: TBEncoded;
   Data: TBEncodedData;
 begin//remove the old one and create a new one
+  //No torrent is decoded.
+  if not assigned(FBEncoded_Info) then
+  begin
+    Result := False;
+    Exit;
+  end;
   //Same source already present: do not touch 'info', re-sorting it could change the info hash.
   Encoded := FBEncoded_Info.ListData.FindElement(BK_SOURCE);
   if assigned(Encoded) and (Encoded.Format = befString) and
@@ -939,6 +974,12 @@ var
   Encoded: TBEncoded;
   Data: TBEncodedData;
 begin//remove the old one and create a new one
+  //No torrent is decoded.
+  if not assigned(FBEncoded) then
+  begin
+    Result := False;
+    Exit;
+  end;
   RemoveAnnounce;
   try
     Encoded := TBEncoded.Create;
@@ -960,6 +1001,12 @@ var
   DataRootBEncodedData: TBEncodedData;
   i: integer;
 begin
+  //No torrent is decoded.
+  if not assigned(FBEncoded) then
+  begin
+    Result := False;
+    Exit;
+  end;
   Result := True;
   //remove the present one.
   RemoveAnnounceList;
