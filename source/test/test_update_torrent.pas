@@ -57,6 +57,8 @@ type
     procedure Test_NonLatin_Torrent_FileName;
     procedure Test_NonLatin_Folder_Path;
     procedure Test_RemoveNothing_Keeps_Ban_Lists_Intact;
+    procedure Test_Folder_Name_With_Dot_Is_A_Folder;
+    procedure Test_LoadTorrentViaDir_Uppercase_Extension_And_Skips_Folders;
   end;
 
 implementation
@@ -485,6 +487,55 @@ begin
     CheckEquals(TRACKER_C, FTrackerList.TrackerFinalList[0], 'Wrong remaining tracker');
   finally
     Present.Free;
+  end;
+end;
+
+procedure TTestUpdateTorrent.Test_Folder_Name_With_Dot_Is_A_Folder;
+var
+  DottedFolder: string;
+begin
+  DottedFolder := FTempFolder + 'My.Torrents';
+  ForceDirectories(DottedFolder);
+  try
+    CheckTrue(PathIsTorrentFolder(DottedFolder), 'Existing folder with a dot is a folder');
+    CheckTrue(PathIsTorrentFolder(FTempFolder + 'no_such_folder'),
+      'A path without extension is treated as a folder');
+    CheckFalse(PathIsTorrentFolder(FTempFolder + 'missing.torrent'),
+      'A missing .torrent path is a file');
+  finally
+    RemoveDir(DottedFolder);
+  end;
+
+  CheckTrue(PathIsTorrentFile('a.torrent'), 'Wrong .torrent detection');
+  CheckTrue(PathIsTorrentFile('A.TORRENT'), '.torrent must be case insensitive');
+  CheckFalse(PathIsTorrentFile('a.txt'), 'A .txt is not a torrent');
+  CheckFalse(PathIsTorrentFile('a.torrent.bak'), 'A .bak is not a torrent');
+end;
+
+procedure TTestUpdateTorrent.Test_LoadTorrentViaDir_Uppercase_Extension_And_Skips_Folders;
+var
+  Folder, UpperFile, LowerFile, OtherFile, SubFolder: string;
+  FoundFiles: TStringList;
+begin
+  Folder := FTempFolder + 'scan' + PathDelim;
+  ForceDirectories(Folder);
+  SubFolder := Folder + 'folder.torrent';
+  ForceDirectories(SubFolder);
+  UpperFile := CreateTorrentFileAt(Folder + 'UPPER.TORRENT', [TRACKER_A]);
+  LowerFile := CreateTorrentFileAt(Folder + 'lower.torrent', [TRACKER_A]);
+  OtherFile := CreateTorrentFileAt(Folder + 'other.txt', [TRACKER_A]);
+  FoundFiles := TStringList.Create;
+  try
+    Check(LoadTorrentViaDir(Folder, FoundFiles), 'Can not find the torrent files');
+    CheckEquals(2, FoundFiles.Count,
+      'Must find the upper and lower case torrent file, not the folder or the .txt');
+  finally
+    FoundFiles.Free;
+    DeleteFile(UpperFile);
+    DeleteFile(LowerFile);
+    DeleteFile(OtherFile);
+    RemoveDir(SubFolder);
+    RemoveDir(Folder);
   end;
 end;
 

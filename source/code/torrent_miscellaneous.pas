@@ -111,6 +111,12 @@ function ByteSizeToBiggerSizeFormatStr(ByteSize: int64): string;
 function LoadTorrentViaDir(const Dir: UTF8String;
   TorrentFilesNameStringList: TStringList): boolean;
 
+//True for a folder that holds torrent files. A folder name may contain a dot.
+function PathIsTorrentFolder(const Path: UTF8String): boolean;
+
+//True when the file name has the extension '.torrent', in any letter case.
+function PathIsTorrentFile(const Path: UTF8String): boolean;
+
 function ValidTrackerURL(const TrackerURL: UTF8String): boolean;
 
 function WebTorrentTrackerURL(const TrackerURL: UTF8String): boolean;
@@ -265,17 +271,31 @@ begin
   //place all the torrent file name in TorrentFilesNameStringList
   //  TorrentFilesNameStringList := TStringList.Create;
 
-  if FindFirstUTF8(dir + PathDelim + '*.torrent', faAnyFile, Info) = 0 then
+  if FindFirstUTF8(dir + PathDelim + '*', faAnyFile, Info) = 0 then
   begin
     //Read all the torrent files inside this dir.
+    //The extension is checked here: a '*.torrent' mask is case sensitive on Linux.
     repeat
-      TorrentFilesNameStringList.Add(UTF8Trim(dir + PathDelim + Info.Name));
+      if ((Info.Attr and faDirectory) = 0) and PathIsTorrentFile(Info.Name) then
+        TorrentFilesNameStringList.Add(UTF8Trim(dir + PathDelim + Info.Name));
     until FindNextUTF8(info) <> 0;
   end;
   FindCloseUTF8(Info);
 
   Result := TorrentFilesNameStringList.Count > 0;
 
+end;
+
+function PathIsTorrentFolder(const Path: UTF8String): boolean;
+begin
+  //A path without extension that does not exist is still treated as a folder,
+  //so the caller reports 'can not load torrent via folder'.
+  Result := DirectoryExistsUTF8(Path) or (ExtractFileExt(Path) = '');
+end;
+
+function PathIsTorrentFile(const Path: UTF8String): boolean;
+begin
+  Result := UTF8LowerCase(ExtractFileExt(Path)) = '.torrent';
 end;
 
 

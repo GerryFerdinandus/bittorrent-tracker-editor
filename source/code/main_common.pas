@@ -404,8 +404,8 @@ begin
 
       if ConsoleModeDecodeParameter(FileNameOrDirStr, TrackerList) then
       begin
-        if ExtractFileExt(FileNameOrDirStr) = '' then
-        begin //There is no file extension. It must be a folder.
+        if PathIsTorrentFolder(FileNameOrDirStr) then
+        begin //A folder. Its name may contain a dot.
           if ConsoleDecodeTorrentFolder(FileNameOrDirStr, TrackerList, DecodeTorrentObj,
             FileSettingList) then
           begin
@@ -416,7 +416,7 @@ begin
           else
             LogConsoleError(TrackerList, 'Can not load torrent via folder');
         end
-        else if ExtractFileExt(FileNameOrDirStr) = '.torrent' then
+        else if PathIsTorrentFile(FileNameOrDirStr) then
         begin
           if ConsoleDecodeSingleTorrentFile(FileNameOrDirStr, TrackerList, DecodeTorrentObj,
             FileSettingList) then

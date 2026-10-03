@@ -870,8 +870,8 @@ begin
     begin
       //There is no error. Proceed with reading the torrent files
 
-      if ExtractFileExt(FileNameOrDirStr) = '' then
-      begin //There is no file extention. It must be a folder.
+      if PathIsTorrentFolder(FileNameOrDirStr) then
+      begin //A folder. Its name may contain a dot.
         if LoadTorrentViaDir(FileNameOrDirStr) then
         begin
           //Show all the tracker inside the torrent files.
@@ -888,7 +888,7 @@ begin
       end
       else //a single torrent file is selected?
       begin
-        if ExtractFileExt(FileNameOrDirStr) = '.torrent' then
+        if PathIsTorrentFile(FileNameOrDirStr) then
         begin
           StringList := TStringList.Create;
           try
@@ -1413,34 +1413,8 @@ begin
       FileNameOrDirStr := UTF8Trim(FileNames[Count]);
 
 
-      //if '.torrent' then add to TorrentFileNameStringList
-      if ExtractFileExt(FileNameOrDirStr) = '.torrent' then
-      begin
-
-        //if first time a torrent detected then ClearAllTorrentFilesNameAndTrackerInside
-        if not TorrentFileSelectionDetected then
-        begin
-          TorrentFileSelectionDetected := True;
-          ClearAllTorrentFilesNameAndTrackerInside;
-        end;
-
-        TorrentFileNameStringList.Add(FileNameOrDirStr);
-      end;
-
-      //if '.txt' then it must be a tracker list.
-      if ExtractFileExt(FileNameOrDirStr) = '.txt' then
-      begin
-        try
-          TrackerFileNameStringList.LoadFromFile(FileNameOrDirStr);
-          MemoNewTrackers.Append(UTF8Trim(TrackerFileNameStringList.Text));
-        except
-          //suppress any error in loading the file
-          FileNameOrDirStr := FileNameOrDirStr;
-        end;
-      end;
-
-      //if there is no file extention. It must be a torrent folder.
-      if ExtractFileExt(FileNameOrDirStr) = '' then
+      //a folder, its name may contain a dot. Must be checked before the file extensions.
+      if PathIsTorrentFolder(FileNameOrDirStr) then
       begin
 
         //if first time a torrent detected then ClearAllTorrentFilesNameAndTrackerInside
@@ -1458,6 +1432,30 @@ begin
 
         LoadTorrentViaDir(FileNameOrDirStr);
 
+      end
+      //if '.torrent' then add to TorrentFileNameStringList
+      else if PathIsTorrentFile(FileNameOrDirStr) then
+      begin
+
+        //if first time a torrent detected then ClearAllTorrentFilesNameAndTrackerInside
+        if not TorrentFileSelectionDetected then
+        begin
+          TorrentFileSelectionDetected := True;
+          ClearAllTorrentFilesNameAndTrackerInside;
+        end;
+
+        TorrentFileNameStringList.Add(FileNameOrDirStr);
+      end
+      //if '.txt' then it must be a tracker list.
+      else if ExtractFileExt(FileNameOrDirStr) = '.txt' then
+      begin
+        try
+          TrackerFileNameStringList.LoadFromFile(FileNameOrDirStr);
+          MemoNewTrackers.Append(UTF8Trim(TrackerFileNameStringList.Text));
+        except
+          //suppress any error in loading the file
+          FileNameOrDirStr := FileNameOrDirStr;
+        end;
       end;
 
     end;//for
