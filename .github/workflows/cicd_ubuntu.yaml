@@ -1,6 +1,6 @@
 # CI/CD workflow for Linux systems.
-# AppImages must be built on the oldest still-supported Ubuntu release for maximum portability.
-# Keep the AppImage runners on the oldest supported Ubuntu version unless its support ends.
+# For maximum portability with glibc, binaries must be built with the oldest glibc version available.
+# Keep all Ubuntu runners (zip, CLI and AppImage builds) on the oldest supported Ubuntu release unless its support ends.
 
 name: CI/CD on Linux systems.
 
@@ -13,7 +13,20 @@ on:
     - cron: "0 0 1 1/6 *"
 
 jobs:
+  config:
+    # Single place to set the Ubuntu version for all build runners.
+    # The 'env' context is not available in 'runs-on', so it is passed through a job output.
+    runs-on: ubuntu-slim
+    outputs:
+      ubuntu_version: ${{ steps.version.outputs.ubuntu_version }}
+    steps:
+    - name: Set Ubuntu version for all build runners
+      id: version
+      run: echo "ubuntu_version=24.04" >> "$GITHUB_OUTPUT"
+      shell: bash
+
   build:
+    needs: config
     timeout-minutes: 60
 
     strategy:
@@ -21,24 +34,22 @@ jobs:
       fail-fast: false
 
       # Set up an include to perform the following build configurations.
+      # RUNNER_SUFFIX: '-arm' selects the arm64 runner of the same Ubuntu version.
       matrix:
         include:
           - BUILD_TARGET: gtk2_amd64
             RELEASE_FILE_NAME: trackereditor_linux_amd64_gtk2.zip
             LAZ_OPT: --widgetset=gtk2
-            RUNS_ON: ubuntu-latest
 
           - BUILD_TARGET: qt5_amd64
             RELEASE_FILE_NAME: trackereditor_linux_amd64_qt5.zip
             LAZ_OPT: --widgetset=qt5
             QT_VERSION_CI: '5'
-            RUNS_ON: ubuntu-latest
 
           - BUILD_TARGET: qt6_amd64
             RELEASE_FILE_NAME: trackereditor_linux_amd64_qt6.zip
             LAZ_OPT: --widgetset=qt6
             QT_VERSION_CI: '6'
-            RUNS_ON: ubuntu-latest
 
           - BUILD_TARGET: AppImage_amd64
             RELEASE_FILE_NAME: trackereditor_linux_amd64_qt6.AppImage
@@ -46,7 +57,6 @@ jobs:
             QT_VERSION_CI: '6'
             LINUX_DEPLOY_FILE_CPU: x86_64
             APPIMAGE_BUILD: true
-            RUNS_ON: ubuntu-24.04
 
           - BUILD_TARGET: AppImage_arm64
             RELEASE_FILE_NAME: trackereditor_linux_arm64_qt6.AppImage
@@ -54,20 +64,19 @@ jobs:
             QT_VERSION_CI: '6'
             LINUX_DEPLOY_FILE_CPU: aarch64
             APPIMAGE_BUILD: true
-            RUNS_ON: ubuntu-24.04-arm
+            RUNNER_SUFFIX: -arm
 
           - BUILD_TARGET: cli_amd64
             RELEASE_FILE_NAME: trackereditor_linux_amd64_cli.zip
             CLI_BUILD: true
-            RUNS_ON: ubuntu-24.04
 
           - BUILD_TARGET: cli_arm64
             RELEASE_FILE_NAME: trackereditor_linux_arm64_cli.zip
             CLI_BUILD: true
-            RUNS_ON: ubuntu-24.04-arm
+            RUNNER_SUFFIX: -arm
 
     name: ${{ matrix.BUILD_TARGET }}
-    runs-on: ${{ matrix.RUNS_ON }}
+    runs-on: ubuntu-${{ needs.config.outputs.ubuntu_version }}${{ matrix.RUNNER_SUFFIX }}
 
     steps:
     - uses: actions/checkout@v7
