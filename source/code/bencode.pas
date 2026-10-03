@@ -76,9 +76,15 @@ type
     destructor Destroy; override;
     constructor Create(Stream: TStream);
     constructor Create;
+    //Used by Create(Stream) for the nested values. Depth is the nesting level.
+    constructor CreateNested(Stream: TStream; Depth: integer);
   end;
 
 implementation
+
+const
+  //Every level is a recursive call. A real torrent is only a few levels deep.
+  MAX_NESTING_DEPTH = 256;
 
 destructor TBEncodedData.Destroy;
 begin
@@ -99,6 +105,11 @@ begin
 end;
 
 constructor TBEncoded.Create(Stream: TStream);
+begin
+  CreateNested(Stream, 0);
+end;
+
+constructor TBEncoded.CreateNested(Stream: TStream; Depth: integer);
 
   function GetString(Buffer: string): string;
   var
@@ -146,6 +157,9 @@ var
   Encoded: TBEncoded;
 begin
   inherited Create;
+
+  if Depth > MAX_NESTING_DEPTH then
+    raise Exception.Create('Bencode is nested too deep');
 
   X := ' ';
 
@@ -200,7 +214,7 @@ begin
       // otherwise move the cursor back
       Stream.Seek(-1, soFromCurrent);
       // create the element
-      Encoded := TBEncoded.Create(Stream);
+      Encoded := TBEncoded.CreateNested(Stream, Depth + 1);
       // add it to the list
       ListData.Add(TBEncodedData.Create(Encoded));
     until False;
@@ -226,7 +240,7 @@ begin
       // now read the string data
       Buffer := GetString(string(X));
       // create the element
-      Encoded := TBEncoded.Create(Stream);
+      Encoded := TBEncoded.CreateNested(Stream, Depth + 1);
       // create the data element
       Data := TBEncodedData.Create(Encoded);
       Data.Header := Buffer;

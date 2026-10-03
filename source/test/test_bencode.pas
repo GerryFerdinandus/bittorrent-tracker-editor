@@ -52,6 +52,10 @@ type
     procedure Test_Decode_String_With_Eight_Digit_Length;
     procedure Test_Decode_String_Length_Larger_Than_Stream_Raises_Exception;
     procedure Test_Decode_String_Length_With_Eleven_Digits_Raises_Exception;
+    procedure Test_Decode_Nested_Lists_Within_The_Limit;
+    procedure Test_Decode_Nested_Lists_Beyond_The_Limit_Raises_Exception;
+    procedure Test_Decode_Nested_Dictionaries_Beyond_The_Limit_Raises_Exception;
+    procedure Test_Decode_Extremely_Deep_Nesting_Raises_Exception;
   end;
 
 implementation
@@ -363,6 +367,70 @@ begin
     on E: Exception do Raised := True;
   end;
   Check(Raised, 'A string length with 11 digits must raise an exception');
+end;
+
+procedure TTestBEncode.Test_Decode_Nested_Lists_Within_The_Limit;
+const
+  DEPTH = 200;
+begin
+  FEncoded := Decode(StringOfChar('l', DEPTH) + StringOfChar('e', DEPTH));
+
+  CheckEquals(Ord(befList), Ord(FEncoded.Format), 'Wrong format');
+  CheckEquals(1, FEncoded.ListData.Count, 'Wrong element count');
+end;
+
+procedure TTestBEncode.Test_Decode_Nested_Lists_Beyond_The_Limit_Raises_Exception;
+const
+  DEPTH = 300;
+var
+  Raised: boolean;
+begin
+  Raised := False;
+  try
+    FEncoded := Decode(StringOfChar('l', DEPTH) + StringOfChar('e', DEPTH));
+  except
+    on E: EAssertionFailedError do raise;
+    on E: Exception do Raised := True;
+  end;
+  Check(Raised, 'Nested lists beyond the limit must raise an exception');
+end;
+
+procedure TTestBEncode.Test_Decode_Nested_Dictionaries_Beyond_The_Limit_Raises_Exception;
+var
+  Nested: UTF8String;
+  i: integer;
+  Raised: boolean;
+begin
+  Nested := '';
+  for i := 1 to 300 do
+    Nested := Nested + 'd1:a';
+  Nested := Nested + 'i1e' + StringOfChar('e', 300);
+
+  Raised := False;
+  try
+    FEncoded := Decode(Nested);
+  except
+    on E: EAssertionFailedError do raise;
+    on E: Exception do Raised := True;
+  end;
+  Check(Raised, 'Nested dictionaries beyond the limit must raise an exception');
+end;
+
+procedure TTestBEncode.Test_Decode_Extremely_Deep_Nesting_Raises_Exception;
+const
+  //Without a limit this overflows the stack and ends the program
+  DEPTH = 1000000;
+var
+  Raised: boolean;
+begin
+  Raised := False;
+  try
+    FEncoded := Decode(StringOfChar('l', DEPTH));
+  except
+    on E: EAssertionFailedError do raise;
+    on E: Exception do Raised := True;
+  end;
+  Check(Raised, 'Extremely deep nesting must raise an exception');
 end;
 
 initialization
