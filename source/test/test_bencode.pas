@@ -49,6 +49,9 @@ type
     procedure Test_Decode_Invalid_Prefix_Raises_Exception;
     procedure Test_Decode_Unterminated_Integer_Raises_Exception;
     procedure Test_Decode_Truncated_String_Raises_Exception;
+    procedure Test_Decode_String_With_Eight_Digit_Length;
+    procedure Test_Decode_String_Length_Larger_Than_Stream_Raises_Exception;
+    procedure Test_Decode_String_Length_With_Eleven_Digits_Raises_Exception;
   end;
 
 implementation
@@ -315,6 +318,51 @@ begin
   except
     on E: Exception do; //expected
   end;
+end;
+
+procedure TTestBEncode.Test_Decode_String_With_Eight_Digit_Length;
+var
+  Data: UTF8String;
+begin
+  //Fields like 'pieces' or 'piece layers' can be bigger than 10 MB
+  Data := StringOfChar('x', 12345678);
+  Data[1] := 'a';
+  Data[Length(Data)] := 'z';
+  FEncoded := Decode(IntToStr(Length(Data)) + ':' + Data);
+
+  CheckEquals(Ord(befString), Ord(FEncoded.Format), 'Wrong format');
+  CheckEquals(Length(Data), Length(FEncoded.StringData), 'Wrong string length');
+  CheckEquals('a', FEncoded.StringData[1], 'Wrong first byte');
+  CheckEquals('z', FEncoded.StringData[Length(Data)], 'Wrong last byte');
+end;
+
+procedure TTestBEncode.Test_Decode_String_Length_Larger_Than_Stream_Raises_Exception;
+var
+  Raised: boolean;
+begin
+  //The length is far more than the data. It must fail without allocating that much memory.
+  Raised := False;
+  try
+    FEncoded := Decode('999999999:abc');
+  except
+    on E: EAssertionFailedError do raise;
+    on E: Exception do Raised := True;
+  end;
+  Check(Raised, 'A string length larger than the stream must raise an exception');
+end;
+
+procedure TTestBEncode.Test_Decode_String_Length_With_Eleven_Digits_Raises_Exception;
+var
+  Raised: boolean;
+begin
+  Raised := False;
+  try
+    FEncoded := Decode('12345678901:abc');
+  except
+    on E: EAssertionFailedError do raise;
+    on E: Exception do Raised := True;
+  end;
+  Check(Raised, 'A string length with 11 digits must raise an exception');
 end;
 
 initialization

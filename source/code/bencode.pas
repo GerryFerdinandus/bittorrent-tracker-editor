@@ -103,6 +103,7 @@ constructor TBEncoded.Create(Stream: TStream);
   function GetString(Buffer: string): string;
   var
     X: char;
+    StringLength: int64;
   begin
     Result := '';
     // loop until we come across it
@@ -116,9 +117,16 @@ constructor TBEncoded.Create(Stream: TStream);
       begin
         if Buffer = '' then
           raise Exception.Create('Missing bencode string length');
-        if Length(Buffer) > 7 then
+        //10 digits always fit in an int64.
+        if Length(Buffer) > 10 then
           raise Exception.Create('Bencode string length is too large');
-        SetLength(Result, StrToInt(Buffer));
+        StringLength := StrToInt64(Buffer);
+        if StringLength > High(longint) then
+          raise Exception.Create('Bencode string length is too large');
+        //Check before SetLength: a wrong length must not allocate a huge string.
+        if StringLength > Stream.Size - Stream.Position then
+          raise Exception.Create('Unexpected end of stream while reading string data');
+        SetLength(Result, StringLength);
         if Length(Result) > 0 then
         begin
           if Stream.Read(Result[1], Length(Result)) <> Length(Result) then
