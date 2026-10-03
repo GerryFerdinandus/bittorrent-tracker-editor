@@ -112,6 +112,7 @@ function UpdateTorrentFileList(var TrackerList: TTrackerList;
   const FileSettingList: TTorrentFileSettingArray): TUpdateTorrentResult;
 var
   i: integer;
+  Attributes: longint;
 begin
   //The count of the tloSort combined list, used when no torrent file is updated.
   Result.TrackerCount := TrackerList.TrackerFinalList.Count;
@@ -129,7 +130,9 @@ begin
   for i := 0 to TrackerList.TorrentFileNameList.Count - 1 do
   begin
     //check for read only files. It can not be updated by tracker editor
-    if (FileGetAttr(TrackerList.TorrentFileNameList[i]) and faReadOnly) <> 0 then
+    //-1 is a missing file, it is not read only. DecodeTorrent reports it below.
+    Attributes := FileGetAttr(TrackerList.TorrentFileNameList[i]);
+    if (Attributes <> -1) and ((Attributes and faReadOnly) <> 0) then
     begin
       Result.SomeFilesAreReadOnly := True;
       Continue;

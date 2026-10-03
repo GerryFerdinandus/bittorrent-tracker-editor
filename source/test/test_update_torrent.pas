@@ -58,6 +58,7 @@ type
     procedure Test_NonLatin_Folder_Path;
     procedure Test_RemoveNothing_Keeps_Ban_Lists_Intact;
     procedure Test_Folder_Name_With_Dot_Is_A_Folder;
+    procedure Test_Missing_File_Is_Reported_As_Undecodable_Not_ReadOnly;
     procedure Test_LoadTorrentViaDir_Uppercase_Extension_And_Skips_Folders;
   end;
 
@@ -537,6 +538,27 @@ begin
     RemoveDir(SubFolder);
     RemoveDir(Folder);
   end;
+end;
+
+procedure TTestUpdateTorrent.Test_Missing_File_Is_Reported_As_Undecodable_Not_ReadOnly;
+var
+  UpdateResult: TUpdateTorrentResult;
+begin
+  //The file was deleted after it was loaded. FileGetAttr returns -1, that is not 'read only'.
+  FTrackerList.TorrentFileNameList.Add(FTempFolder + 'missing.torrent');
+  FTrackerList.TorrentFileNameList.Add(CreateTorrentFile('two.torrent', [TRACKER_C]));
+
+  FTrackerList.TrackerAddedByUserList.Add(TRACKER_A);
+  FTrackerList.TrackerListOrderForUpdatedTorrent := tloSort;
+  CombineFiveTrackerListToOne(tloSort, FTrackerList, FDecodeTorrent.TrackerList);
+
+  UpdateResult := UpdateTorrentFileList(FTrackerList, FDecodeTorrent,
+    DefaultFileSettingList);
+
+  CheckFalse(UpdateResult.SomeFilesAreReadOnly, 'A missing file is not read only');
+  CheckTrue(UpdateResult.SomeFilesCanNotBeDecoded, 'A missing file must be reported');
+  CheckEquals(1, UpdateResult.FilesUpdated, 'Only the existing file can be updated');
+  CheckTrackerListInFile(FTrackerList.TorrentFileNameList[1], [TRACKER_A]);
 end;
 
 initialization
