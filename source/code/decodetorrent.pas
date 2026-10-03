@@ -781,6 +781,7 @@ begin
       Data := TBEncodedData.Create(FBEncoded_Comment);
       Data.Header := BK_COMMENT;
       FBEncoded.ListData.Add(Data);
+      FBEncoded.ListData.Sort(@sort_);//keys must be in alphabetical order.
     end
     else
     begin

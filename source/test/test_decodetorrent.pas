@@ -43,6 +43,7 @@ type
     procedure Test_NonLatin_FileName_And_Comment_Inside_Torrent;
     procedure Test_SaveTorrent_Overwrites_Existing_File_Without_Temp_Leftover;
     procedure Test_SaveTorrent_Failure_Leaves_No_Temp_File;
+    procedure Test_Comment_Added_Keeps_Root_Keys_Sorted;
     {$IFDEF UNIX}
     procedure Test_SaveTorrent_Keeps_Permissions_Of_Original;
     {$ENDIF}
@@ -335,6 +336,37 @@ begin
   finally
     RemoveDir(TargetFolder);
   end;
+end;
+
+procedure TTestDecodeTorrent.Test_Comment_Added_Keeps_Root_Keys_Sorted;
+var
+  TempFileName: string;
+  Stream: TFileStream;
+  Saved: UTF8String;
+begin
+  //The torrent has no 'comment', so a new element is created and must not be appended after 'info'.
+  Check(DecodeTorrentString(BuildTorrent(INFO_SINGLE_FILE)),
+    'Can not decode a torrent with one file');
+
+  FDecodeTorrent.Comment := 'new comment';
+
+  TempFileName := GetTempDir + 'test_decodetorrent_comment_order.torrent';
+  Check(FDecodeTorrent.SaveTorrent(TempFileName), 'Can not save torrent');
+  try
+    Stream := TFileStream.Create(TempFileName, fmOpenRead);
+    try
+      SetLength(Saved, Stream.Size);
+      Stream.ReadBuffer(Saved[1], Length(Saved));
+    finally
+      Stream.Free;
+    end;
+  finally
+    DeleteFile(TempFileName);
+  end;
+
+  Check(Pos('7:comment', Saved) > 0, 'Comment must be saved');
+  Check(Pos('7:comment', Saved) < Pos('4:info', Saved),
+    'Key ''comment'' must come before ''info'' in the saved file');
 end;
 
 {$IFDEF UNIX}
