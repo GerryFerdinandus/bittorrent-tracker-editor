@@ -290,7 +290,7 @@ end;
 
 function TDecodeTorrent.GetAnnounceList: boolean;
 var
-  TempBEncoded: TBEncoded;
+  TempBEncoded, TierBEncoded: TBEncoded;
   i, Count: integer;
   TrackerStr: utf8string;
 begin
@@ -317,8 +317,11 @@ begin
         begin
           //there is a list in side a list!
           //By design only the first tracker of each tier is read. See unit header.
-          TrackerStr := TempBEncoded.ListData.Items[
-            i].Data.ListData.First.Data.StringData;
+          //An empty tier has no tracker. Skip it, it must not make the whole torrent fail.
+          TierBEncoded := TempBEncoded.ListData.Items[i].Data;
+          if (TierBEncoded.Format <> befList) or (TierBEncoded.ListData.Count = 0) then
+            Continue;
+          TrackerStr := TierBEncoded.ListData.First.Data.StringData;
 
           // TrackerList is not sorted. Must use IndexOf to ignore duplicated entries.
           if TrackerList.IndexOf(TrackerStr) < 0 then

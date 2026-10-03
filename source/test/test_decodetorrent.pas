@@ -50,7 +50,7 @@ type
     procedure Test_Root_Keys_Are_Sorted_By_Byte_Order;
     procedure Test_Private_And_Source_Already_Present_Keep_Info_Unchanged;
     procedure Test_Private_Flag_With_Value_Zero_Is_Replaced_Not_Duplicated;
-    {$IFDEF UNIX}
+    procedure Test_Empty_AnnounceList_Tier_Is_Skipped;    {$IFDEF UNIX}
     procedure Test_SaveTorrent_Keeps_Permissions_Of_Original;
     {$ENDIF}
   end;
@@ -435,6 +435,22 @@ begin
     Length(StringReplace(Saved, '7:private', '', [rfReplaceAll])),
     'There must be exactly one ''private'' key');
   Check(Pos('7:privatei1e', Saved) > 0, 'The private flag must have value 1');
+end;
+
+procedure TTestDecodeTorrent.Test_Empty_AnnounceList_Tier_Is_Skipped;
+const
+  TRACKER_B = 'udp://b.test/announce';
+begin
+  //The first tier is empty ('le'). It must be skipped, not make the whole torrent fail.
+  Check(DecodeTorrentString('d' + ANNOUNCE + '13:announce-listlle' + 'l' +
+    BEncodeString(TRACKER_B) + 'ee4:info' + INFO_MULTI_FILE + 'e'),
+    'An empty tier in announce-list must not make decoding fail');
+
+  CheckEquals(2, FDecodeTorrent.InfoFilesCount, 'Wrong file count');
+  CheckEquals(2, FDecodeTorrent.TrackerList.Count, 'Wrong tracker count');
+  CheckEquals('udp://tracker.test/announce', FDecodeTorrent.TrackerList[0],
+    'Wrong first tracker');
+  CheckEquals(TRACKER_B, FDecodeTorrent.TrackerList[1], 'Wrong second tracker');
 end;
 
 {$IFDEF UNIX}
