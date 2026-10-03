@@ -645,6 +645,10 @@ begin
   //Undo all possible sort column used by the user. Sort it back to 'begin state'
   FControllerGridTorrentData.ReorderGrid;
 
+  //EditingDone may not have fired yet when a menu item is clicked while the edit has focus.
+  if not FConsoleMode then
+    FTrackerList.SourceTag := LabeledEditInfoSource.Text;
+
   //initial value is false, will be set to true if some file fails to write
   UpdateResult.SomeFilesCannotBeWritten := False;
   UpdateResult.SomeFilesAreReadOnly := False;
