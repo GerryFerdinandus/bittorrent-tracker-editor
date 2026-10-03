@@ -28,6 +28,9 @@ type
 
     //Decode a torrent that is present as a bencoded string
     function DecodeTorrentString(const TorrentStr: UTF8String): boolean;
+
+    //Save FDecodeTorrent to a temp file and return the exact bytes that were written
+    function SaveAndReadBack: UTF8String;
   protected
     procedure SetUp; override;
     procedure TearDown; override;
@@ -44,6 +47,9 @@ type
     procedure Test_SaveTorrent_Overwrites_Existing_File_Without_Temp_Leftover;
     procedure Test_SaveTorrent_Failure_Leaves_No_Temp_File;
     procedure Test_Comment_Added_Keeps_Root_Keys_Sorted;
+    procedure Test_Root_Keys_Are_Sorted_By_Byte_Order;
+    procedure Test_Private_And_Source_Already_Present_Keep_Info_Unchanged;
+    procedure Test_Private_Flag_With_Value_Zero_Is_Replaced_Not_Duplicated;
     {$IFDEF UNIX}
     procedure Test_SaveTorrent_Keeps_Permissions_Of_Original;
     {$ENDIF}
@@ -130,6 +136,26 @@ begin
     Result := FDecodeTorrent.DecodeTorrent(Stream);
   finally
     Stream.Free;
+  end;
+end;
+
+function TTestDecodeTorrent.SaveAndReadBack: UTF8String;
+var
+  TempFileName: string;
+  Stream: TFileStream;
+begin
+  TempFileName := GetTempDir + 'test_decodetorrent_saveandreadback.torrent';
+  Check(FDecodeTorrent.SaveTorrent(TempFileName), 'Can not save torrent');
+  try
+    Stream := TFileStream.Create(TempFileName, fmOpenRead);
+    try
+      SetLength(Result, Stream.Size);
+      Stream.ReadBuffer(Result[1], Length(Result));
+    finally
+      Stream.Free;
+    end;
+  finally
+    DeleteFile(TempFileName);
   end;
 end;
 
@@ -340,8 +366,6 @@ end;
 
 procedure TTestDecodeTorrent.Test_Comment_Added_Keeps_Root_Keys_Sorted;
 var
-  TempFileName: string;
-  Stream: TFileStream;
   Saved: UTF8String;
 begin
   //The torrent has no 'comment', so a new element is created and must not be appended after 'info'.
@@ -349,24 +373,68 @@ begin
     'Can not decode a torrent with one file');
 
   FDecodeTorrent.Comment := 'new comment';
-
-  TempFileName := GetTempDir + 'test_decodetorrent_comment_order.torrent';
-  Check(FDecodeTorrent.SaveTorrent(TempFileName), 'Can not save torrent');
-  try
-    Stream := TFileStream.Create(TempFileName, fmOpenRead);
-    try
-      SetLength(Saved, Stream.Size);
-      Stream.ReadBuffer(Saved[1], Length(Saved));
-    finally
-      Stream.Free;
-    end;
-  finally
-    DeleteFile(TempFileName);
-  end;
+  Saved := SaveAndReadBack;
 
   Check(Pos('7:comment', Saved) > 0, 'Comment must be saved');
   Check(Pos('7:comment', Saved) < Pos('4:info', Saved),
     'Key ''comment'' must come before ''info'' in the saved file');
+end;
+
+procedure TTestDecodeTorrent.Test_Root_Keys_Are_Sorted_By_Byte_Order;
+var
+  Saved: UTF8String;
+begin
+  //Upper case 'Z' is sorted before lower case 'a' in byte order. A case-insensitive sort moves it to the end.
+  Check(DecodeTorrentString('d6:Zextra3:foo' + ANNOUNCE + '4:info' + INFO_SINGLE_FILE + 'e'),
+    'Can not decode a torrent with an upper case key');
+
+  //Setting a comment sorts the root dictionary
+  FDecodeTorrent.Comment := 'new comment';
+  Saved := SaveAndReadBack;
+
+  Check(Pos('6:Zextra', Saved) < Pos('8:announce', Saved),
+    'Key ''Zextra'' must come before ''announce'' in byte order');
+  Check(Pos('7:comment', Saved) < Pos('4:info', Saved),
+    'Key ''comment'' must come before ''info''');
+end;
+
+procedure TTestDecodeTorrent.Test_Private_And_Source_Already_Present_Keep_Info_Unchanged;
+var
+  Before, After: UTF8String;
+begin
+  //'info' is deliberately not sorted. Rewriting it would change the info hash.
+  Check(DecodeTorrentString(BuildTorrent('d7:privatei1e6:source3:abc6:lengthi1024e' +
+    '4:name8:test.bin12:piece lengthi16384e6:pieces' + PIECES + 'e')),
+    'Can not decode a private torrent');
+  Before := SaveAndReadBack;
+
+  Check(FDecodeTorrent.AddPrivateTorrentFlag, 'Can not add the private flag');
+  Check(FDecodeTorrent.InfoSourceAdd('abc'), 'Can not add the source');
+  After := SaveAndReadBack;
+
+  CheckTrue(FDecodeTorrent.PrivateTorrent, 'Torrent must stay private');
+  CheckEquals(Before, After,
+    'Adding a flag and source that are already present must not change the torrent');
+end;
+
+procedure TTestDecodeTorrent.Test_Private_Flag_With_Value_Zero_Is_Replaced_Not_Duplicated;
+var
+  Saved: UTF8String;
+begin
+  //'private' is present but not 1, so the torrent is public and the flag must be replaced.
+  Check(DecodeTorrentString(BuildTorrent('d7:privatei0e6:lengthi1024e4:name8:test.bin' +
+    '12:piece lengthi16384e6:pieces' + PIECES + 'e')),
+    'Can not decode a torrent with private flag 0');
+  CheckFalse(FDecodeTorrent.PrivateTorrent, 'Torrent with private flag 0 must be public');
+
+  Check(FDecodeTorrent.AddPrivateTorrentFlag, 'Can not add the private flag');
+  CheckTrue(FDecodeTorrent.PrivateTorrent, 'Torrent must be private');
+
+  Saved := SaveAndReadBack;
+  CheckEquals(Length(Saved) - Length('7:private'),
+    Length(StringReplace(Saved, '7:private', '', [rfReplaceAll])),
+    'There must be exactly one ''private'' key');
+  Check(Pos('7:privatei1e', Saved) > 0, 'The private flag must have value 1');
 end;
 
 {$IFDEF UNIX}

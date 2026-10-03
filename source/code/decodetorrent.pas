@@ -221,7 +221,8 @@ end;
 
 function Sort_(Item1, Item2: Pointer): integer;
 begin
-  Result := UTF8CompareText(TBEncodedData(Item1).Header, TBEncodedData(Item2).Header);
+  //Bencode requires raw byte order. A case-insensitive or locale compare would change the order of the keys.
+  Result := CompareStr(TBEncodedData(Item1).Header, TBEncodedData(Item2).Header);
 end;
 
 { TDecodeTorrent }
@@ -812,6 +813,13 @@ var
   Encoded: TBEncoded;
   Data: TBEncodedData;
 begin//remove the old one and create a new one
+  //Already private: do not touch 'info', re-sorting it could change the info hash.
+  if GetPrivateTorrent then
+  begin
+    FPrivateTorrent := True;
+    Result := True;
+    Exit;
+  end;
   RemovePrivateTorrentFlag;
   try
     Encoded := TBEncoded.Create;
@@ -846,6 +854,14 @@ var
   Encoded: TBEncoded;
   Data: TBEncodedData;
 begin//remove the old one and create a new one
+  //Same source already present: do not touch 'info', re-sorting it could change the info hash.
+  Encoded := FBEncoded_Info.ListData.FindElement(BK_SOURCE);
+  if assigned(Encoded) and (Encoded.Format = befString) and
+    (Encoded.StringData = Value) then
+  begin
+    Result := True;
+    Exit;
+  end;
   InfoSourceRemove;
   try
     Encoded := TBEncoded.Create;
