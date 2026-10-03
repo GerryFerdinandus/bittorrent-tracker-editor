@@ -179,6 +179,7 @@ type
     procedure ViewUpdateEnd;
     procedure ViewUpdateFormCaption;
     procedure ClearAllTorrentFilesNameAndTrackerInside;
+    procedure ClearTorrentFilesView;
     procedure SaveTrackerFinalListToFile;
     procedure ConsoleModeOrDragAndDropStartupMode;
     procedure UpdateViewRemoveTracker;
@@ -1542,9 +1543,10 @@ begin
       else
       begin
         //Something is wrong. Can not decode torrent tracker item.
-        //Cancel everything.
+        //Cancel everything. The view rows must go too, they are index-matched to TorrentFileNameList.
         FTrackerList.TorrentFileNameList.Clear;
         FTrackerList.TrackerFromInsideTorrentFilesList.Clear;
+        ClearTorrentFilesView;
         ShowUserErrorMessage('Error: Can not read torrent.', TorrentFileNameStr);
         Result := False;
         exit;
@@ -1557,7 +1559,7 @@ end;
 
 function TFormTrackerModify.ReloadAllTorrentAndRefreshView: boolean;
 var
-  TorrentFileStr: utf8string;
+  i: integer;
 begin
 {
   This is called after updating the torrent.
@@ -1571,16 +1573,20 @@ begin
   ViewUpdateBegin;
   //Copy all the trackers in inside the torrent files to FTrackerList.TrackerFromInsideTorrentFilesList
   FTrackerList.TrackerFromInsideTorrentFilesList.Clear;
-  for TorrentFileStr in FTrackerList.TorrentFileNameList do
+  i := 0;
+  while i < FTrackerList.TorrentFileNameList.Count do
   begin
-    if DecodeTorrentFile(TorrentFileStr) then
+    if DecodeTorrentFile(FTrackerList.TorrentFileNameList[i]) then
     begin
       UpdateTorrentTrackerList;
+      Inc(i);
     end
     else
     begin
       //some files can not be read/decoded
       Result := False;
+      //No view row is made for it. Drop it, or the rows no longer match TorrentFileNameList.
+      FTrackerList.TorrentFileNameList.Delete(i);
     end;
   end;
 
@@ -1595,6 +1601,16 @@ begin
   FTrackerList.TrackerFromInsideTorrentFilesList.Clear;
   //  Caption := FORM_CAPTION;
   //  ShowTorrentFilesAfterBeingLoaded;
+end;
+
+procedure TFormTrackerModify.ClearTorrentFilesView;
+begin
+  //Same clearing as ViewUpdateBegin, but safe to call between ViewUpdateBegin and ViewUpdateEnd.
+  CheckListBoxPublicPrivateTorrent.Clear;
+  StringGridTorrentData.Clear;
+  FControllerGridTorrentData.ClearAllImageIndex;
+  StringGridTorrentData.RowCount := 1;
+  FControllerTreeviewTorrentData.Clear;
 end;
 
 

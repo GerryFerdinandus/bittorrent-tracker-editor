@@ -42,9 +42,11 @@ type
     procedure MenuItemTorrentFilesTreeShowOrHideItemClick(Sender: TObject);
     procedure MenuItemTorrentFilesTreeHideAllClick(Sender: TObject);
     procedure MenuItemTorrentFilesTreeShowAllClick(Sender: TObject);
-    procedure Clear;
     procedure MenuItemTorrentFilesTreeSyncWithPopupMenu;
   public
+    //Remove all the torrent files from the view
+    procedure Clear;
+
     //called before AddOneTorrentFileDecoded
     procedure BeginUpdate;
 
