@@ -388,18 +388,28 @@ begin
 end;
 
 procedure TFormTrackerModify.MenuFileTorrentFolderClick(Sender: TObject);
+var
+  NoTorrentFound: boolean;
 begin
-  ClearAllTorrentFilesNameAndTrackerInside;
-  ViewUpdateBegin;
+  NoTorrentFound := False;
   //User what to select one torrent file. Show the user dialog file selection.
   SelectDirectoryDialog1.InitialDir := ExtractFilePath(Application.ExeName);
+  //Cancel must keep the torrent files that are already loaded.
   if SelectDirectoryDialog1.Execute then
   begin
+    ClearAllTorrentFilesNameAndTrackerInside;
+    ViewUpdateBegin;
     ShowHourGlassCursor(True);
-    LoadTorrentViaDir(SelectDirectoryDialog1.FileName);
+    //A failed decode is already reported by AddTorrentFileList.
+    NoTorrentFound := LoadTorrentViaDir(SelectDirectoryDialog1.FileName) and
+      (FTrackerList.TorrentFileNameList.Count = 0);
     ShowHourGlassCursor(False);
+    ViewUpdateEnd;
   end;
-  ViewUpdateEnd;
+
+  if NoTorrentFound then
+    ShowUserErrorMessage('No torrent files found in this folder.',
+      SelectDirectoryDialog1.FileName);
 end;
 
 procedure TFormTrackerModify.MenuHelpVisitWebsiteClick(Sender: TObject);
@@ -486,7 +496,10 @@ end;
 procedure TFormTrackerModify.AppendTrackersToMemoNewTrackers(TrackerList: TStringList);
 var
   tracker: utf8string;
+  PreviousText: string;
 begin
+  PreviousText := MemoNewTrackers.Text;
+
   //Append all the trackers to MemoNewTrackers
   MemoNewTrackers.Lines.BeginUpdate;
   for Tracker in TrackerList do
@@ -495,10 +508,10 @@ begin
   end;
   MemoNewTrackers.Lines.EndUpdate;
 
-  //Check for error in tracker list
+  //Check for error in tracker list. Keep what the user already had.
   if not CopyUserInputNewTrackersToList then
   begin
-    MemoNewTrackers.Lines.Clear;
+    MemoNewTrackers.Text := PreviousText;
   end;
 end;
 
@@ -1197,14 +1210,14 @@ procedure TFormTrackerModify.MenuOpenTorrentFileClick(Sender: TObject);
 var
   StringList: TStringList;
 begin
-  ClearAllTorrentFilesNameAndTrackerInside;
-  ViewUpdateBegin;
-
   //User what to select a torrent file. Show the user dialog.
   OpenDialog.Title := 'Select a torrent file';
   OpenDialog.Filter := 'torrent|*.torrent';
+  //Cancel must keep the torrent files that are already loaded.
   if OpenDialog.Execute then
   begin
+    ClearAllTorrentFilesNameAndTrackerInside;
+    ViewUpdateBegin;
     ShowHourGlassCursor(True);
     StringList := TStringList.Create;
     try
@@ -1214,8 +1227,8 @@ begin
       StringList.Free;
       ShowHourGlassCursor(False);
     end;
+    ViewUpdateEnd;
   end;
-  ViewUpdateEnd;
 
 end;
 
@@ -1242,16 +1255,21 @@ end;
 
 
 procedure TFormTrackerModify.MenuFileOpenTrackerListClick(Sender: TObject);
+var
+  PreviousText: string;
 begin
-  //Clear the present list
-  MemoNewTrackers.Lines.Clear;
   //User what to select a tracker file. Show the user dialog.
-
+  //Cancel or an unreadable file must keep the present list.
   OpenDialog.Title := 'Select a tracker list file';
   OpenDialog.Filter := 'tracker text file|*.txt';
   if OpenDialog.Execute then
   begin
-    ReadAddTrackerFileFromUser(OpenDialog.FileName);
+    PreviousText := MemoNewTrackers.Text;
+    if not ReadAddTrackerFileFromUser(OpenDialog.FileName) then
+      ShowUserErrorMessage('Can not read the tracker list file', OpenDialog.FileName)
+    else if not CopyUserInputNewTrackersToList then
+      //The error is already shown. Keep the list the user had.
+      MemoNewTrackers.Text := PreviousText;
   end;
 end;
 
@@ -1385,8 +1403,12 @@ var
   ViewUpdateBeginActiveOneTimeOnly: boolean;
 
   FileNameOrDirStr: utf8string;
+  PreviousMemoText: string;
 begin
   //Drag and drop a folder or files?
+
+  //Restored when the dropped tracker lists are not valid.
+  PreviousMemoText := MemoNewTrackers.Text;
 
   //Change cursor
   ShowHourGlassCursor(True);
@@ -1465,8 +1487,8 @@ begin
 
     //Check for error in tracker list
     if not CopyUserInputNewTrackersToList then
-    begin //When error clear tracker list.
-      MemoNewTrackers.Lines.Clear;
+    begin //When error restore the tracker list the user already had.
+      MemoNewTrackers.Text := PreviousMemoText;
     end;
 
     //the torrent files we have collected here must be add to AddTorrentFileList()
