@@ -25,6 +25,9 @@ type
 
     //Build a standalone bencoded string value, to be added as a child of FEncoded
     function MakeString(const Str: UTF8String): TBEncoded;
+
+    //Check that decoding Str raises an exception
+    procedure CheckDecodeRaises(const Str: UTF8String; const Msg: string);
   protected
     procedure SetUp; override;
     procedure TearDown; override;
@@ -33,6 +36,11 @@ type
     procedure Test_Decode_Empty_String;
     procedure Test_Decode_Integer;
     procedure Test_Decode_Negative_Integer;
+    procedure Test_Decode_Zero_Integer;
+    procedure Test_Decode_Integer_With_Misplaced_Minus_Raises_Exception;
+    procedure Test_Decode_Integer_With_Leading_Zero_Raises_Exception;
+    procedure Test_Decode_Negative_Zero_Raises_Exception;
+    procedure Test_Decode_Integer_Without_Digits_Raises_Exception;
     procedure Test_Decode_List;
     procedure Test_Decode_Dictionary;
     procedure Test_Decode_Nested_List_In_Dictionary;
@@ -93,6 +101,20 @@ begin
   Result.StringData := Str;
 end;
 
+procedure TTestBEncode.CheckDecodeRaises(const Str: UTF8String; const Msg: string);
+var
+  Raised: boolean;
+begin
+  Raised := False;
+  try
+    FEncoded := Decode(Str);
+  except
+    on E: EAssertionFailedError do raise;
+    on E: Exception do Raised := True;
+  end;
+  Check(Raised, Msg);
+end;
+
 procedure TTestBEncode.Test_Decode_String;
 begin
   FEncoded := Decode('4:spam');
@@ -123,6 +145,39 @@ begin
 
   CheckEquals(Ord(befInteger), Ord(FEncoded.Format), 'Wrong format');
   CheckEquals(-42, FEncoded.IntegerData, 'Negative integers must be supported');
+end;
+
+procedure TTestBEncode.Test_Decode_Zero_Integer;
+begin
+  FEncoded := Decode('i0e');
+
+  CheckEquals(Ord(befInteger), Ord(FEncoded.Format), 'Wrong format');
+  CheckEquals(0, FEncoded.IntegerData, 'Zero must be supported');
+end;
+
+procedure TTestBEncode.Test_Decode_Integer_With_Misplaced_Minus_Raises_Exception;
+begin
+  CheckDecodeRaises('i1-2e', 'A minus sign inside the digits must raise an exception');
+  CheckDecodeRaises('i--2e', 'A double minus sign must raise an exception');
+  CheckDecodeRaises('i2-e', 'A trailing minus sign must raise an exception');
+end;
+
+procedure TTestBEncode.Test_Decode_Integer_With_Leading_Zero_Raises_Exception;
+begin
+  CheckDecodeRaises('i03e', 'A leading zero must raise an exception');
+  CheckDecodeRaises('i-03e', 'A leading zero after the minus sign must raise an exception');
+  CheckDecodeRaises('i00e', 'Double zero must raise an exception');
+end;
+
+procedure TTestBEncode.Test_Decode_Negative_Zero_Raises_Exception;
+begin
+  CheckDecodeRaises('i-0e', 'Negative zero must raise an exception');
+end;
+
+procedure TTestBEncode.Test_Decode_Integer_Without_Digits_Raises_Exception;
+begin
+  CheckDecodeRaises('ie', 'An empty integer must raise an exception');
+  CheckDecodeRaises('i-e', 'A minus sign without digits must raise an exception');
 end;
 
 procedure TTestBEncode.Test_Decode_List;

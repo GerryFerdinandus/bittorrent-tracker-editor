@@ -111,6 +111,27 @@ end;
 
 constructor TBEncoded.CreateNested(Stream: TStream; Depth: integer);
 
+  //BEP 3: no leading zeros, no '-0', '-' only as the first character.
+  function IsValidInteger(const Digits: string): boolean;
+  var
+    Start, i: integer;
+  begin
+    Start := 1;
+    if (Digits <> '') and (Digits[1] = '-') then
+      Start := 2;
+
+    Result := Start <= Length(Digits);
+    if not Result then
+      Exit;
+
+    for i := Start to Length(Digits) do
+      if not (Digits[i] in ['0'..'9']) then
+        Exit(False);
+
+    if Digits[Start] = '0' then
+      Result := (Start = 1) and (Length(Digits) = 1);
+  end;
+
   function GetString(Buffer: string): string;
   var
     X: char;
@@ -188,6 +209,8 @@ begin
           raise Exception.Create('Missing bencode integer value')
         else
         begin
+          if not IsValidInteger(Buffer) then
+            raise Exception.Create('Invalid bencode integer value');
           Format := befInteger;
           IntegerData := StrToInt64(Buffer);
           Break;
