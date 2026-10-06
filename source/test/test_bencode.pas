@@ -26,8 +26,9 @@ type
     //Build a standalone bencoded string value, to be added as a child of FEncoded
     function MakeString(const Str: UTF8String): TBEncoded;
 
-    //Check that decoding Str raises an exception
-    procedure CheckDecodeRaises(const Str: UTF8String; const Msg: string);
+    //Check that decoding Str raises an exception, with MessagePart in its message when given
+    procedure CheckDecodeRaises(const Str: UTF8String; const Msg: string;
+      const MessagePart: string = '');
   protected
     procedure SetUp; override;
     procedure TearDown; override;
@@ -49,6 +50,8 @@ type
     procedure Test_FindElement_Is_Case_Insensitive;
     procedure Test_FindElement_Returns_Nil_When_Missing;
     procedure Test_RemoveElement_Removes_Matching_Item;
+    procedure Test_RemoveElement_Returns_Index_Of_Later_Item;
+    procedure Test_RemoveElement_Returns_Minus_One_When_Missing;
     procedure Test_Encode_String;
     procedure Test_Encode_Integer;
     procedure Test_Encode_Negative_Integer;
@@ -60,6 +63,13 @@ type
     procedure Test_Decode_String_With_Eight_Digit_Length;
     procedure Test_Decode_String_Length_Larger_Than_Stream_Raises_Exception;
     procedure Test_Decode_String_Length_With_Eleven_Digits_Raises_Exception;
+    procedure Test_Decode_String_Length_Limit_Is_High_Longint;
+    procedure Test_Decode_String_Length_Without_Digits_Raises_Exception;
+    procedure Test_Decode_Integer_Beyond_Int64_Raises_Exception;
+    procedure Test_Decode_Empty_Input_Raises_Exception;
+    procedure Test_Decode_Unterminated_List_Raises_Exception;
+    procedure Test_Decode_Unterminated_Dictionary_Raises_Exception;
+    procedure Test_Decode_Dictionary_Key_That_Is_Not_A_String_Raises_Exception;
     procedure Test_Decode_Nested_Lists_Within_The_Limit;
     procedure Test_Decode_Nested_Lists_Beyond_The_Limit_Raises_Exception;
     procedure Test_Decode_Nested_Dictionaries_Beyond_The_Limit_Raises_Exception;
@@ -86,7 +96,9 @@ var
 begin
   Stream := TMemoryStream.Create;
   try
-    Stream.Write(Str[1], Length(Str));
+    //An empty string has no first byte to write
+    if Str <> '' then
+      Stream.Write(Str[1], Length(Str));
     Stream.Position := 0;
     Result := TBEncoded.Create(Stream);
   finally
@@ -101,7 +113,8 @@ begin
   Result.StringData := Str;
 end;
 
-procedure TTestBEncode.CheckDecodeRaises(const Str: UTF8String; const Msg: string);
+procedure TTestBEncode.CheckDecodeRaises(const Str: UTF8String; const Msg: string;
+  const MessagePart: string);
 var
   Raised: boolean;
 begin
@@ -110,7 +123,13 @@ begin
     FEncoded := Decode(Str);
   except
     on E: EAssertionFailedError do raise;
-    on E: Exception do Raised := True;
+    on E: Exception do
+    begin
+      Raised := True;
+      if MessagePart <> '' then
+        Check(Pos(MessagePart, E.Message) > 0,
+          Msg + ': the message ''' + E.Message + ''' must contain ''' + MessagePart + '''');
+    end;
   end;
   Check(Raised, Msg);
 end;
@@ -275,6 +294,31 @@ begin
     'Remaining element must be unaffected');
 end;
 
+procedure TTestBEncode.Test_RemoveElement_Returns_Index_Of_Later_Item;
+begin
+  FEncoded := Decode('d3:cow3:moo4:spam4:eggse');
+
+  CheckEquals(1, FEncoded.ListData.RemoveElement('SPAM'), 'Wrong removed index');
+  CheckEquals(1, FEncoded.ListData.Count, 'Element must be removed from the list');
+  CheckEquals('moo', FEncoded.ListData.FindElement('cow').StringData,
+    'Remaining element must be unaffected');
+end;
+
+procedure TTestBEncode.Test_RemoveElement_Returns_Minus_One_When_Missing;
+begin
+  FEncoded := Decode('d3:cow3:mooe');
+  CheckEquals(-1, FEncoded.ListData.RemoveElement('missing'), 'Missing key');
+  CheckEquals(1, FEncoded.ListData.Count, 'Nothing may be removed');
+
+  //The second remove of the same key is a missing key too
+  CheckEquals(0, FEncoded.ListData.RemoveElement('cow'), 'First remove');
+  CheckEquals(-1, FEncoded.ListData.RemoveElement('cow'), 'Second remove');
+
+  FEncoded.Free;
+  FEncoded := Decode('de');
+  CheckEquals(-1, FEncoded.ListData.RemoveElement('cow'), 'Empty dictionary');
+end;
+
 procedure TTestBEncode.Test_Encode_String;
 var
   Output: UTF8String;
@@ -350,33 +394,24 @@ end;
 
 procedure TTestBEncode.Test_Decode_Invalid_Prefix_Raises_Exception;
 begin
-  try
-    Decode('x');
-    Fail('An unknown bencode prefix must raise an exception');
-  except
-    on E: Exception do; //expected
-  end;
+  CheckDecodeRaises('x', 'An unknown bencode prefix must raise an exception',
+    'Unknown bencode value prefix');
+  CheckDecodeRaises(':abc', 'A string without length must raise an exception',
+    'Unknown bencode value prefix');
 end;
 
 procedure TTestBEncode.Test_Decode_Unterminated_Integer_Raises_Exception;
 begin
-  try
-    Decode('i42');
-    Fail('An integer without a terminating ''e'' must raise an exception');
-  except
-    on E: Exception do; //expected
-  end;
+  CheckDecodeRaises('i42', 'An integer without a terminating ''e'' must raise an exception',
+    'end of stream');
 end;
 
 procedure TTestBEncode.Test_Decode_Truncated_String_Raises_Exception;
 begin
-  try
-    //string length says 4 bytes, but only 2 are present
-    Decode('4:sp');
-    Fail('A truncated string must raise an exception');
-  except
-    on E: Exception do; //expected
-  end;
+  //string length says 4 bytes, but only 2 are present
+  CheckDecodeRaises('4:sp', 'A truncated string must raise an exception', 'end of stream');
+  //the length itself is cut
+  CheckDecodeRaises('4', 'A string without ''e'' must raise an exception', 'end of stream');
 end;
 
 procedure TTestBEncode.Test_Decode_String_With_Eight_Digit_Length;
@@ -422,6 +457,78 @@ begin
     on E: Exception do Raised := True;
   end;
   Check(Raised, 'A string length with 11 digits must raise an exception');
+end;
+
+procedure TTestBEncode.Test_Decode_String_Length_Limit_Is_High_Longint;
+begin
+  //10 digits, one more than High(longint): refused by the limit
+  CheckDecodeRaises('2147483648:abc', 'A length above High(longint) must raise an exception',
+    'too large');
+  CheckDecodeRaises('9999999999:abc', 'A 10 digit length must raise an exception',
+    'too large');
+  //High(longint) is allowed by the limit, but the stream is much shorter
+  CheckDecodeRaises('2147483647:abc', 'A length that is longer than the stream must raise',
+    'end of stream while reading string data');
+end;
+
+procedure TTestBEncode.Test_Decode_String_Length_Without_Digits_Raises_Exception;
+begin
+  CheckDecodeRaises('1x:a', 'A letter inside the length must raise an exception',
+    'Invalid character in bencode string length');
+  CheckDecodeRaises('-1:a', 'A negative length must raise an exception',
+    'Unknown bencode value prefix');
+end;
+
+procedure TTestBEncode.Test_Decode_Integer_Beyond_Int64_Raises_Exception;
+begin
+  CheckDecodeRaises('i9223372036854775808e', 'An integer above High(int64) must raise');
+  CheckDecodeRaises('i-9223372036854775809e', 'An integer below Low(int64) must raise');
+
+  FEncoded := Decode('i9223372036854775807e');
+  CheckEquals(High(int64), FEncoded.IntegerData, 'High(int64) must be accepted');
+  FEncoded.Free;
+
+  FEncoded := Decode('i-9223372036854775808e');
+  CheckEquals(Low(int64), FEncoded.IntegerData, 'Low(int64) must be accepted');
+end;
+
+procedure TTestBEncode.Test_Decode_Empty_Input_Raises_Exception;
+begin
+  CheckDecodeRaises('', 'An empty input must raise an exception', 'end of stream');
+end;
+
+procedure TTestBEncode.Test_Decode_Unterminated_List_Raises_Exception;
+const
+  LISTS: array[0..4] of UTF8String = ('l', 'li1e', 'l4:spam', 'll', 'lli1ee');
+var
+  Str: UTF8String;
+begin
+  for Str in LISTS do
+    CheckDecodeRaises(Str, 'The list ''' + Str + ''' must raise an exception',
+      'end of stream');
+end;
+
+procedure TTestBEncode.Test_Decode_Unterminated_Dictionary_Raises_Exception;
+const
+  DICTIONARIES: array[0..3] of UTF8String = ('d', 'd3:cow', 'd3:cow3:moo', 'd3:cowd3:foo');
+var
+  Str: UTF8String;
+begin
+  for Str in DICTIONARIES do
+    CheckDecodeRaises(Str, 'The dictionary ''' + Str + ''' must raise an exception',
+      'end of stream');
+end;
+
+procedure TTestBEncode.Test_Decode_Dictionary_Key_That_Is_Not_A_String_Raises_Exception;
+const
+  DICTIONARIES: array[0..3] of UTF8String =
+    ('di1e3:mooe', 'dl3:cowe3:mooe', 'dd3:cow3:mooe3:mooe', 'dx3:cow3:mooe');
+var
+  Str: UTF8String;
+begin
+  for Str in DICTIONARIES do
+    CheckDecodeRaises(Str, 'The dictionary ''' + Str + ''' must raise an exception',
+      'dictionary key');
 end;
 
 procedure TTestBEncode.Test_Decode_Nested_Lists_Within_The_Limit;
