@@ -27,8 +27,8 @@ type
 
     //The column must be in this design order.
     FSelect,               //< 0
-    FTorrentURL,           //< 1
-    FTorrentURL_Status     //< 2
+    FTorrentURL_Status,    //< 1
+    FTorrentURL            //< 2
     : TGridColumn;
 
     function GetChecked(index: integer): boolean;

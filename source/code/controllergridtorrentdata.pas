@@ -7,7 +7,7 @@ The grid column position order can be rearrange by the user.
 The updating and reading of the column position must be 'dynamic'.
 Must keep track of the position of the column even when the user rearrange it.
 
-There are 10 column that must be 'track'
+There are 13 column that must be 'track'
 }
 {$mode objfpc}{$H+}
 
@@ -37,7 +37,7 @@ type
     FPrivateTorrent,        //8
     FInfoSource,            //9
     FPieceLength,           //10
-    FTotalSize,              //11
+    FTotalSize,             //11
     FIndexOrder             //12
     : TGridColumn;
 
@@ -60,7 +60,7 @@ type
     PrivateTorrent,        //8
     InfoSource,            //9
     PieceLength,           //10
-    TotalSize,              //11
+    TotalSize,             //11
     IndexOrder             //12
     : UTF8String;
 
