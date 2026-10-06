@@ -7,7 +7,10 @@ unit test_start_up_parameter;
 
   ------------------------------------
   There are 4 txt files that are being used for this test
-  All these files are place in the same folder as the executable files
+  Every test has its own temp folder with a copy of the program and a copy of the
+  torrent files, so the tests do not change the files of the project and do not
+  depend on the order of the tests. (macOS: the txt files are in the config folder.)
+  The txt files are place in the same folder as the copy of the program
 
   List of all the trackers that must added.
   add_trackers.txt
@@ -53,6 +56,11 @@ type
     FFullPathToTorrent: string;
     FFullPathToEndUser: string;
     FFullPathToBinary: string;
+
+    //The program of the project. FFullPathToBinary is a copy of it, but without its DLL files.
+    FFullPathToOriginalBinary: string;
+    //Temp folder of this test, with the copies of the program and the torrent files
+    FTestFolder: string;
 
     FTorrentFilesNameStringList: TStringList;
     FNewTrackon: TNewTrackon;
@@ -119,6 +127,26 @@ const
   //there are 5 test torrent files in 'test_torrent' folder.
   TEST_TORRENT_FILES_COUNT = 5;
 
+var
+  TestFolderCounter: integer = 0;
+
+//Copy all the torrent files of FromFolder into ToFolder
+procedure CopyTorrentFiles(const FromFolder, ToFolder: string);
+var
+  Files: TStringList;
+  FileName: string;
+begin
+  Files := TStringList.Create;
+  try
+    torrent_miscellaneous.LoadTorrentViaDir(ExcludeTrailingPathDelimiter(FromFolder), Files);
+    for FileName in Files do
+      if not CopyFile(FileName, ToFolder + ExtractFileName(FileName)) then
+        raise Exception.Create('Can not copy ' + FileName);
+  finally
+    Files.Free;
+  end;
+end;
+
 procedure TTestStartUpParameter.Test_Parameter_U0;
 begin
   Test_Parameter_Ux(tloInsertNewBeforeAndKeepNewIntact);
@@ -162,6 +190,8 @@ end;
 procedure TTestStartUpParameter.Test_Parameter_TEST_SSL;
 begin
   // Check if SSL connection is working.
+  //The copy of the program has no DLL files, so use the program of the project.
+  FFullPathToBinary := FFullPathToOriginalBinary;
   FCommandLine := '-TEST_SSL';
   CallExecutableFile;
   // Exit code should be zero
@@ -403,10 +433,8 @@ begin
     DownloadNewTrackonTrackers;
 
     //write some trackers to add.
-    //Use tracker literals unique per TrackerListOrder: the test torrent files are
-    //not reset between tests, so reusing the same literal across U5 and U6 would
-    //make a previous test's surviving 'added' tracker look like part of the
-    //'original' tracker list for the next test.
+    //Use tracker literals unique per TrackerListOrder: a tracker that is added by this
+    //test must never look like a tracker that was already in the torrent files.
     FVerifyTrackerResult.TrackerAdded.Clear;
     FVerifyTrackerResult.TrackerAdded.Add('udp://' + IntToStr(Ord(TrackerListOrder)) +
       'a.test/announce');
@@ -753,7 +781,13 @@ begin
 
   //Create some full path link
   FFullPathToRoot := GetProjectRootFolderWithPathDelimiter;
-  FFullPathToTorrent := FFullPathToRoot + TORRENT_FOLDER + PathDelim;
+
+  //The test works in its own folder: a copy of the torrent files and of the program.
+  //The program is started with torrent files that the other tests have not changed.
+  Inc(TestFolderCounter);
+  FTestFolder := IncludeTrailingPathDelimiter(GetTempDir) + 'test_start_up_parameter_' +
+    IntToStr(GetProcessID) + '_' + IntToStr(TestFolderCounter) + PathDelim;
+  FFullPathToTorrent := FTestFolder + TORRENT_FOLDER + PathDelim;
 
   {$IFDEF DARWIN}
   // PATH: ~/.config/test_trackereditor/ -> ~/.config/trackereditor/
@@ -764,34 +798,56 @@ begin
                      + '..' + PathDelim;
   FFullPathToEndUser := ExpandFileName(FFullPathToEndUser) + 'trackereditor' + PathDelim;
 
-  //path to the program we want to test.
-  FFullPathToBinary := FFullPathToRoot + END_USER_FOLDER + PathDelim
+  //path to the program we want to test. It is not copied, it must use the config folder.
+  FFullPathToOriginalBinary := FFullPathToRoot + END_USER_FOLDER + PathDelim
                     + GetProgramName;
+  FFullPathToBinary := FFullPathToOriginalBinary;
 
   {$ELSE DARWIN}
-  // Default is to use the same place as the application file
-  FFullPathToEndUser := FFullPathToRoot + END_USER_FOLDER + PathDelim;
+  //The program reads and writes its txt files next to itself
+  FFullPathToEndUser := FTestFolder;
 
   //path to the program we want to test.
-  FFullPathToBinary := FFullPathToEndUser + GetProgramName +
-    ExtractFileExt(ParamStr(0));
+  FFullPathToOriginalBinary := FFullPathToRoot + END_USER_FOLDER + PathDelim +
+    GetProgramName + ExtractFileExt(ParamStr(0));
+  FFullPathToBinary := FTestFolder + ExtractFileName(FFullPathToOriginalBinary);
   {$ENDIF DARWIN}
 
-  //fill with torrent file(s)
-  FTorrentFilesNameStringList := TStringList.Create;
-  torrent_miscellaneous.LoadTorrentViaDir(FFullPathToTorrent,
-    FTorrentFilesNameStringList);
+  FTorrentFilesNameStringList := nil;
+  FNewTrackon := nil;
+  try
+    ForceDirectories(FFullPathToTorrent);
+    CopyTorrentFiles(FFullPathToRoot + TORRENT_FOLDER + PathDelim, FFullPathToTorrent);
 
-  FNewTrackon := TNewTrackon.Create;
+    {$IFNDEF DARWIN}
+    if not CopyFile(FFullPathToOriginalBinary, FFullPathToBinary) then
+      raise Exception.Create('Can not copy the program ' + FFullPathToOriginalBinary);
+    {$IFDEF UNIX}
+    //CopyFile does not keep the execute permission.
+    if FpChmod(FFullPathToBinary, &755) <> 0 then
+      raise Exception.Create('Can not make the program executable');
+    {$ENDIF}
+    {$ENDIF DARWIN}
 
+    //fill with torrent file(s)
+    FTorrentFilesNameStringList := TStringList.Create;
+    torrent_miscellaneous.LoadTorrentViaDir(ExcludeTrailingPathDelimiter(FFullPathToTorrent),
+      FTorrentFilesNameStringList);
 
+    FNewTrackon := TNewTrackon.Create;
+  except
+    //TTestCase.RunBare does not call TearDown when SetUp raises
+    TearDown;
+    raise;
+  end;
 
+  {$IFDEF DARWIN}
   //Delete all the previous test result
   DeleteFile(FFullPathToEndUser + FILE_NAME_CONSOLE_LOG);
   DeleteFile(FFullPathToEndUser + FILE_NAME_EXPORT_TRACKERS);
   DeleteFile(FFullPathToEndUser + FILE_NAME_ADD_TRACKERS);
   DeleteFile(FFullPathToEndUser + FILE_NAME_REMOVE_TRACKERS);
-
+  {$ENDIF DARWIN}
 end;
 
 procedure TTestStartUpParameter.TearDown;
@@ -806,6 +862,11 @@ begin
 
   FTorrentFilesNameStringList.Free;
   FNewTrackon.Free;
+
+  //The copies of the program and of the torrent files
+  if FTestFolder <> '' then
+    DeleteDirectory(FTestFolder, False);
+  FTestFolder := '';
 end;
 
 function TTestStartUpParameter.ReadConsoleLogFile: boolean;
@@ -824,7 +885,7 @@ type
   //Excluded on macOS: the macOS build does not produce a trackereditor_cli binary.
   TTestStartUpParameterCli = class(TTestStartUpParameter)
   private
-    //Every test of this class runs a copy of the program in its own folder. The program
+    //Every test of this class uses the copy of the program in the folder of the test. The program
     //reads and writes add_trackers.txt, remove_trackers.txt and console_log.txt next to itself.
     FWorkFolder: string;
     FWorkExe: string;
@@ -887,8 +948,6 @@ begin
 
   FLog.Free;
   FLog := nil;
-  if FWorkFolder <> '' then
-    DeleteDirectory(FWorkFolder, False);
   FWorkFolder := '';
 
   inherited TearDown;
@@ -896,19 +955,9 @@ end;
 
 procedure TTestStartUpParameterCli.PrepareWorkFolder;
 begin
-  FWorkFolder := IncludeTrailingPathDelimiter(GetTempDir) + 'test_cli_console' + PathDelim;
-  //A folder that a crashed run has left behind
-  if DirectoryExists(FWorkFolder) then
-    DeleteDirectory(FWorkFolder, False);
-  ForceDirectories(FWorkFolder);
-
-  FWorkExe := FWorkFolder + ExtractFileName(FFullPathToBinary);
-  Check(CopyFile(FFullPathToBinary, FWorkExe), 'Can not copy the program');
-  {$IFDEF UNIX}
-  //CopyFile does not keep the execute permission.
-  Check(FpChmod(FWorkExe, &755) = 0, 'Can not make the program executable');
-  {$ENDIF}
-
+  //The program is the copy in the folder of the test, its text files are next to it
+  FWorkFolder := FFullPathToEndUser;
+  FWorkExe := FFullPathToBinary;
   FLog := TStringList.Create;
 end;
 
