@@ -130,6 +130,35 @@ const
 var
   TestFolderCounter: integer = 0;
 
+//A path with a space is one parameter. A trailing path delimiter before the closing quote
+//would escape the quote on Windows, so it is removed.
+function QuoteParameter(const Path: string): string;
+begin
+  Result := '"' + ExcludeTrailingPathDelimiter(Path) + '"';
+end;
+
+//The first live tracker that is in no tracker list of the torrent files, '' when there is none.
+//OriginalTrackersPerFile has one TStringList in Objects[] for every torrent file.
+function FirstLiveTrackerNotInTorrents(Live, OriginalTrackersPerFile: TStringList): UTF8String;
+var
+  i, j: integer;
+  Found: boolean;
+begin
+  Result := '';
+  for i := 0 to Live.Count - 1 do
+  begin
+    Found := False;
+    for j := 0 to OriginalTrackersPerFile.Count - 1 do
+      if TStringList(OriginalTrackersPerFile.Objects[j]).IndexOf(Live[i]) >= 0 then
+      begin
+        Found := True;
+        Break;
+      end;
+    if not Found then
+      Exit(Live[i]);
+  end;
+end;
+
 //Copy all the torrent files of FromFolder into ToFolder
 procedure CopyTorrentFiles(const FromFolder, ToFolder: string);
 var
@@ -202,7 +231,7 @@ procedure TTestStartUpParameter.Test_Parameter_Invalid_No_Dash_U;
 begin
   //Neither parameter starts with '-U'. Decoding must fail with a clear error,
   //not silently continue with an unassigned FileNameOrDirStr.
-  FCommandLine := FFullPathToTorrent + ' -BOGUS';
+  FCommandLine := QuoteParameter(FFullPathToTorrent) + ' -BOGUS';
   CallExecutableFile;
 
   //exit code must indicate failure
@@ -223,9 +252,9 @@ begin
   //Both parameter orders must be supported.
   if FUpdateParameterFirst then
     FCommandLine := format('-U%d %s', [Ord(StartupParameter.TrackerListOrder),
-      FFullPathToTorrent])
+      QuoteParameter(FFullPathToTorrent)])
   else
-    FCommandLine := format('%s -U%d', [FFullPathToTorrent,
+    FCommandLine := format('%s -U%d', [QuoteParameter(FFullPathToTorrent),
       Ord(StartupParameter.TrackerListOrder)]);
 
   if StartupParameter.SkipAnnounceCheck then
@@ -415,9 +444,16 @@ var
   OriginalTrackersPerFile: TStringList;
   DecodeTorrent: TDecodeTorrent;
   StartupParameter: TStartupParameter;
+  OK: boolean;
   i: integer;
-  RemovedTracker: UTF8String;
+  RemovedTracker, LiveTracker: UTF8String;
 begin
+  //Pre test condition: every torrent file has trackers. Some test torrent files have none.
+  StartupParameter.TrackerListOrder := tloInsertNewBeforeAndKeepNewIntact;
+  StartupParameter.SkipAnnounceCheck := False;
+  StartupParameter.SourcePresent := False;
+  CreateFilledTorrent(StartupParameter);
+
   //Every torrent file may already have its own different tracker list, capture it first
   OriginalTrackersPerFile := TStringList.Create;
   DecodeTorrent := TDecodeTorrent.Create;
@@ -438,8 +474,12 @@ begin
     FVerifyTrackerResult.TrackerAdded.Clear;
     FVerifyTrackerResult.TrackerAdded.Add('udp://' + IntToStr(Ord(TrackerListOrder)) +
       'a.test/announce');
-    if FNewTrackon.TrackerList_Live.Count > 0 then
-      FVerifyTrackerResult.TrackerAdded.Add(FNewTrackon.TrackerList_Live[0]);
+    //A live tracker from the internet changes every day. It must not be a tracker that
+    //is already inside a torrent file, because then it is not an 'added' tracker.
+    LiveTracker := FirstLiveTrackerNotInTorrents(FNewTrackon.TrackerList_Live,
+      OriginalTrackersPerFile);
+    if LiveTracker <> '' then
+      FVerifyTrackerResult.TrackerAdded.Add(LiveTracker);
     FVerifyTrackerResult.TrackerAdded.Add('udp://' + IntToStr(Ord(TrackerListOrder)) +
       'b.test/announce');
     FVerifyTrackerResult.TrackerAdded.SaveToFile(FFullPathToEndUser +
@@ -481,8 +521,9 @@ begin
         TStringList(OriginalTrackersPerFile.Objects[i]));
       FVerifyTrackerResult.TrackerEndResult.Assign(DecodeTorrent.TrackerList);
 
-      Check(VerifyTrackerResult(FVerifyTrackerResult),
-        FTorrentFilesNameStringList[i] + ': ' + FVerifyTrackerResult.ErrorString);
+      //The message must be read after the call: the call sets ErrorString.
+      OK := VerifyTrackerResult(FVerifyTrackerResult);
+      Check(OK, FTorrentFilesNameStringList[i] + ': ' + FVerifyTrackerResult.ErrorString);
 
       Check(DecodeTorrent.TrackerList.IndexOf(RemovedTracker) >= 0,
         FTorrentFilesNameStringList[i] +
@@ -1318,7 +1359,7 @@ begin
   LoadTrackerListAddAndRemoved;
 
   //No -Ux at all - just the torrent path.
-  FCommandLine := FFullPathToTorrent;
+  FCommandLine := QuoteParameter(FFullPathToTorrent);
   CallExecutableFile;
 
   CopyTrackerEndResultToVerifyTrackerResult;
@@ -1358,7 +1399,8 @@ begin
     //A folder with this name makes writing the export file fail with an exception.
     ForceDirectories(Folder + FILE_NAME_EXPORT_TRACKERS);
 
-    FExitCode := SysUtils.ExecuteProcess(UTF8ToSys(ExeCopy), TorrentCopy + ' -U4', []);
+    FExitCode := SysUtils.ExecuteProcess(UTF8ToSys(ExeCopy),
+      QuoteParameter(TorrentCopy) + ' -U4', []);
 
     CheckEquals(1, FExitCode, 'An exception must give an error exit code');
     Log.LoadFromFile(LogFileName);
