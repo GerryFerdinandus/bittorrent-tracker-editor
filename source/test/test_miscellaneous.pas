@@ -61,7 +61,8 @@ type
 function GetProjectRootFolderWithPathDelimiter: string;
 begin
   //the present folder is /enduser where the executable file is run
-  Result := ExtractFilePath(ParamStr(0));
+  //Absolute path: a test may change the current directory.
+  Result := ExtractFilePath(ExpandFileName(ParamStr(0)));
   Result := ExcludeTrailingBackslash(Result);
   Result := ExtractFilePath(Result);
 end;
