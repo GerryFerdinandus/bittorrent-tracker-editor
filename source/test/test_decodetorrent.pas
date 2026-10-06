@@ -16,7 +16,8 @@ unit test_decodetorrent;
 interface
 
 uses
-  Classes, SysUtils, fpcunit, testregistry, decodetorrent;
+  Classes, SysUtils, dateutils, fpcunit, testregistry, decodetorrent, BEncode,
+  test_miscellaneous;
 
 type
 
@@ -31,6 +32,15 @@ type
 
     //Save FDecodeTorrent to a temp file and return the exact bytes that were written
     function SaveAndReadBack: UTF8String;
+
+    function ReadWholeFile(const FileName: string): UTF8String;
+
+    //Parse bencoded text. The caller must free the result.
+    function ParseBEncoded(const Str: UTF8String): TBEncoded;
+
+    //The keys of a dictionary must be in raw byte order.
+    procedure CheckKeysSorted(Dict: TBEncoded; const Msg: string);
+    function CountKeys(Dict: TBEncoded; const Key: UTF8String): integer;
   protected
     procedure SetUp; override;
     procedure TearDown; override;
@@ -52,6 +62,30 @@ type
     procedure Test_Private_Flag_With_Value_Zero_Is_Replaced_Not_Duplicated;
     procedure Test_Empty_AnnounceList_Tier_Is_Skipped;
     procedure Test_Failed_Decode_Clears_Previous_Torrent_State;
+    procedure Test_New_Object_Has_Unknown_Version;
+    procedure Test_RoundTrip_Real_Torrent_Files_Are_Identical;
+    procedure Test_RoundTrip_V2_And_Hybrid_Are_Identical;
+    procedure Test_V2_Version_Hashes_And_Metadata;
+    procedure Test_V2_File_Tree_And_Padding;
+    procedure Test_Hybrid_Uses_V2_Files_And_Detects_V1_Padding;
+    procedure Test_V1_Padding_File_Is_Not_Counted;
+    procedure Test_AnnounceList_Multiple_Tiers;
+    procedure Test_AnnounceList_Url_Also_In_Announce_Is_Not_Duplicated;
+    procedure Test_AnnounceList_Without_Announce;
+    procedure Test_AnnounceList_Tier_With_Several_Trackers_Reads_First_Only;
+    procedure Test_No_Announce_And_No_AnnounceList;
+    procedure Test_ChangeAnnounce_Replaces_And_Keeps_Keys_Sorted;
+    procedure Test_ChangeAnnounceList_One_Tracker_Per_Tier_And_Keys_Sorted;
+    procedure Test_ChangeAnnounceList_Empty_Removes_The_List;
+    procedure Test_RemoveAnnounce_And_RemoveAnnounceList;
+    procedure Test_Private_Flag_Add_Remove_Keeps_Info_Keys_Sorted;
+    procedure Test_InfoSource_Add_Change_Remove_Keeps_Info_Keys_Sorted;
+    procedure Test_Empty_Input_Fails;
+    procedure Test_Info_That_Is_Not_A_Dictionary_Fails;
+    procedure Test_Every_Truncated_Torrent_Fails_And_Object_Can_Be_Reused;
+    procedure Test_Truncated_And_Missing_File_Fail;
+    procedure Test_CreatedBy_CreatedDate_Name_And_PieceLength;
+    procedure Test_Missing_CreatedBy_And_CreatedDate_Are_Empty;
     procedure Test_InfoHash_Is_Recalculated_After_Private_Flag_And_Source_Change;
     procedure Test_InfoHash_V1_And_V2_Are_Recalculated_For_Hybrid;    {$IFDEF UNIX}
     procedure Test_SaveTorrent_Keeps_Permissions_Of_Original;
@@ -105,6 +139,48 @@ const
   INFO_HASH_MULTI_FILE = '2575ADB45B1E904ADF75726BFD5C27FD76897C2B';
 
   NO_INFO_HASH = 'N/A';
+
+  TRACKER_2 = 'udp://b.test/announce';
+  TRACKER_3 = 'udp://c.test/announce';
+
+  //V2 file tree: a.txt (100), dir/b.bin (2000) and zpad (50, a padding file)
+  TREE_V2 =
+    'd5:a.txtd0:d6:lengthi100eee3:dird5:b.bind0:d6:lengthi2000eeee' +
+    '4:zpadd0:d4:attr1:p6:lengthi50eeee';
+
+  //V2 only: 'file tree' and no 'pieces'
+  INFO_V2 = 'd9:file tree' + TREE_V2 + '12:meta versioni2e4:name4:root' +
+    '12:piece lengthi16384ee';
+  //Calculated with an other program (Python hashlib)
+  INFO_HASH_V2_SHA256 =
+    'ED179DC8F0BE69EA2CE8624D450D37D711CF85590E3B29E8B465551C1EC9CC66';
+
+  //Hybrid: the V2 tree has 2 files, the V1 list has a third padding file
+  TREE_HYBRID = 'd5:a.txtd0:d6:lengthi100eee3:dird5:b.bind0:d6:lengthi2000eeeee';
+  FILES_HYBRID = 'ld6:lengthi100e4:pathl5:a.txteed6:lengthi2000e4:pathl3:dir5:b.bineed' +
+    '4:attr1:p6:lengthi50e4:pathl4:.pad2:50eee';
+  INFO_HYBRID_PADDING = 'd9:file tree' + TREE_HYBRID + '5:files' + FILES_HYBRID +
+    '12:meta versioni2e4:name4:root12:piece lengthi16384e6:pieces' + PIECES + 'e';
+  INFO_HASH_HYBRID_SHA1 = '3AB309F4309D70831FFC02CDD9FFF8B77DE6C052';
+  INFO_HASH_HYBRID_SHA256 =
+    '8C262A68A7309035CE5F9D5E238709F5B9F6240F0462416C5365343FE0E64BEA';
+
+  //V1 torrent where the second file is a padding file
+  INFO_V1_PADDING =
+    'd5:filesld6:lengthi100e4:pathl5:a.txteed4:attr1:p6:lengthi28e4:pathl4:.pad2:28eee' +
+    '4:name4:root12:piece lengthi16384e6:pieces' + PIECES + 'e';
+
+  //Keys after 'private' and after 'source': adding them must put them in the middle
+  INFO_TRAILING_KEYS = 'd6:lengthi1024e4:name8:test.bin12:piece lengthi16384e6:pieces' +
+    PIECES + '9:publisher3:abc7:x-after1:ye';
+
+  //The torrent files that are used by the other tests, in the folder test_torrent
+  REAL_TORRENT_FILES: array[0..4] of string = (
+    'Sintel.2010.2K.SURROUND.x264-VODO.torrent',
+    'Sintel.2010.2K.Theora.Ogv-VODO.torrent',
+    'Sintel.2010.720p.SURROUND.x264-VODO.torrent',
+    'bittorrent-v2-test.torrent',
+    'bittorrent-v2-hybrid-test.torrent');
 
 function BEncodeString(const Str: UTF8String): UTF8String;
 begin
@@ -160,6 +236,53 @@ begin
   finally
     DeleteFile(TempFileName);
   end;
+end;
+
+function TTestDecodeTorrent.ReadWholeFile(const FileName: string): UTF8String;
+var
+  Stream: TFileStream;
+begin
+  Stream := TFileStream.Create(FileName, fmOpenRead or fmShareDenyNone);
+  try
+    SetLength(Result, Stream.Size);
+    if Length(Result) > 0 then
+      Stream.ReadBuffer(Result[1], Length(Result));
+  finally
+    Stream.Free;
+  end;
+end;
+
+function TTestDecodeTorrent.ParseBEncoded(const Str: UTF8String): TBEncoded;
+var
+  Stream: TMemoryStream;
+begin
+  Stream := TMemoryStream.Create;
+  try
+    Stream.Write(Str[1], Length(Str));
+    Stream.Position := 0;
+    Result := TBEncoded.Create(Stream);
+  finally
+    Stream.Free;
+  end;
+end;
+
+procedure TTestDecodeTorrent.CheckKeysSorted(Dict: TBEncoded; const Msg: string);
+var
+  i: integer;
+begin
+  for i := 1 to Dict.ListData.Count - 1 do
+    Check(CompareStr(Dict.ListData[i - 1].Header, Dict.ListData[i].Header) < 0,
+      Msg + ': key ''' + Dict.ListData[i].Header + ''' is not in byte order');
+end;
+
+function TTestDecodeTorrent.CountKeys(Dict: TBEncoded; const Key: UTF8String): integer;
+var
+  i: integer;
+begin
+  Result := 0;
+  for i := 0 to Dict.ListData.Count - 1 do
+    if Dict.ListData[i].Header = Key then
+      Inc(Result);
 end;
 
 procedure TTestDecodeTorrent.Test_Single_File_V1_InfoHash;
@@ -554,6 +677,431 @@ begin
   Check(DecodeTorrentString(SaveAndReadBack), 'Can not decode the saved torrent');
   CheckEquals(ChangedV1, FDecodeTorrent.InfoHash_V1, 'Saved V1 hash must match');
   CheckEquals(ChangedV2, FDecodeTorrent.InfoHash_V2, 'Saved V2 hash must match');
+end;
+
+procedure TTestDecodeTorrent.Test_New_Object_Has_Unknown_Version;
+begin
+  CheckEquals(Ord(tv_unknown), Ord(FDecodeTorrent.TorrentVersion), 'Version');
+  CheckEquals('unknown', FDecodeTorrent.TorrentVersionToString, 'Version text');
+  CheckEquals('N/A', FDecodeTorrent.PaddingToString, 'Padding text');
+  CheckEquals(0, FDecodeTorrent.InfoFilesCount, 'File count');
+end;
+
+procedure TTestDecodeTorrent.Test_RoundTrip_Real_Torrent_Files_Are_Identical;
+var
+  Name: string;
+  FileName: string;
+  Original, Saved: UTF8String;
+  HashV1, HashV2: UTF8String;
+begin
+  //Decode and save without any change must not change a single byte.
+  //Else the info hash changes and the torrent becomes a different torrent.
+  for Name in REAL_TORRENT_FILES do
+  begin
+    FileName := GetProjectRootFolderWithPathDelimiter + 'test_torrent' + PathDelim + Name;
+    Check(FileExists(FileName), 'Missing test torrent ' + FileName);
+    Original := ReadWholeFile(FileName);
+
+    Check(FDecodeTorrent.DecodeTorrent(FileName), 'Can not decode ' + FileName);
+    HashV1 := FDecodeTorrent.InfoHash_V1;
+    HashV2 := FDecodeTorrent.InfoHash_V2;
+    Saved := SaveAndReadBack;
+
+    CheckEquals(Length(Original), Length(Saved), 'Saved size differs: ' + FileName);
+    Check(Original = Saved, 'Saved bytes differ: ' + FileName);
+
+    //The hashes of the saved file are the hashes of the original
+    Check(DecodeTorrentString(Saved), 'Can not decode the saved ' + FileName);
+    CheckEquals(HashV1, FDecodeTorrent.InfoHash_V1, 'V1 hash differs: ' + FileName);
+    CheckEquals(HashV2, FDecodeTorrent.InfoHash_V2, 'V2 hash differs: ' + FileName);
+  end;
+end;
+
+procedure TTestDecodeTorrent.Test_RoundTrip_V2_And_Hybrid_Are_Identical;
+const
+  INFOS: array[0..1] of UTF8String = (INFO_V2, INFO_HYBRID_PADDING);
+var
+  Torrent: UTF8String;
+  Info: UTF8String;
+begin
+  for Info in INFOS do
+  begin
+    Torrent := BuildTorrent(Info);
+    Check(DecodeTorrentString(Torrent), 'Can not decode the torrent');
+    Check(Torrent = SaveAndReadBack, 'Saved bytes differ');
+  end;
+end;
+
+procedure TTestDecodeTorrent.Test_V2_Version_Hashes_And_Metadata;
+begin
+  Check(DecodeTorrentString(BuildTorrent(INFO_V2)), 'Can not decode a V2 torrent');
+
+  CheckEquals(Ord(tv_V2), Ord(FDecodeTorrent.TorrentVersion), 'Version');
+  CheckEquals('V2', FDecodeTorrent.TorrentVersionToString, 'Version text');
+  CheckEquals(2, FDecodeTorrent.MetaVersion, 'Meta version');
+  CheckEquals(INFO_HASH_V2_SHA256, FDecodeTorrent.InfoHash_V2, 'V2 info hash');
+  CheckEquals(NO_INFO_HASH, FDecodeTorrent.InfoHash_V1, 'A V2 torrent has no V1 hash');
+  CheckEquals('root', FDecodeTorrent.Name, 'Name');
+  CheckEquals(16384, FDecodeTorrent.PieceLength, 'Piece length');
+end;
+
+procedure TTestDecodeTorrent.Test_V2_File_Tree_And_Padding;
+begin
+  Check(DecodeTorrentString(BuildTorrent(INFO_V2)), 'Can not decode a V2 torrent');
+
+  CheckEquals(2, FDecodeTorrent.InfoFilesVersion, 'Files version');
+  CheckEquals(3, FDecodeTorrent.InfoFilesCount, 'File count');
+  CheckEquals(DirectorySeparator + 'a.txt', FDecodeTorrent.InfoFilesNameIndex(0), 'File 0');
+  CheckEquals(100, FDecodeTorrent.InfoFilesLengthIndex(0), 'Length 0');
+  CheckEquals(DirectorySeparator + 'dir' + DirectorySeparator + 'b.bin',
+    FDecodeTorrent.InfoFilesNameIndex(1), 'File 1');
+  CheckEquals(2000, FDecodeTorrent.InfoFilesLengthIndex(1), 'Length 1');
+  CheckEquals(DirectorySeparator + 'zpad', FDecodeTorrent.InfoFilesNameIndex(2), 'File 2');
+  CheckEquals(50, FDecodeTorrent.InfoFilesLengthIndex(2), 'Length 2');
+
+  //The padding file is listed, but not counted
+  CheckEquals(2100, FDecodeTorrent.TotalFileSize, 'Total size');
+  CheckTrue(FDecodeTorrent.PaddingPresent_V2, 'Padding V2');
+  CheckFalse(FDecodeTorrent.PaddingPresent_V1, 'Padding V1');
+  CheckEquals('Yes', FDecodeTorrent.PaddingToString, 'Padding text');
+end;
+
+procedure TTestDecodeTorrent.Test_Hybrid_Uses_V2_Files_And_Detects_V1_Padding;
+begin
+  Check(DecodeTorrentString(BuildTorrent(INFO_HYBRID_PADDING)),
+    'Can not decode a hybrid torrent');
+
+  CheckEquals(Ord(tv_Hybrid), Ord(FDecodeTorrent.TorrentVersion), 'Version');
+  CheckEquals('Hybrid (V1&V2)', FDecodeTorrent.TorrentVersionToString, 'Version text');
+  CheckEquals(INFO_HASH_HYBRID_SHA1, FDecodeTorrent.InfoHash_V1, 'V1 info hash');
+  CheckEquals(INFO_HASH_HYBRID_SHA256, FDecodeTorrent.InfoHash_V2, 'V2 info hash');
+  CheckEquals(2, FDecodeTorrent.MetaVersion, 'Meta version');
+
+  //Only the V2 files are used, the V1 list is only read for the padding
+  CheckEquals(2, FDecodeTorrent.InfoFilesVersion, 'Files version');
+  CheckEquals(2, FDecodeTorrent.InfoFilesCount, 'File count');
+  CheckEquals(2100, FDecodeTorrent.TotalFileSize, 'Total size');
+  CheckTrue(FDecodeTorrent.PaddingPresent_V1, 'Padding V1');
+  CheckFalse(FDecodeTorrent.PaddingPresent_V2, 'Padding V2');
+  CheckEquals('V1:Yes V2:No', FDecodeTorrent.PaddingToString, 'Padding text');
+end;
+
+procedure TTestDecodeTorrent.Test_V1_Padding_File_Is_Not_Counted;
+begin
+  Check(DecodeTorrentString(BuildTorrent(INFO_V1_PADDING)), 'Can not decode a V1 torrent');
+
+  CheckEquals('V1', FDecodeTorrent.TorrentVersionToString, 'Version text');
+  CheckEquals(0, FDecodeTorrent.MetaVersion, 'A V1 torrent has no meta version');
+  CheckEquals(2, FDecodeTorrent.InfoFilesCount, 'The padding file is listed');
+  CheckEquals(100, FDecodeTorrent.TotalFileSize, 'The padding file is not counted');
+  CheckTrue(FDecodeTorrent.PaddingPresent_V1, 'Padding V1');
+  CheckEquals('Yes', FDecodeTorrent.PaddingToString, 'Padding text');
+
+  //No padding
+  Check(DecodeTorrentString(BuildTorrent(INFO_MULTI_FILE)), 'Can not decode a V1 torrent');
+  CheckFalse(FDecodeTorrent.PaddingPresent_V1, 'No padding V1');
+  CheckEquals('No', FDecodeTorrent.PaddingToString, 'No padding text');
+end;
+
+procedure TTestDecodeTorrent.Test_AnnounceList_Multiple_Tiers;
+begin
+  Check(DecodeTorrentString('d' + ANNOUNCE + '13:announce-listl' +
+    'l' + BEncodeString(TRACKER_2) + 'e' + 'l' + BEncodeString(TRACKER_3) + 'ee' +
+    '4:info' + INFO_SINGLE_FILE + 'e'), 'Can not decode the torrent');
+
+  CheckEquals(3, FDecodeTorrent.TrackerList.Count, 'Tracker count');
+  CheckEquals('udp://tracker.test/announce', FDecodeTorrent.TrackerList[0], 'Tracker 0');
+  CheckEquals(TRACKER_2, FDecodeTorrent.TrackerList[1], 'Tracker 1');
+  CheckEquals(TRACKER_3, FDecodeTorrent.TrackerList[2], 'Tracker 2');
+end;
+
+procedure TTestDecodeTorrent.Test_AnnounceList_Url_Also_In_Announce_Is_Not_Duplicated;
+begin
+  Check(DecodeTorrentString('d' + ANNOUNCE + '13:announce-listl' +
+    'l' + BEncodeString('udp://tracker.test/announce') + 'e' +
+    'l' + BEncodeString(TRACKER_2) + 'ee' +
+    '4:info' + INFO_SINGLE_FILE + 'e'), 'Can not decode the torrent');
+
+  CheckEquals(2, FDecodeTorrent.TrackerList.Count, 'Tracker count');
+  CheckEquals('udp://tracker.test/announce', FDecodeTorrent.TrackerList[0], 'Tracker 0');
+  CheckEquals(TRACKER_2, FDecodeTorrent.TrackerList[1], 'Tracker 1');
+end;
+
+procedure TTestDecodeTorrent.Test_AnnounceList_Without_Announce;
+begin
+  Check(DecodeTorrentString('d13:announce-listl' +
+    'l' + BEncodeString(TRACKER_2) + 'e' + 'l' + BEncodeString(TRACKER_3) + 'ee' +
+    '4:info' + INFO_SINGLE_FILE + 'e'), 'Can not decode the torrent');
+
+  CheckEquals(2, FDecodeTorrent.TrackerList.Count, 'Tracker count');
+  CheckEquals(TRACKER_2, FDecodeTorrent.TrackerList[0], 'Tracker 0');
+  CheckEquals(TRACKER_3, FDecodeTorrent.TrackerList[1], 'Tracker 1');
+end;
+
+procedure TTestDecodeTorrent.Test_AnnounceList_Tier_With_Several_Trackers_Reads_First_Only;
+begin
+  //Design choice, see the header of decodetorrent.pas: one tracker per tier.
+  Check(DecodeTorrentString('d13:announce-listl' +
+    'l' + BEncodeString(TRACKER_2) + BEncodeString(TRACKER_3) + 'ee' +
+    '4:info' + INFO_SINGLE_FILE + 'e'), 'Can not decode the torrent');
+
+  CheckEquals(1, FDecodeTorrent.TrackerList.Count, 'Tracker count');
+  CheckEquals(TRACKER_2, FDecodeTorrent.TrackerList[0], 'Tracker 0');
+end;
+
+procedure TTestDecodeTorrent.Test_No_Announce_And_No_AnnounceList;
+begin
+  Check(DecodeTorrentString('d4:info' + INFO_SINGLE_FILE + 'e'),
+    'A torrent without trackers must decode');
+  CheckEquals(0, FDecodeTorrent.TrackerList.Count, 'Tracker count');
+end;
+
+procedure TTestDecodeTorrent.Test_ChangeAnnounce_Replaces_And_Keeps_Keys_Sorted;
+var
+  Root: TBEncoded;
+begin
+  //Without 'announce' the new key must be sorted in front of 'comment'
+  Check(DecodeTorrentString('d7:comment3:abc10:created by2:me4:info' + INFO_SINGLE_FILE +
+    'e'), 'Can not decode the torrent');
+
+  Check(FDecodeTorrent.ChangeAnnounce(TRACKER_2), 'Can not add the announce');
+  Check(FDecodeTorrent.ChangeAnnounce(TRACKER_3), 'Can not replace the announce');
+
+  Root := ParseBEncoded(SaveAndReadBack);
+  try
+    CheckKeysSorted(Root, 'Root');
+    CheckEquals(1, CountKeys(Root, 'announce'), 'There must be one announce');
+    CheckEquals(TRACKER_3, Root.ListData.FindElement('announce').StringData,
+      'Wrong announce');
+    CheckEquals('abc', Root.ListData.FindElement('comment').StringData,
+      'The comment must stay');
+  finally
+    Root.Free;
+  end;
+end;
+
+procedure TTestDecodeTorrent.Test_ChangeAnnounceList_One_Tracker_Per_Tier_And_Keys_Sorted;
+var
+  Root, AnnounceList: TBEncoded;
+  Trackers: TStringList;
+begin
+  Check(DecodeTorrentString(BuildTorrent(INFO_SINGLE_FILE)),
+    'Can not decode the torrent');
+
+  Trackers := TStringList.Create;
+  try
+    Trackers.Add(TRACKER_2);
+    Trackers.Add(TRACKER_3);
+    Check(FDecodeTorrent.ChangeAnnounceList(Trackers), 'Can not change the announce-list');
+    //Again, the old list must be replaced, not added
+    Check(FDecodeTorrent.ChangeAnnounceList(Trackers), 'Can not change it again');
+  finally
+    Trackers.Free;
+  end;
+
+  Root := ParseBEncoded(SaveAndReadBack);
+  try
+    CheckKeysSorted(Root, 'Root');
+    CheckEquals(1, CountKeys(Root, 'announce-list'), 'There must be one announce-list');
+    AnnounceList := Root.ListData.FindElement('announce-list');
+    CheckEquals(2, AnnounceList.ListData.Count, 'Tier count');
+    CheckEquals(1, AnnounceList.ListData[0].Data.ListData.Count, 'Size of tier 0');
+    CheckEquals(TRACKER_2, AnnounceList.ListData[0].Data.ListData.First.Data.StringData,
+      'Tier 0');
+    CheckEquals(TRACKER_3, AnnounceList.ListData[1].Data.ListData.First.Data.StringData,
+      'Tier 1');
+  finally
+    Root.Free;
+  end;
+end;
+
+procedure TTestDecodeTorrent.Test_ChangeAnnounceList_Empty_Removes_The_List;
+var
+  Trackers: TStringList;
+  Root: TBEncoded;
+begin
+  Check(DecodeTorrentString('d' + ANNOUNCE + '13:announce-listl' + 'l' +
+    BEncodeString(TRACKER_2) + 'ee4:info' + INFO_SINGLE_FILE + 'e'),
+    'Can not decode the torrent');
+
+  Trackers := TStringList.Create;
+  try
+    Check(FDecodeTorrent.ChangeAnnounceList(Trackers), 'An empty list must be accepted');
+  finally
+    Trackers.Free;
+  end;
+
+  Root := ParseBEncoded(SaveAndReadBack);
+  try
+    CheckEquals(0, CountKeys(Root, 'announce-list'), 'The announce-list must be removed');
+    CheckEquals(1, CountKeys(Root, 'announce'), 'The announce must stay');
+  finally
+    Root.Free;
+  end;
+end;
+
+procedure TTestDecodeTorrent.Test_RemoveAnnounce_And_RemoveAnnounceList;
+var
+  Root: TBEncoded;
+begin
+  Check(DecodeTorrentString('d' + ANNOUNCE + '13:announce-listl' + 'l' +
+    BEncodeString(TRACKER_2) + 'ee4:info' + INFO_SINGLE_FILE + 'e'),
+    'Can not decode the torrent');
+
+  Check(FDecodeTorrent.RemoveAnnounce, 'Can not remove the announce');
+  Check(FDecodeTorrent.RemoveAnnounceList, 'Can not remove the announce-list');
+  //Nothing left to remove is not an error
+  Check(FDecodeTorrent.RemoveAnnounce, 'Remove of a missing announce');
+  Check(FDecodeTorrent.RemoveAnnounceList, 'Remove of a missing announce-list');
+
+  Root := ParseBEncoded(SaveAndReadBack);
+  try
+    CheckEquals(0, CountKeys(Root, 'announce'), 'The announce must be removed');
+    CheckEquals(0, CountKeys(Root, 'announce-list'), 'The announce-list must be removed');
+    CheckEquals(1, CountKeys(Root, 'info'), 'The info must stay');
+  finally
+    Root.Free;
+  end;
+end;
+
+procedure TTestDecodeTorrent.Test_Private_Flag_Add_Remove_Keeps_Info_Keys_Sorted;
+var
+  Root: TBEncoded;
+begin
+  Check(DecodeTorrentString(BuildTorrent(INFO_TRAILING_KEYS)),
+    'Can not decode the torrent');
+
+  Check(FDecodeTorrent.AddPrivateTorrentFlag, 'Can not add the private flag');
+  Root := ParseBEncoded(SaveAndReadBack);
+  try
+    CheckKeysSorted(Root.ListData.FindElement('info'), 'Info');
+    CheckEquals(1, CountKeys(Root.ListData.FindElement('info'), 'private'),
+      'There must be one private key');
+  finally
+    Root.Free;
+  end;
+
+  //Remove it again: the original torrent, byte for byte
+  Check(FDecodeTorrent.RemovePrivateTorrentFlag, 'Can not remove the private flag');
+  CheckFalse(FDecodeTorrent.PrivateTorrent, 'Torrent must be public');
+  Check(BuildTorrent(INFO_TRAILING_KEYS) = SaveAndReadBack, 'Must be the original torrent');
+end;
+
+procedure TTestDecodeTorrent.Test_InfoSource_Add_Change_Remove_Keeps_Info_Keys_Sorted;
+var
+  Root: TBEncoded;
+begin
+  Check(DecodeTorrentString(BuildTorrent(INFO_TRAILING_KEYS)),
+    'Can not decode the torrent');
+  Check(FDecodeTorrent.AddPrivateTorrentFlag, 'Can not add the private flag');
+
+  Check(FDecodeTorrent.InfoSourceAdd('abc'), 'Can not add the source');
+  CheckEquals('abc', FDecodeTorrent.InfoSource, 'Source');
+  Check(FDecodeTorrent.InfoSourceAdd('xyz'), 'Can not change the source');
+  CheckEquals('xyz', FDecodeTorrent.InfoSource, 'Changed source');
+
+  Root := ParseBEncoded(SaveAndReadBack);
+  try
+    CheckKeysSorted(Root.ListData.FindElement('info'), 'Info');
+    CheckEquals(1, CountKeys(Root.ListData.FindElement('info'), 'source'),
+      'There must be one source key');
+    CheckEquals('xyz', Root.ListData.FindElement('info').ListData.FindElement('source').StringData,
+      'Wrong source');
+  finally
+    Root.Free;
+  end;
+
+  Check(FDecodeTorrent.InfoSourceRemove, 'Can not remove the source');
+  CheckEquals('', FDecodeTorrent.InfoSource, 'Source must be empty');
+  Check(FDecodeTorrent.RemovePrivateTorrentFlag, 'Can not remove the private flag');
+  Check(BuildTorrent(INFO_TRAILING_KEYS) = SaveAndReadBack, 'Must be the original torrent');
+end;
+
+procedure TTestDecodeTorrent.Test_Empty_Input_Fails;
+var
+  Stream: TMemoryStream;
+begin
+  Stream := TMemoryStream.Create;
+  try
+    CheckFalse(FDecodeTorrent.DecodeTorrent(Stream), 'An empty stream must fail');
+  finally
+    Stream.Free;
+  end;
+  CheckEquals(Ord(tv_unknown), Ord(FDecodeTorrent.TorrentVersion), 'Version');
+end;
+
+procedure TTestDecodeTorrent.Test_Info_That_Is_Not_A_Dictionary_Fails;
+begin
+  CheckFalse(DecodeTorrentString('d4:infoi5ee'), 'An integer as info must fail');
+  CheckFalse(DecodeTorrentString('d4:info3:abce'), 'A string as info must fail');
+  CheckFalse(DecodeTorrentString('d4:infolee'), 'A list as info must fail');
+end;
+
+procedure TTestDecodeTorrent.Test_Every_Truncated_Torrent_Fails_And_Object_Can_Be_Reused;
+var
+  Torrent: UTF8String;
+  Len: integer;
+begin
+  Torrent := BuildTorrent(INFO_MULTI_FILE);
+
+  for Len := 1 to Length(Torrent) - 1 do
+    CheckFalse(DecodeTorrentString(Copy(Torrent, 1, Len)),
+      'A torrent cut at ' + IntToStr(Len) + ' bytes must fail');
+
+  //The object still works after all the failures
+  Check(DecodeTorrentString(Torrent), 'The complete torrent must decode');
+  CheckEquals(2, FDecodeTorrent.InfoFilesCount, 'File count');
+  CheckEquals(1, FDecodeTorrent.TrackerList.Count, 'Tracker count');
+end;
+
+procedure TTestDecodeTorrent.Test_Truncated_And_Missing_File_Fail;
+var
+  FileName: string;
+  Torrent: UTF8String;
+  Stream: TFileStream;
+begin
+  FileName := GetTempDir + 'test_decodetorrent_truncated.torrent';
+  Torrent := BuildTorrent(INFO_MULTI_FILE);
+  Stream := TFileStream.Create(FileName, fmCreate);
+  try
+    //Only the first half of the torrent
+    Stream.WriteBuffer(Torrent[1], Length(Torrent) div 2);
+  finally
+    Stream.Free;
+  end;
+
+  try
+    CheckFalse(FDecodeTorrent.DecodeTorrent(FileName), 'A truncated file must fail');
+  finally
+    DeleteFile(FileName);
+  end;
+
+  CheckFalse(FDecodeTorrent.DecodeTorrent(FileName), 'A missing file must fail');
+  CheckEquals(Ord(tv_unknown), Ord(FDecodeTorrent.TorrentVersion), 'Version');
+  CheckEquals('', FDecodeTorrent.FilenameTorrent, 'No file name after a failure');
+end;
+
+procedure TTestDecodeTorrent.Test_CreatedBy_CreatedDate_Name_And_PieceLength;
+begin
+  Check(DecodeTorrentString('d10:created by6:tester13:creation datei1700000000e4:info' +
+    INFO_SINGLE_FILE + 'e'), 'Can not decode the torrent');
+
+  CheckEquals('tester', FDecodeTorrent.CreatedBy, 'Created by');
+  //1700000000 is 2023-11-14 22:13:20 UTC
+  CheckEquals(EncodeDate(2023, 11, 14) + EncodeTime(22, 13, 20, 0),
+    FDecodeTorrent.CreatedDate, 1 / MSecsPerDay, 'Creation date');
+  CheckEquals('test.bin', FDecodeTorrent.Name, 'Name');
+  CheckEquals(16384, FDecodeTorrent.PieceLength, 'Piece length');
+end;
+
+procedure TTestDecodeTorrent.Test_Missing_CreatedBy_And_CreatedDate_Are_Empty;
+begin
+  Check(DecodeTorrentString(BuildTorrent(INFO_SINGLE_FILE)), 'Can not decode the torrent');
+
+  CheckEquals('', FDecodeTorrent.CreatedBy, 'Created by');
+  CheckEquals(0, FDecodeTorrent.CreatedDate, 1 / MSecsPerDay, 'Creation date');
+  CheckEquals('', FDecodeTorrent.Comment, 'Comment');
+  CheckEquals(0, FDecodeTorrent.MetaVersion, 'Meta version');
 end;
 
 {$IFDEF UNIX}

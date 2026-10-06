@@ -246,6 +246,8 @@ begin
 
   FMemoryStream := TMemoryStream.Create;
 
+  //Nothing is decoded yet. TorrentVersion must be tv_unknown, not the first enum value.
+  ResetDecodedState;
 end;
 
 destructor TDecodeTorrent.Destroy;
