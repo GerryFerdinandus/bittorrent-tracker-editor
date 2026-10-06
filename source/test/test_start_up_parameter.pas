@@ -293,9 +293,18 @@ begin
 end;
 
 procedure TTestStartUpParameter.CallExecutableFile;
+var
+  OldDir: string;
 begin
-  //start the test program. This will return the Exit code
-  FExitCode := SysUtils.ExecuteProcess(UTF8ToSys(FFullPathToBinary), FCommandLine, []);
+  //An AppImage writes its txt files to the working directory ($OWD), not next to itself.
+  OldDir := GetCurrentDir;
+  Check(SetCurrentDir(FFullPathToEndUser), 'Can not change to the work folder');
+  try
+    //start the test program. This will return the Exit code
+    FExitCode := SysUtils.ExecuteProcess(UTF8ToSys(FFullPathToBinary), FCommandLine, []);
+  finally
+    SetCurrentDir(OldDir);
+  end;
 end;
 
 procedure TTestStartUpParameter.CopyTrackerEndResultToVerifyTrackerResult;
