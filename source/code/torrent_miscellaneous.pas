@@ -135,6 +135,11 @@ procedure CombineFiveTrackerListToOne(TrackerListOrder: TTrackerListOrder;
 function ConsoleModeDecodeParameter(out FileNameOrDirStr: UTF8String;
   var TrackerList: TTrackerList): boolean;
 
+//Same as ConsoleModeDecodeParameter, for an explicit argument list. Arguments[0] is the first
+//parameter, so without the program name.
+function ConsoleModeDecodeArguments(Arguments: TStrings;
+  out FileNameOrDirStr: UTF8String; var TrackerList: TTrackerList): boolean;
+
 function DecodeConsoleUpdateParameter(const ConsoleUpdateParameter: UTF8String;
   var TrackerList: TTrackerList): boolean;
 
@@ -190,8 +195,7 @@ end;
 procedure SanitizeTrackerList(StringList: TStringList);
 var
   TrackerStr: UTF8String;
-  i: integer;
-  PositionSpace: PtrInt;
+  i, p: integer;
 begin
   //remove all empty space and comment after the URL
 
@@ -205,13 +209,15 @@ begin
       //remove empty spaces at the begin/end of line
       TrackerStr := UTF8Trim(TrackerStr);
 
-      //find the first 'space' found in line
-      PositionSpace := UTF8Pos(' ', TrackerStr);
-      if PositionSpace > 0 then
+      //Remove everything after the first space or tab. A URL has none, so this is a comment.
+      //Both are single byte characters, so a byte search is safe for UTF8.
+      for p := 1 to Length(TrackerStr) do
       begin
-        // There is a 'space' found
-        // Remove everything after this 'space'
-        TrackerStr := UTF8LeftStr(TrackerStr, PositionSpace - 1);
+        if TrackerStr[p] in [' ', #9] then
+        begin
+          SetLength(TrackerStr, p - 1);
+          Break;
+        end;
       end;
 
       //write the modified string back
@@ -604,6 +610,22 @@ end;
 function ConsoleModeDecodeParameter(out FileNameOrDirStr: UTF8String;
   var TrackerList: TTrackerList): boolean;
 var
+  Arguments: TStringList;
+  i: integer;
+begin
+  Arguments := TStringList.Create;
+  try
+    for i := 1 to ParamCount do
+      Arguments.Add(ParamStr(i));
+    Result := ConsoleModeDecodeArguments(Arguments, FileNameOrDirStr, TrackerList);
+  finally
+    Arguments.Free;
+  end;
+end;
+
+function ConsoleModeDecodeArguments(Arguments: TStrings;
+  out FileNameOrDirStr: UTF8String; var TrackerList: TTrackerList): boolean;
+var
   i: integer;
 begin
   {
@@ -622,7 +644,8 @@ begin
   }
 
   Result := False;
-  case Paramcount of
+  FileNameOrDirStr := '';
+  case Arguments.Count of
     0:
     begin
       TrackerList.LogStringList.Add('ERROR: There are no parameter detected.');
@@ -631,7 +654,7 @@ begin
     1:
     begin
       //one parameter. Must be a link.
-      FileNameOrDirStr := UTF8Trim(ParamStr(1));
+      FileNameOrDirStr := UTF8Trim(Arguments[0]);
       //Keep the same behaviour as the previous software version.
       TrackerList.TrackerListOrderForUpdatedTorrent := tloSort;
       Result := True;
@@ -640,21 +663,21 @@ begin
     begin
       //Two parameters. The user can select the update method.
       //Check for '-U' construction as first parameter
-      if (Pos('-U', ParamStr(1)) = 1) then
+      if (Pos('-U', Arguments[0]) = 1) then
       begin
         //Update parameter is the first parameter
-        Result := DecodeConsoleUpdateParameter(ParamStr(1), TrackerList);
+        Result := DecodeConsoleUpdateParameter(Arguments[0], TrackerList);
         // second parameter is the file/folder
-        FileNameOrDirStr := UTF8Trim(ParamStr(2));
+        FileNameOrDirStr := UTF8Trim(Arguments[1]);
       end
       else
       //Check for '-U' construction as second parameter
-      if (Pos('-U', ParamStr(2)) = 1) then
+      if (Pos('-U', Arguments[1]) = 1) then
       begin
         // Update parameter is the second parameter
-        Result := DecodeConsoleUpdateParameter(ParamStr(2), TrackerList);
+        Result := DecodeConsoleUpdateParameter(Arguments[1], TrackerList);
         // first parameter MUST be the file/folder
-        FileNameOrDirStr := UTF8Trim(ParamStr(1));
+        FileNameOrDirStr := UTF8Trim(Arguments[0]);
       end
       else
       begin
@@ -668,17 +691,17 @@ begin
 
       //Check for parameter -SAC and -SOURCE.
       //Must be done for both '-Ux' parameter positions.
-      for i := 2 to ParamCount do
+      for i := 1 to Arguments.Count - 1 do
       begin
-        if ParamStr(i) = '-SAC' then
+        if Arguments[i] = '-SAC' then
         begin
           TrackerList.SkipAnnounceCheck := True;
           Continue;
         end;
 
-        if ParamStr(i) = '-SOURCE' then
+        if Arguments[i] = '-SOURCE' then
         begin
-          if ParamCount < i + 1 then
+          if Arguments.Count < i + 2 then
           begin
             TrackerList.LogStringList.Add(
               'ERROR: There is no value after -SOURCE');
@@ -687,21 +710,13 @@ begin
           end;
 
           // parameter after -SOURCE must be the value.
-          TrackerList.SourceTag := ParamStr(i + 1);
+          TrackerList.SourceTag := Arguments[i + 1];
           // Empty '' -> remove all source tag
           TrackerList.RemoveAllSourceTag := TrackerList.SourceTag = '';
         end;
       end;
 
     end;
-      //else
-      //begin
-      //  TrackerList.LogStringList.Add(
-      //    'ERROR: There can only be maximum of 2 parameter. Not: ' + IntToStr(ParamCount));
-      //  Result := False;
-      //  exit;
-      //end;
-
   end;
 end;
 
