@@ -155,7 +155,7 @@ begin
       end;
     end
     else
-      ErrorStr := 'ERROR: Tracker URL must begin with http://, http:// or udp://';
+      ErrorStr := InvalidTrackerURLMessage;
 
     if Result then
       AddButIgnoreDuplicates(TrackerList.TrackerAddedByUserList, TrackerStr)

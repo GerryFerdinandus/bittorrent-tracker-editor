@@ -1100,7 +1100,7 @@ begin
     end
     else
     begin
-      ErrorStr := 'ERROR: Tracker URL must begin with http://, http:// or udp://';
+      ErrorStr := InvalidTrackerURLMessage;
     end;
 
     if Result then

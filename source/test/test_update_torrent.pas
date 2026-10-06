@@ -60,6 +60,7 @@ type
     procedure Test_Folder_Name_With_Dot_Is_A_Folder;
     procedure Test_Missing_File_Is_Reported_As_Undecodable_Not_ReadOnly;
     procedure Test_SanitizeTrackerList_Removes_Comments_And_Spaces;
+    procedure Test_InvalidTrackerURLMessage_Lists_All_Valid_Prefixes;
     procedure Test_LoadTorrentViaDir_Uppercase_Extension_And_Skips_Folders;
   end;
 
@@ -582,6 +583,17 @@ begin
   finally
     Lines.Free;
   end;
+end;
+
+procedure TTestUpdateTorrent.Test_InvalidTrackerURLMessage_Lists_All_Valid_Prefixes;
+var
+  Prefix: UTF8String;
+begin
+  for Prefix in VALID_TRACKERS_URL do
+    Check(Pos(Prefix, InvalidTrackerURLMessage) > 0,
+      'Error message must mention ' + Prefix);
+  CheckEquals('ERROR: Tracker URL must begin with udp://, http://, https://, ws:// or wss://',
+    InvalidTrackerURLMessage, 'Wrong error message');
 end;
 
 initialization

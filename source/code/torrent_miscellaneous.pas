@@ -119,6 +119,9 @@ function PathIsTorrentFile(const Path: UTF8String): boolean;
 
 function ValidTrackerURL(const TrackerURL: UTF8String): boolean;
 
+//Error text for a tracker URL that fails ValidTrackerURL(). Lists every VALID_TRACKERS_URL prefix.
+function InvalidTrackerURLMessage: UTF8String;
+
 function WebTorrentTrackerURL(const TrackerURL: UTF8String): boolean;
 
 procedure CombineFiveTrackerListToOne(TrackerListOrder: TTrackerListOrder;
@@ -313,6 +316,21 @@ begin
       Result := True;
       exit;
     end;
+  end;
+end;
+
+function InvalidTrackerURLMessage: UTF8String;
+var
+  i: integer;
+begin
+  Result := 'ERROR: Tracker URL must begin with ';
+  for i := low(VALID_TRACKERS_URL) to high(VALID_TRACKERS_URL) do
+  begin
+    if i = high(VALID_TRACKERS_URL) then
+      Result := Result + ' or '
+    else if i > low(VALID_TRACKERS_URL) then
+      Result := Result + ', ';
+    Result := Result + VALID_TRACKERS_URL[i];
   end;
 end;
 
