@@ -124,6 +124,11 @@ function InvalidTrackerURLMessage: UTF8String;
 
 function WebTorrentTrackerURL(const TrackerURL: UTF8String): boolean;
 
+//Validates every line of TrackerLines and rebuilds AddedTrackerList from it. WebTorrent URLs never
+//need /announce. On failure ErrorStr is the message and FailedTracker the line that was rejected.
+function ValidateNewTrackerLines(TrackerLines: TStrings; SkipAnnounceCheck: boolean;
+  AddedTrackerList: TStringList; out ErrorStr, FailedTracker: UTF8String): boolean;
+
 procedure CombineFiveTrackerListToOne(TrackerListOrder: TTrackerListOrder;
   var TrackerList: TTrackerList; PresentTorrentTrackerList: TStringList);
 
@@ -347,6 +352,41 @@ begin
       Result := True;
       exit;
     end;
+  end;
+end;
+
+function ValidateNewTrackerLines(TrackerLines: TStrings; SkipAnnounceCheck: boolean;
+  AddedTrackerList: TStringList; out ErrorStr, FailedTracker: UTF8String): boolean;
+var
+  TrackerStrLoop, TrackerStr: UTF8String;
+begin
+  AddedTrackerList.Clear;
+  Result := True;
+  ErrorStr := '';
+  FailedTracker := '';
+
+  for TrackerStrLoop in TrackerLines do
+  begin
+    TrackerStr := UTF8Trim(TrackerStrLoop);
+    if TrackerStr = '' then
+      continue;
+
+    if not ValidTrackerURL(TrackerStr) then
+    begin
+      ErrorStr := InvalidTrackerURLMessage;
+      FailedTracker := TrackerStr;
+      Exit(False);
+    end;
+
+    if (not SkipAnnounceCheck) and (not WebTorrentTrackerURL(TrackerStr)) and
+      (not TrackerURLWithAnnounce(TrackerStr)) then
+    begin
+      ErrorStr := 'ERROR: Tracker URL must end with /announce or /announce.php';
+      FailedTracker := TrackerStr;
+      Exit(False);
+    end;
+
+    AddButIgnoreDuplicates(AddedTrackerList, TrackerStr);
   end;
 end;
 

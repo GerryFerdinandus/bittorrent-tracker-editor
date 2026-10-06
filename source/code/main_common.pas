@@ -17,6 +17,23 @@ uses
 //Mirrors the Snap/Flatpak/AppImage/macOS/default rules from the GUI's FormCreate.
 function DetermineTrackerListFolder(const ExeFileName: string): string;
 
+//Creates all the lists of TrackerList. Release them with FreeTrackerList.
+procedure CreateTrackerList(out TrackerList: TTrackerList);
+procedure FreeTrackerList(var TrackerList: TTrackerList);
+
+//Loads a tracker list text file into Lines. False, and Lines unchanged, when the file is unreadable.
+function ReadAddTrackersFile(const FileName: string; Lines: TStrings): boolean;
+
+//Loads add_trackers.txt from Folder into Lines, or the recommended trackers when there is no file.
+procedure LoadAddTrackersRaw(const Folder: string; Lines: TStrings);
+
+//Loads remove_trackers.txt from Folder into TrackerList.TrackerBanByUserList.
+procedure LoadRemoveTrackers(const Folder: string; var TrackerList: TTrackerList;
+  out FilePresentBanByUserList: boolean);
+
+//Writes the export_trackers.txt file, one tracker group per URL.
+procedure SaveTrackerFinalListToFile(const Folder: string; TrackerFinalList: TStringList);
+
 //Runs the full console pipeline (decodes ParamStr/ParamCount itself). Writes console_log.txt
 //and export_trackers.txt into FolderForTrackerListLoadAndSave. Returns True on success.
 function RunConsoleMode(const FolderForTrackerListLoadAndSave: string): boolean;
@@ -130,64 +147,48 @@ end;
 function ValidateAndSanitizeTrackers(RawLines: TStringList; var TrackerList: TTrackerList;
   Temporary_SkipAnnounceCheck: boolean): boolean;
 var
-  TrackerStrLoop, TrackerStr, ErrorStr: UTF8String;
+  ErrorStr, FailedTracker: UTF8String;
 begin
-  TrackerList.TrackerAddedByUserList.Clear;
-  Result := True;
-  ErrorStr := '';
-  TrackerStr := '';
-
-  for TrackerStrLoop in RawLines do
-  begin
-    TrackerStr := UTF8Trim(TrackerStrLoop);
-    if TrackerStr = '' then
-      continue;
-
-    Result := ValidTrackerURL(TrackerStr);
-    if Result then
-    begin
-      if (not TrackerList.SkipAnnounceCheck) and (not Temporary_SkipAnnounceCheck) and
-        (not WebTorrentTrackerURL(TrackerStr)) then
-      begin
-        Result := TrackerURLWithAnnounce(TrackerStr);
-        if not Result then
-          ErrorStr := 'ERROR: Tracker URL must end with /announce or /announce.php';
-      end;
-    end
-    else
-      ErrorStr := InvalidTrackerURLMessage;
-
-    if Result then
-      AddButIgnoreDuplicates(TrackerList.TrackerAddedByUserList, TrackerStr)
-    else
-      break;
-  end;
+  Result := ValidateNewTrackerLines(RawLines,
+    TrackerList.SkipAnnounceCheck or Temporary_SkipAnnounceCheck,
+    TrackerList.TrackerAddedByUserList, ErrorStr, FailedTracker);
 
   if Result then
     RawLines.Text := TrackerList.TrackerAddedByUserList.Text
   else
-    LogConsoleError(TrackerList, ErrorStr, TrackerStr);
+    LogConsoleError(TrackerList, ErrorStr, FailedTracker);
 end;
 
-procedure LoadAddTrackersRaw(const Folder: string; RawList: TStringList);
+function ReadAddTrackersFile(const FileName: string; Lines: TStrings): boolean;
 var
   TrackerFileList: TStringList;
-  i: integer;
 begin
   TrackerFileList := TStringList.Create;
   try
     try
-      TrackerFileList.LoadFromFile(Folder + FILE_NAME_ADD_TRACKERS);
+      TrackerFileList.LoadFromFile(FileName);
       SanitizeTrackerList(TrackerFileList);
-      RawList.Text := UTF8Trim(TrackerFileList.Text);
+      Lines.Text := UTF8Trim(TrackerFileList.Text);
+      Result := True;
     except
-      //No file found (or unreadable). Fall back to the recommended trackers.
-      RawList.Clear;
-      for i := low(RECOMMENDED_TRACKERS) to high(RECOMMENDED_TRACKERS) do
-        RawList.Add(RECOMMENDED_TRACKERS[i]);
+      //No file found, or unreadable.
+      Result := False;
     end;
   finally
     TrackerFileList.Free;
+  end;
+end;
+
+procedure LoadAddTrackersRaw(const Folder: string; Lines: TStrings);
+var
+  i: integer;
+begin
+  if not ReadAddTrackersFile(Folder + FILE_NAME_ADD_TRACKERS, Lines) then
+  begin
+    //Fall back to the recommended trackers.
+    Lines.Clear;
+    for i := low(RECOMMENDED_TRACKERS) to high(RECOMMENDED_TRACKERS) do
+      Lines.Add(RECOMMENDED_TRACKERS[i]);
   end;
 end;
 

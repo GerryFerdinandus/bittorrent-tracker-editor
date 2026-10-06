@@ -18,7 +18,7 @@ interface
 
 uses
   Classes, SysUtils, fpcunit, testregistry, decodetorrent, torrent_miscellaneous,
-  update_torrent;
+  update_torrent, main_common;
 
 type
 
@@ -61,6 +61,13 @@ type
     procedure Test_Missing_File_Is_Reported_As_Undecodable_Not_ReadOnly;
     procedure Test_SanitizeTrackerList_Removes_Comments_And_Spaces;
     procedure Test_InvalidTrackerURLMessage_Lists_All_Valid_Prefixes;
+    procedure Test_ValidateNewTrackerLines_Cleans_And_Ignores_Duplicates;
+    procedure Test_ValidateNewTrackerLines_Rejects_Unknown_Scheme;
+    procedure Test_ValidateNewTrackerLines_Announce_Check;
+    procedure Test_ValidateNewTrackerLines_Replaces_Previous_Result;
+    procedure Test_ReadAddTrackersFile_Unreadable_Keeps_Lines;
+    procedure Test_LoadAddTrackersRaw_Without_File_Uses_Recommended_Trackers;
+    procedure Test_LoadRemoveTrackers_Present_And_Missing;
     procedure Test_LoadTorrentViaDir_Uppercase_Extension_And_Skips_Folders;
   end;
 
@@ -594,6 +601,175 @@ begin
       'Error message must mention ' + Prefix);
   CheckEquals('ERROR: Tracker URL must begin with udp://, http://, https://, ws:// or wss://',
     InvalidTrackerURLMessage, 'Wrong error message');
+end;
+
+procedure TTestUpdateTorrent.Test_ValidateNewTrackerLines_Cleans_And_Ignores_Duplicates;
+var
+  Lines, Added: TStringList;
+  ErrorStr, FailedTracker: UTF8String;
+begin
+  Lines := TStringList.Create;
+  Added := TStringList.Create;
+  try
+    Lines.Add('  ' + TRACKER_A + '  ');
+    Lines.Add('');
+    Lines.Add(TRACKER_B);
+    Lines.Add(TRACKER_A);
+
+    CheckTrue(ValidateNewTrackerLines(Lines, False, Added, ErrorStr, FailedTracker),
+      'Valid lines must be accepted');
+
+    CheckEquals(2, Added.Count, 'Duplicates and empty lines must be dropped');
+    CheckEquals(TRACKER_A, Added[0], 'Spaces must be removed, the order must be kept');
+    CheckEquals(TRACKER_B, Added[1], 'Wrong second tracker');
+    CheckEquals('', ErrorStr, 'No error expected');
+  finally
+    Added.Free;
+    Lines.Free;
+  end;
+end;
+
+procedure TTestUpdateTorrent.Test_ValidateNewTrackerLines_Rejects_Unknown_Scheme;
+var
+  Lines, Added: TStringList;
+  ErrorStr, FailedTracker: UTF8String;
+begin
+  Lines := TStringList.Create;
+  Added := TStringList.Create;
+  try
+    Lines.Add(TRACKER_A);
+    Lines.Add('ftp://c.test/announce');
+    Lines.Add(TRACKER_B);
+
+    CheckFalse(ValidateNewTrackerLines(Lines, False, Added, ErrorStr, FailedTracker),
+      'An unknown scheme must be rejected');
+
+    CheckEquals(InvalidTrackerURLMessage, ErrorStr, 'Wrong error message');
+    CheckEquals('ftp://c.test/announce', FailedTracker, 'Wrong rejected tracker');
+  finally
+    Added.Free;
+    Lines.Free;
+  end;
+end;
+
+procedure TTestUpdateTorrent.Test_ValidateNewTrackerLines_Announce_Check;
+var
+  Lines, Added: TStringList;
+  ErrorStr, FailedTracker: UTF8String;
+begin
+  Lines := TStringList.Create;
+  Added := TStringList.Create;
+  try
+    Lines.Add('udp://a.test:6969');
+
+    CheckFalse(ValidateNewTrackerLines(Lines, False, Added, ErrorStr, FailedTracker),
+      'A tracker without /announce must be rejected');
+    CheckEquals('ERROR: Tracker URL must end with /announce or /announce.php',
+      ErrorStr, 'Wrong error message');
+    CheckEquals('udp://a.test:6969', FailedTracker, 'Wrong rejected tracker');
+
+    CheckTrue(ValidateNewTrackerLines(Lines, True, Added, ErrorStr, FailedTracker),
+      'SkipAnnounceCheck must accept it');
+
+    //WebTorrent trackers never have /announce
+    Lines.Clear;
+    Lines.Add('wss://tracker.test');
+    CheckTrue(ValidateNewTrackerLines(Lines, False, Added, ErrorStr, FailedTracker),
+      'A WebTorrent tracker needs no /announce');
+  finally
+    Added.Free;
+    Lines.Free;
+  end;
+end;
+
+procedure TTestUpdateTorrent.Test_ValidateNewTrackerLines_Replaces_Previous_Result;
+var
+  Lines, Added: TStringList;
+  ErrorStr, FailedTracker: UTF8String;
+begin
+  Lines := TStringList.Create;
+  Added := TStringList.Create;
+  try
+    Added.Add(TRACKER_C);
+    Lines.Add(TRACKER_A);
+
+    CheckTrue(ValidateNewTrackerLines(Lines, False, Added, ErrorStr, FailedTracker),
+      'Valid lines must be accepted');
+
+    CheckEquals(1, Added.Count, 'The previous result must be replaced');
+    CheckEquals(TRACKER_A, Added[0], 'Wrong tracker');
+  finally
+    Added.Free;
+    Lines.Free;
+  end;
+end;
+
+procedure TTestUpdateTorrent.Test_ReadAddTrackersFile_Unreadable_Keeps_Lines;
+var
+  Lines: TStringList;
+begin
+  Lines := TStringList.Create;
+  try
+    Lines.Add(TRACKER_A);
+
+    CheckFalse(ReadAddTrackersFile(FTempFolder + 'no_such_file.txt', Lines),
+      'A missing file must be reported');
+    CheckEquals(1, Lines.Count, 'The lines must stay unchanged');
+    CheckEquals(TRACKER_A, Lines[0], 'The lines must stay unchanged');
+  finally
+    Lines.Free;
+  end;
+end;
+
+procedure TTestUpdateTorrent.Test_LoadAddTrackersRaw_Without_File_Uses_Recommended_Trackers;
+var
+  Lines: TStringList;
+  TrackerFile: TStringList;
+begin
+  Lines := TStringList.Create;
+  TrackerFile := TStringList.Create;
+  try
+    LoadAddTrackersRaw(FTempFolder, Lines);
+    CheckTrue(Lines.Count > 0, 'Without a file the recommended trackers must be used');
+
+    TrackerFile.Add(TRACKER_B + ' # comment');
+    TrackerFile.SaveToFile(FTempFolder + FILE_NAME_ADD_TRACKERS);
+
+    LoadAddTrackersRaw(FTempFolder, Lines);
+    CheckEquals(1, Lines.Count, 'The file must replace the recommended trackers');
+    CheckEquals(TRACKER_B, Lines[0], 'The comment must be removed');
+  finally
+    DeleteFile(FTempFolder + FILE_NAME_ADD_TRACKERS);
+    TrackerFile.Free;
+    Lines.Free;
+  end;
+end;
+
+procedure TTestUpdateTorrent.Test_LoadRemoveTrackers_Present_And_Missing;
+var
+  TrackerList: TTrackerList;
+  TrackerFile: TStringList;
+  FilePresent: boolean;
+begin
+  CreateTrackerList(TrackerList);
+  TrackerFile := TStringList.Create;
+  try
+    LoadRemoveTrackers(FTempFolder, TrackerList, FilePresent);
+    CheckFalse(FilePresent, 'No file present');
+    CheckEquals(0, TrackerList.TrackerBanByUserList.Count, 'No ban list without a file');
+
+    TrackerFile.Add(TRACKER_A);
+    TrackerFile.SaveToFile(FTempFolder + FILE_NAME_REMOVE_TRACKERS);
+
+    LoadRemoveTrackers(FTempFolder, TrackerList, FilePresent);
+    CheckTrue(FilePresent, 'File must be detected');
+    CheckEquals(1, TrackerList.TrackerBanByUserList.Count, 'Wrong ban list count');
+    CheckEquals(TRACKER_A, TrackerList.TrackerBanByUserList[0], 'Wrong ban list item');
+  finally
+    DeleteFile(FTempFolder + FILE_NAME_REMOVE_TRACKERS);
+    TrackerFile.Free;
+    FreeTrackerList(TrackerList);
+  end;
 end;
 
 initialization
