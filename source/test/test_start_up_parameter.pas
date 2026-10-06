@@ -108,7 +108,7 @@ type
 
 implementation
 
-uses  LazUTF8, FileUtil
+uses  LazUTF8, FileUtil, main_common
   {$IFDEF UNIX}, BaseUnix{$ENDIF};
 
 const
@@ -823,8 +823,28 @@ type
   //Runs every TTestStartUpParameter test against trackereditor_cli instead of trackereditor.
   //Excluded on macOS: the macOS build does not produce a trackereditor_cli binary.
   TTestStartUpParameterCli = class(TTestStartUpParameter)
+  private
+    //Every test of this class runs a copy of the program in its own folder. The program
+    //reads and writes add_trackers.txt, remove_trackers.txt and console_log.txt next to itself.
+    FWorkFolder: string;
+    FWorkExe: string;
+    FReadOnlyFile: string;
+    FLog: TStringList;
+
+    procedure PrepareWorkFolder;
+    procedure CreateTorrentFile(const FileName: string; Trackers: array of string;
+      const Source: string = '');
+    procedure WriteTextFile(const Name: string; Lines: array of string);
+    procedure CheckTrackersInFile(const FileName: string; Expected: array of string);
+    procedure CheckSource(const FileName, Expected: string);
+
+    //Run the copy of the program. Every argument is passed as it is, an empty one too.
+    procedure RunCli(const Args: array of RawByteString);
+    procedure CheckSuccessLog(ExpectedTrackerCount: integer);
+    procedure CheckErrorLog(const ExpectedFirstLine: string);
   protected
     function GetProgramName: string; override;
+    procedure TearDown; override;
   published
     //trackereditor_cli has no networking code and does not support '-TEST_SSL': it is treated
     //like any other invalid single argument, i.e. an unresolvable torrent path/folder.
@@ -836,6 +856,19 @@ type
 
     //An exception inside the console mode must be written to console_log.txt.
     procedure Test_Exception_Is_Written_To_Console_Log;
+
+    //These tests do not use the torrent files of the project. They never need a network.
+    procedure Test_Single_Torrent_File_Path_Without_Update_Parameter;
+    procedure Test_Single_Torrent_File_Path_With_Update_Parameter;
+    procedure Test_Empty_Remove_Trackers_File_Removes_All_Trackers_Inside_Torrent;
+    procedure Test_Missing_Add_Trackers_File_Uses_Recommended_Trackers;
+    procedure Test_ReadOnly_Torrent_Is_Reported;
+    procedure Test_SOURCE_Without_Value_Fails;
+    procedure Test_Empty_SOURCE_Removes_Source_Tag;
+    procedure Test_Update_Parameter_U8_Fails;
+    procedure Test_Folder_With_Corrupt_Torrent_Fails_And_Changes_Nothing;
+    procedure Test_Folder_Without_Torrents_Fails;
+    procedure Test_Folder_Name_With_Dot_Is_Accepted;
   end;
   {$ENDIF DARWIN}
 
@@ -843,6 +876,374 @@ type
 function TTestStartUpParameterCli.GetProgramName: string;
 begin
   Result := 'trackereditor_cli';
+end;
+
+procedure TTestStartUpParameterCli.TearDown;
+begin
+  //A read only file can not be deleted on Windows
+  if FReadOnlyFile <> '' then
+    SetFileReadOnly(FReadOnlyFile, False);
+  FReadOnlyFile := '';
+
+  FLog.Free;
+  FLog := nil;
+  if FWorkFolder <> '' then
+    DeleteDirectory(FWorkFolder, False);
+  FWorkFolder := '';
+
+  inherited TearDown;
+end;
+
+procedure TTestStartUpParameterCli.PrepareWorkFolder;
+begin
+  FWorkFolder := IncludeTrailingPathDelimiter(GetTempDir) + 'test_cli_console' + PathDelim;
+  //A folder that a crashed run has left behind
+  if DirectoryExists(FWorkFolder) then
+    DeleteDirectory(FWorkFolder, False);
+  ForceDirectories(FWorkFolder);
+
+  FWorkExe := FWorkFolder + ExtractFileName(FFullPathToBinary);
+  Check(CopyFile(FFullPathToBinary, FWorkExe), 'Can not copy the program');
+  {$IFDEF UNIX}
+  //CopyFile does not keep the execute permission.
+  Check(FpChmod(FWorkExe, &755) = 0, 'Can not make the program executable');
+  {$ENDIF}
+
+  FLog := TStringList.Create;
+end;
+
+procedure TTestStartUpParameterCli.CreateTorrentFile(const FileName: string;
+  Trackers: array of string; const Source: string);
+var
+  Torrent: UTF8String;
+  Stream: TFileStream;
+  i: integer;
+
+  function BEncodeString(const Str: UTF8String): UTF8String;
+  begin
+    Result := IntToStr(Length(Str)) + ':' + Str;
+  end;
+
+begin
+  //Dictionary keys must be in alphabetical order
+  Torrent := 'd';
+  if Length(Trackers) > 0 then
+  begin
+    Torrent := Torrent + '8:announce' + BEncodeString(Trackers[0]) + '13:announce-listl';
+    for i := Low(Trackers) to High(Trackers) do
+      Torrent := Torrent + 'l' + BEncodeString(Trackers[i]) + 'e';
+    Torrent := Torrent + 'e';
+  end;
+  Torrent := Torrent + '4:info' + 'd6:lengthi1024e4:name8:test.bin' +
+    '12:piece lengthi16384e6:pieces20:AAAAAAAAAAAAAAAAAAAA';
+  if Source <> '' then
+    Torrent := Torrent + '6:source' + BEncodeString(Source);
+  Torrent := Torrent + 'ee';
+
+  Stream := TFileStream.Create(FileName, fmCreate);
+  try
+    Stream.WriteBuffer(Torrent[1], Length(Torrent));
+  finally
+    Stream.Free;
+  end;
+end;
+
+procedure TTestStartUpParameterCli.WriteTextFile(const Name: string;
+  Lines: array of string);
+var
+  TextFile: TStringList;
+  Line: string;
+begin
+  TextFile := TStringList.Create;
+  try
+    for Line in Lines do
+      TextFile.Add(Line);
+    //No line gives an empty file
+    TextFile.SaveToFile(FWorkFolder + Name);
+  finally
+    TextFile.Free;
+  end;
+end;
+
+procedure TTestStartUpParameterCli.CheckTrackersInFile(const FileName: string;
+  Expected: array of string);
+var
+  Torrent: TDecodeTorrent;
+  i: integer;
+begin
+  Torrent := TDecodeTorrent.Create;
+  try
+    Check(Torrent.DecodeTorrent(FileName), 'Can not decode ' + FileName);
+    CheckEquals(Length(Expected), Torrent.TrackerList.Count,
+      'Wrong tracker count in ' + FileName);
+    for i := Low(Expected) to High(Expected) do
+      CheckEquals(Expected[i], Torrent.TrackerList[i], 'Wrong tracker ' + IntToStr(i));
+  finally
+    Torrent.Free;
+  end;
+end;
+
+procedure TTestStartUpParameterCli.CheckSource(const FileName, Expected: string);
+var
+  Torrent: TDecodeTorrent;
+begin
+  Torrent := TDecodeTorrent.Create;
+  try
+    Check(Torrent.DecodeTorrent(FileName), 'Can not decode ' + FileName);
+    CheckEquals(Expected, Torrent.InfoSource, 'Wrong source in ' + FileName);
+  finally
+    Torrent.Free;
+  end;
+end;
+
+procedure TTestStartUpParameterCli.RunCli(const Args: array of RawByteString);
+{$IFDEF WINDOWS}
+var
+  CommandLine: string;
+  Arg: RawByteString;
+begin
+  //Quote every argument, else an empty argument is lost
+  CommandLine := '';
+  for Arg in Args do
+    CommandLine := CommandLine + ' "' + Arg + '"';
+  FExitCode := SysUtils.ExecuteProcess(UTF8ToSys(FWorkExe), Trim(CommandLine), []);
+{$ELSE}
+begin
+  //The string version of ExecuteProcess drops an empty argument
+  FExitCode := SysUtils.ExecuteProcess(UTF8ToSys(FWorkExe), Args, []);
+{$ENDIF}
+  FLog.Clear;
+  if FileExists(FWorkFolder + FILE_NAME_CONSOLE_LOG) then
+    FLog.LoadFromFile(FWorkFolder + FILE_NAME_CONSOLE_LOG);
+end;
+
+procedure TTestStartUpParameterCli.CheckSuccessLog(ExpectedTrackerCount: integer);
+begin
+  CheckEquals(0, FExitCode, 'Exit code');
+  Check(FLog.Count >= 3, 'The log of a success has 3 lines');
+  CheckEquals(CONSOLE_SUCCESS_STATUS, FLog[0], 'Status');
+  CheckEquals('1', FLog[1], 'Torrent file count');
+  CheckEquals(IntToStr(ExpectedTrackerCount), FLog[2], 'Tracker count');
+end;
+
+procedure TTestStartUpParameterCli.CheckErrorLog(const ExpectedFirstLine: string);
+begin
+  CheckEquals(1, FExitCode, 'Exit code');
+  Check(FLog.Count > 0, 'The log must have the error');
+  CheckEquals(ExpectedFirstLine, FLog[0], 'First line of the log');
+end;
+
+procedure TTestStartUpParameterCli.Test_Single_Torrent_File_Path_Without_Update_Parameter;
+var
+  TorrentFile: string;
+begin
+  PrepareWorkFolder;
+  TorrentFile := FWorkFolder + 'a.torrent';
+  CreateTorrentFile(TorrentFile, ['udp://orig1.test/announce']);
+  WriteTextFile(FILE_NAME_ADD_TRACKERS, ['udp://new.test/announce']);
+
+  //Just the path of one torrent file: sort
+  RunCli([TorrentFile]);
+
+  CheckSuccessLog(2);
+  CheckTrackersInFile(TorrentFile, ['udp://new.test/announce', 'udp://orig1.test/announce']);
+end;
+
+procedure TTestStartUpParameterCli.Test_Single_Torrent_File_Path_With_Update_Parameter;
+var
+  TorrentFile: string;
+begin
+  PrepareWorkFolder;
+  TorrentFile := FWorkFolder + 'a.torrent';
+  CreateTorrentFile(TorrentFile, ['udp://orig1.test/announce']);
+  WriteTextFile(FILE_NAME_ADD_TRACKERS, ['udp://new.test/announce']);
+
+  //-U3: the original tracker stays first, the new tracker is appended
+  RunCli([TorrentFile, '-U3']);
+
+  CheckSuccessLog(2);
+  CheckTrackersInFile(TorrentFile, ['udp://orig1.test/announce', 'udp://new.test/announce']);
+end;
+
+procedure TTestStartUpParameterCli.
+Test_Empty_Remove_Trackers_File_Removes_All_Trackers_Inside_Torrent;
+var
+  TorrentFile: string;
+begin
+  PrepareWorkFolder;
+  TorrentFile := FWorkFolder + 'a.torrent';
+  WriteTextFile(FILE_NAME_ADD_TRACKERS, ['udp://new.test/announce']);
+
+  //remove_trackers.txt is present, but empty: every tracker inside the torrent is removed
+  CreateTorrentFile(TorrentFile, ['udp://orig1.test/announce', 'udp://orig2.test/announce']);
+  WriteTextFile(FILE_NAME_REMOVE_TRACKERS, []);
+  RunCli([TorrentFile, '-U4']);
+  CheckSuccessLog(1);
+  CheckTrackersInFile(TorrentFile, ['udp://new.test/announce']);
+
+  //No remove_trackers.txt: nothing is removed
+  CreateTorrentFile(TorrentFile, ['udp://orig1.test/announce', 'udp://orig2.test/announce']);
+  DeleteFile(FWorkFolder + FILE_NAME_REMOVE_TRACKERS);
+  RunCli([TorrentFile, '-U4']);
+  CheckSuccessLog(3);
+  CheckTrackersInFile(TorrentFile, ['udp://new.test/announce', 'udp://orig1.test/announce',
+    'udp://orig2.test/announce']);
+end;
+
+procedure TTestStartUpParameterCli.Test_Missing_Add_Trackers_File_Uses_Recommended_Trackers;
+var
+  TorrentFile: string;
+  Torrent: TDecodeTorrent;
+  Tracker: string;
+begin
+  PrepareWorkFolder;
+  TorrentFile := FWorkFolder + 'a.torrent';
+  CreateTorrentFile(TorrentFile, ['udp://orig1.test/announce']);
+
+  //There is no add_trackers.txt in the folder of the program
+  RunCli([TorrentFile, '-U4']);
+
+  CheckSuccessLog(Length(RECOMMENDED_TRACKERS) + 1);
+  Torrent := TDecodeTorrent.Create;
+  try
+    Check(Torrent.DecodeTorrent(TorrentFile), 'Can not decode the torrent');
+    Check(Torrent.TrackerList.IndexOf('udp://orig1.test/announce') >= 0,
+      'The original tracker must stay');
+    for Tracker in RECOMMENDED_TRACKERS do
+      Check(Torrent.TrackerList.IndexOf(Tracker) >= 0,
+        'The recommended tracker ' + Tracker + ' must be added');
+  finally
+    Torrent.Free;
+  end;
+end;
+
+procedure TTestStartUpParameterCli.Test_ReadOnly_Torrent_Is_Reported;
+var
+  TorrentFile: string;
+begin
+  PrepareWorkFolder;
+  TorrentFile := FWorkFolder + 'a.torrent';
+  CreateTorrentFile(TorrentFile, ['udp://orig1.test/announce']);
+  WriteTextFile(FILE_NAME_ADD_TRACKERS, ['udp://new.test/announce']);
+  Check(SetFileReadOnly(TorrentFile, True), 'Can not make the torrent read only');
+  FReadOnlyFile := TorrentFile;
+
+  RunCli([TorrentFile, '-U4']);
+
+  CheckErrorLog('ERROR: Some torrent files are READ-ONLY and were not updated.');
+  CheckTrackersInFile(TorrentFile, ['udp://orig1.test/announce']);
+end;
+
+procedure TTestStartUpParameterCli.Test_SOURCE_Without_Value_Fails;
+var
+  TorrentFile: string;
+begin
+  PrepareWorkFolder;
+  TorrentFile := FWorkFolder + 'a.torrent';
+  CreateTorrentFile(TorrentFile, ['udp://orig1.test/announce'], 'OLD');
+  WriteTextFile(FILE_NAME_ADD_TRACKERS, ['udp://new.test/announce']);
+
+  RunCli([TorrentFile, '-U4', '-SOURCE']);
+
+  CheckErrorLog('ERROR: There is no value after -SOURCE');
+  //Nothing is changed
+  CheckTrackersInFile(TorrentFile, ['udp://orig1.test/announce']);
+  CheckSource(TorrentFile, 'OLD');
+end;
+
+procedure TTestStartUpParameterCli.Test_Empty_SOURCE_Removes_Source_Tag;
+var
+  TorrentFile: string;
+begin
+  PrepareWorkFolder;
+  TorrentFile := FWorkFolder + 'a.torrent';
+  CreateTorrentFile(TorrentFile, ['udp://orig1.test/announce'], 'OLD');
+  WriteTextFile(FILE_NAME_ADD_TRACKERS, ['udp://new.test/announce']);
+
+  RunCli([TorrentFile, '-U4', '-SOURCE', '']);
+
+  CheckSuccessLog(2);
+  CheckSource(TorrentFile, '');
+end;
+
+procedure TTestStartUpParameterCli.Test_Update_Parameter_U8_Fails;
+var
+  TorrentFile: string;
+begin
+  PrepareWorkFolder;
+  TorrentFile := FWorkFolder + 'a.torrent';
+  CreateTorrentFile(TorrentFile, ['udp://orig1.test/announce']);
+  WriteTextFile(FILE_NAME_ADD_TRACKERS, ['udp://new.test/announce']);
+
+  RunCli([TorrentFile, '-U8']);
+
+  CheckErrorLog('ERROR: can not decode update parameter -U : -U8');
+  CheckTrackersInFile(TorrentFile, ['udp://orig1.test/announce']);
+end;
+
+procedure TTestStartUpParameterCli.
+Test_Folder_With_Corrupt_Torrent_Fails_And_Changes_Nothing;
+var
+  Folder, GoodFile: string;
+  Corrupt: TStringList;
+begin
+  PrepareWorkFolder;
+  Folder := FWorkFolder + 'torrents';
+  ForceDirectories(Folder);
+  GoodFile := Folder + PathDelim + 'good.torrent';
+  CreateTorrentFile(GoodFile, ['udp://orig1.test/announce']);
+  Corrupt := TStringList.Create;
+  try
+    Corrupt.Add('this is not bencode');
+    Corrupt.SaveToFile(Folder + PathDelim + 'corrupt.torrent');
+  finally
+    Corrupt.Free;
+  end;
+  WriteTextFile(FILE_NAME_ADD_TRACKERS, ['udp://new.test/announce']);
+
+  RunCli([Folder, '-U4']);
+
+  CheckEquals(1, FExitCode, 'Exit code');
+  Check(Pos('Can not read torrent', FLog.Text) > 0, 'The corrupt torrent must be reported');
+  Check(Pos('Can not load torrent via folder', FLog.Text) > 0,
+    'The folder must be reported');
+  //The good torrent is not updated either: it is all or nothing
+  CheckTrackersInFile(GoodFile, ['udp://orig1.test/announce']);
+end;
+
+procedure TTestStartUpParameterCli.Test_Folder_Without_Torrents_Fails;
+var
+  Folder: string;
+begin
+  PrepareWorkFolder;
+  Folder := FWorkFolder + 'empty';
+  ForceDirectories(Folder);
+  WriteTextFile(FILE_NAME_ADD_TRACKERS, ['udp://new.test/announce']);
+
+  RunCli([Folder, '-U4']);
+  CheckErrorLog('ERROR: No torrent file selected');
+
+  //A folder that has only other files
+  WriteTextFile('empty' + PathDelim + 'readme.txt', ['not a torrent']);
+  RunCli([Folder, '-U4']);
+  CheckErrorLog('ERROR: No torrent file selected');
+end;
+
+procedure TTestStartUpParameterCli.Test_Folder_Name_With_Dot_Is_Accepted;
+var
+  Folder, TorrentFile: string;
+begin
+  PrepareWorkFolder;
+  Folder := FWorkFolder + 'My.Torrents';
+  ForceDirectories(Folder);
+  TorrentFile := Folder + PathDelim + 'a.torrent';
+  CreateTorrentFile(TorrentFile, ['udp://orig1.test/announce']);
+  WriteTextFile(FILE_NAME_ADD_TRACKERS, ['udp://new.test/announce']);
+
+  RunCli([Folder, '-U3']);
+
+  CheckSuccessLog(2);
+  CheckTrackersInFile(TorrentFile, ['udp://orig1.test/announce', 'udp://new.test/announce']);
 end;
 
 procedure TTestStartUpParameterCli.Test_Parameter_TEST_SSL;

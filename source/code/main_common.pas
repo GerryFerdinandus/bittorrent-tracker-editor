@@ -13,6 +13,15 @@ interface
 uses
   Classes, SysUtils, DecodeTorrent, torrent_miscellaneous, update_torrent;
 
+const
+  //Used when add_trackers.txt is missing or can not be read.
+  RECOMMENDED_TRACKERS: array[0..2] of UTF8String =
+    (
+    'udp://tracker.coppersurfer.tk:6969/announce',
+    'udp://tracker.opentrackr.org:1337/announce',
+    'wss://tracker.openwebtorrent.com'
+    );
+
 //Resolve the folder used to load/save add_trackers.txt, remove_trackers.txt, etc.
 //Mirrors the Snap/Flatpak/AppImage/macOS/default rules from the GUI's FormCreate.
 function DetermineTrackerListFolder(const ExeFileName: string): string;
@@ -41,15 +50,6 @@ function RunConsoleMode(const FolderForTrackerListLoadAndSave: string): boolean;
 implementation
 
 uses LazUTF8, LazFileUtils;
-
-const
-  //Used when add_trackers.txt is missing or can not be read.
-  RECOMMENDED_TRACKERS: array[0..2] of UTF8String =
-    (
-    'udp://tracker.coppersurfer.tk:6969/announce',
-    'udp://tracker.opentrackr.org:1337/announce',
-    'wss://tracker.openwebtorrent.com'
-    );
 
 function DetermineTrackerListFolder(const ExeFileName: string): string;
 begin

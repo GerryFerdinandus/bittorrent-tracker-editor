@@ -38,7 +38,21 @@ function VerifyTrackerResult(var VerifyTracker: TVerifyTrackerResult): boolean;
 
 procedure RemoveLineSeparation(TrackerList: TStringList);
 
+{
+ Make a file read only, or writable again.
+
+ Windows has a read only file attribute, Unix has not. FileSetAttr always fails
+ on Unix, so the file permission must be used there. FPC reports faReadOnly for
+ a Unix file when the owner has no write permission (and the user is not root).
+}
+function SetFileReadOnly(const FileName: string; ReadOnly: boolean): boolean;
+
 implementation
+
+{$IFDEF UNIX}
+uses
+  BaseUnix;
+{$ENDIF}
 
 type
   TTrackerFoundInList = (tf_NotFound, tf_Increamental, tf_Skip);
@@ -629,6 +643,35 @@ begin
   end;
 
   ConsoleStringlist.Free;
+end;
+
+function SetFileReadOnly(const FileName: string; ReadOnly: boolean): boolean;
+{$IFDEF UNIX}
+const
+  //The tests create the files themselves, so the permission can simply be set.
+  MODE_READ_ONLY = &444;
+  MODE_READ_WRITE = &644;
+begin
+  if ReadOnly then
+    Result := FpChmod(FileName, MODE_READ_ONLY) = 0
+  else
+    Result := FpChmod(FileName, MODE_READ_WRITE) = 0;
+{$ELSE}
+var
+  Attributes: longint;
+begin
+  Attributes := FileGetAttr(FileName);
+  Result := Attributes <> -1;
+  if not Result then
+    Exit;
+
+  if ReadOnly then
+    Attributes := Attributes or faReadOnly
+  else
+    Attributes := Attributes and not faReadOnly;
+
+  Result := FileSetAttr(FileName, Attributes) = 0;
+{$ENDIF}
 end;
 
 end.

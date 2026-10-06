@@ -18,7 +18,7 @@ interface
 
 uses
   Classes, SysUtils, fpcunit, testregistry, decodetorrent, torrent_miscellaneous,
-  update_torrent, main_common, BEncode;
+  update_torrent, main_common, BEncode, test_miscellaneous;
 
 type
 
@@ -96,11 +96,6 @@ type
 
 implementation
 
-{$IFDEF UNIX}
-uses
-  BaseUnix;
-{$ENDIF}
-
 const
   PIECES = '20:AAAAAAAAAAAAAAAAAAAA';
   INFO_ONE_FILE =
@@ -115,43 +110,6 @@ const
 function BEncodeString(const Str: UTF8String): UTF8String;
 begin
   Result := IntToStr(Length(Str)) + ':' + Str;
-end;
-
-{
- Make a file read only, or writable again.
-
- Windows has a read only file attribute, Unix has not. FileSetAttr always fails
- on Unix, so the file permission must be used there. FPC reports faReadOnly for
- a Unix file when the owner has no write permission, and that is what the code
- under test is looking at.
-}
-function SetFileReadOnly(const FileName: string; ReadOnly: boolean): boolean;
-{$IFDEF UNIX}
-const
-  //This test creates the files itself, so the permission can simply be set.
-  MODE_READ_ONLY = &444;
-  MODE_READ_WRITE = &644;
-begin
-  if ReadOnly then
-    Result := FpChmod(FileName, MODE_READ_ONLY) = 0
-  else
-    Result := FpChmod(FileName, MODE_READ_WRITE) = 0;
-{$ELSE}
-var
-  Attributes: longint;
-begin
-  Attributes := FileGetAttr(FileName);
-  Result := Attributes <> -1;
-  if not Result then
-    Exit;
-
-  if ReadOnly then
-    Attributes := Attributes or faReadOnly
-  else
-    Attributes := Attributes and not faReadOnly;
-
-  Result := FileSetAttr(FileName, Attributes) = 0;
-{$ENDIF}
 end;
 
 { TTestUpdateTorrent }
