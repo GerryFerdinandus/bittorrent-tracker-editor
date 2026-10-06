@@ -19,15 +19,15 @@ type
 
   //All the type of tracker list.
   Tngosang_List = (
-    ntl_URL_Blacklist,//< Download from internet
-    ntl_URL_All,//< Download from internet
-    ntl_URL_All_HTTP,//< Download from internet
-    ntl_URL_All_HTTPS,//< Download from internet
-    ntl_URL_All_IP,//< Download from internet
-    ntl_URL_All_UDP,//< Download from internet
-    ntl_URL_All_WS,//< Download from internet
-    ntl_URL_Best,//< Download from internet
-    ntl_URL_Best_IP//< Download from internet
+    ngl_URL_Blacklist,//< Download from internet
+    ngl_URL_All,//< Download from internet
+    ngl_URL_All_HTTP,//< Download from internet
+    ngl_URL_All_HTTPS,//< Download from internet
+    ngl_URL_All_IP,//< Download from internet
+    ngl_URL_All_UDP,//< Download from internet
+    ngl_URL_All_WS,//< Download from internet
+    ngl_URL_Best,//< Download from internet
+    ngl_URL_Best_IP//< Download from internet
     );
 
   { TngosangTrackerList }
@@ -38,26 +38,26 @@ type
     function DownloadTracker(ngosang_List: Tngosang_List): TStringList;
   public
 
-    property TrackerList_Blacklist: TStringList index ntl_URL_Blacklist
+    property TrackerList_Blacklist: TStringList index ngl_URL_Blacklist
       read DownloadTracker;
 
-    property TrackerList_All: TStringList index ntl_URL_All read DownloadTracker;
+    property TrackerList_All: TStringList index ngl_URL_All read DownloadTracker;
 
-    property TrackerList_All_HTTP: TStringList index ntl_URL_All_HTTP
+    property TrackerList_All_HTTP: TStringList index ngl_URL_All_HTTP
       read DownloadTracker;
 
-    property TrackerList_All_HTTPS: TStringList index ntl_URL_All_HTTPS
+    property TrackerList_All_HTTPS: TStringList index ngl_URL_All_HTTPS
       read DownloadTracker;
 
-    property TrackerList_All_IP: TStringList index ntl_URL_All_IP read DownloadTracker;
+    property TrackerList_All_IP: TStringList index ngl_URL_All_IP read DownloadTracker;
 
-    property TrackerList_All_UDP: TStringList index ntl_URL_All_UDP read DownloadTracker;
+    property TrackerList_All_UDP: TStringList index ngl_URL_All_UDP read DownloadTracker;
 
-    property TrackerList_All_WS: TStringList index ntl_URL_All_WS read DownloadTracker;
+    property TrackerList_All_WS: TStringList index ngl_URL_All_WS read DownloadTracker;
 
-    property TrackerList_Best: TStringList index ntl_URL_Best read DownloadTracker;
+    property TrackerList_Best: TStringList index ngl_URL_Best read DownloadTracker;
 
-    property TrackerList_Best_IP: TStringList index ntl_URL_Best_IP read DownloadTracker;
+    property TrackerList_Best_IP: TStringList index ngl_URL_Best_IP read DownloadTracker;
 
     //create/destroy class object
     constructor Create;
