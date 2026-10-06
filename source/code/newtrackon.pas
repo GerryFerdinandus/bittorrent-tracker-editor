@@ -30,10 +30,16 @@ type
   TNewTrackon = class
   private
     FTRackerList: array [TNewTrackon_List] of TStringList;
+    FBaseURL: string;
 
     function DownloadTracker(NewTrackon_List: TNewTrackon_List): boolean;
-    procedure CreateTrackerList_Dead;
   public
+    //Folder URL of the API. Only changed to test a failing download.
+    property BaseURL: string read FBaseURL write FBaseURL;
+
+    //TrackerList_Dead = TrackerList_All - TrackerList_Live. Called after every download.
+    procedure CreateTrackerList_Dead;
+
     // all known trackers, dead or alive
     property TrackerList_All: TStringList read FTRackerList[ntl_URL_All];
 
@@ -78,13 +84,15 @@ const
   HTTP_CONNECT_TIMEOUT_MS = 10000;
   HTTP_IO_TIMEOUT_MS = 15000;
 
-  URL: array [TNewTrackon_List] of string =
-    (//Warning: the URL strings must be in the same order as TNewTrackon_List
-    'https://newtrackon.com/api/all',
-    'https://newtrackon.com/api/live',
-    'https://newtrackon.com/api/stable',
-    'https://newtrackon.com/api/udp',
-    'https://newtrackon.com/api/http',
+  BASE_URL = 'https://newtrackon.com/api/';
+
+  API_NAME: array [TNewTrackon_List] of string =
+    (//Warning: the API names must be in the same order as TNewTrackon_List
+    'all',
+    'live',
+    'stable',
+    'udp',
+    'http',
     ''//there is no dead tracker list api
     );
 
@@ -114,7 +122,8 @@ begin
 
         //download via URL and put the data in the TrackerList
         //will create exception if something is wrong
-        FTRackerList[NewTrackon_List].Text := HTTPClient.Get(URL[NewTrackon_List]);
+        FTRackerList[NewTrackon_List].Text :=
+          HTTPClient.Get(FBaseURL + API_NAME[NewTrackon_List]);
       finally
         HTTPClient.Free;
       end;
@@ -170,8 +179,6 @@ var
   HTTPS: TFPHTTPClient;
   Separator: string;
 
-const
-  URL_POST = 'https://newtrackon.com/api/add';
 begin
   TrackersSendCount := 0;
 
@@ -210,7 +217,7 @@ begin
         end;
 
         try
-          HTTPS.FormPost(URL_POST, FormData);
+          HTTPS.FormPost(FBaseURL + 'add', FormData);
 
           //Check the response must be 204
           Result := HTTPS.ResponseStatusCode = 204;
@@ -231,6 +238,8 @@ constructor TNewTrackon.Create;
 var
   i: TNewTrackon_List;
 begin
+  FBaseURL := BASE_URL;
+
   //Create all the TStringList
   for i in TNewTrackon_List do
   begin
