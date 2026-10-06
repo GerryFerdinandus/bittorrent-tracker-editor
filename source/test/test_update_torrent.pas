@@ -18,7 +18,7 @@ interface
 
 uses
   Classes, SysUtils, fpcunit, testregistry, decodetorrent, torrent_miscellaneous,
-  update_torrent, main_common;
+  update_torrent, main_common, BEncode;
 
 type
 
@@ -44,6 +44,16 @@ type
 
     procedure CheckTrackerListInFile(const FileName: string;
       Expected: array of string);
+
+    //Two torrent files with their own trackers, trackers to add and trackers to keep.
+    //File 1 has B, C, D. File 2 has D, C. Added: A, C. Kept from all files: B, D, E
+    procedure PrepareTwoFilesForModes;
+
+    //Combine like the program does for the sort, then update all the files in the given order
+    function UpdateWithOrder(Order: TTrackerListOrder): TUpdateTorrentResult;
+
+    //Read a torrent file as bencode. The caller must free the result.
+    function ReadBEncodedFile(const FileName: string): TBEncoded;
   protected
     procedure SetUp; override;
     procedure TearDown; override;
@@ -69,6 +79,19 @@ type
     procedure Test_LoadAddTrackersRaw_Without_File_Uses_Recommended_Trackers;
     procedure Test_LoadRemoveTrackers_Present_And_Missing;
     procedure Test_LoadTorrentViaDir_Uppercase_Extension_And_Skips_Folders;
+    procedure Test_Order_U0_Insert_Before_Keep_New_Intact;
+    procedure Test_Order_U1_Insert_Before_Keep_Original_Intact;
+    procedure Test_Order_U2_Append_After_Keep_New_Intact;
+    procedure Test_Order_U3_Append_After_Keep_Original_Intact;
+    procedure Test_Order_U5_Insert_Before_Remove_Nothing;
+    procedure Test_Order_U6_Append_After_Remove_Nothing;
+    procedure Test_Order_U7_Randomize_Writes_The_Same_Trackers;
+    procedure Test_Ban_And_Deselected_Lists_Remove_Trackers_From_Every_File;
+    procedure Test_Source_Tag_Is_Kept_Replaced_Or_Removed;
+    procedure Test_One_Tracker_Writes_Announce_Without_AnnounceList;
+    procedure Test_Several_Trackers_Write_Announce_And_AnnounceList;
+    procedure Test_Private_Torrent_With_Same_Settings_Stays_Byte_Identical;
+    procedure Test_Mismatched_FileSettingList_Length_Is_Refused;
   end;
 
 implementation
@@ -86,6 +109,8 @@ const
   TRACKER_A = 'udp://a.test/announce';
   TRACKER_B = 'udp://b.test/announce';
   TRACKER_C = 'udp://c.test/announce';
+  TRACKER_D = 'udp://d.test/announce';
+  TRACKER_E = 'udp://e.test/announce';
 
 function BEncodeString(const Str: UTF8String): UTF8String;
 begin
@@ -221,6 +246,43 @@ begin
   begin
     CheckEquals(Expected[i], FDecodeTorrent.TrackerList[i],
       Format('Wrong tracker at index %d in %s', [i, FileName]));
+  end;
+end;
+
+procedure TTestUpdateTorrent.PrepareTwoFilesForModes;
+begin
+  FTrackerList.TorrentFileNameList.Add(CreateTorrentFile('one.torrent',
+    [TRACKER_B, TRACKER_C, TRACKER_D]));
+  FTrackerList.TorrentFileNameList.Add(CreateTorrentFile('two.torrent',
+    [TRACKER_D, TRACKER_C]));
+
+  FTrackerList.TrackerAddedByUserList.Add(TRACKER_A);
+  FTrackerList.TrackerAddedByUserList.Add(TRACKER_C);
+
+  FTrackerList.TrackerFromInsideTorrentFilesList.Add(TRACKER_B);
+  FTrackerList.TrackerFromInsideTorrentFilesList.Add(TRACKER_D);
+  FTrackerList.TrackerFromInsideTorrentFilesList.Add(TRACKER_E);
+end;
+
+function TTestUpdateTorrent.UpdateWithOrder(Order: TTrackerListOrder): TUpdateTorrentResult;
+begin
+  FTrackerList.TrackerListOrderForUpdatedTorrent := Order;
+  CombineFiveTrackerListToOne(tloSort, FTrackerList, FDecodeTorrent.TrackerList);
+
+  Result := UpdateTorrentFileList(FTrackerList, FDecodeTorrent, DefaultFileSettingList);
+  CheckEquals(FTrackerList.TorrentFileNameList.Count, Result.FilesUpdated,
+    'Every torrent file must be updated');
+end;
+
+function TTestUpdateTorrent.ReadBEncodedFile(const FileName: string): TBEncoded;
+var
+  Stream: TFileStream;
+begin
+  Stream := TFileStream.Create(FileName, fmOpenRead or fmShareDenyNone);
+  try
+    Result := TBEncoded.Create(Stream);
+  finally
+    Stream.Free;
   end;
 end;
 
@@ -770,6 +832,278 @@ begin
     TrackerFile.Free;
     FreeTrackerList(TrackerList);
   end;
+end;
+
+procedure TTestUpdateTorrent.Test_Order_U0_Insert_Before_Keep_New_Intact;
+var
+  UpdateResult: TUpdateTorrentResult;
+begin
+  PrepareTwoFilesForModes;
+  UpdateResult := UpdateWithOrder(tloInsertNewBeforeAndKeepNewIntact);
+
+  CheckTrackerListInFile(FTrackerList.TorrentFileNameList[0],
+    [TRACKER_A, TRACKER_C, TRACKER_B, TRACKER_D, TRACKER_E]);
+  CheckTrackerListInFile(FTrackerList.TorrentFileNameList[1],
+    [TRACKER_A, TRACKER_C, TRACKER_D, TRACKER_B, TRACKER_E]);
+  CheckEquals(5, UpdateResult.TrackerCount, 'Wrong tracker count');
+end;
+
+procedure TTestUpdateTorrent.Test_Order_U1_Insert_Before_Keep_Original_Intact;
+begin
+  PrepareTwoFilesForModes;
+  UpdateWithOrder(tloInsertNewBeforeAndKeepOriginalIntact);
+
+  CheckTrackerListInFile(FTrackerList.TorrentFileNameList[0],
+    [TRACKER_A, TRACKER_B, TRACKER_C, TRACKER_D, TRACKER_E]);
+  CheckTrackerListInFile(FTrackerList.TorrentFileNameList[1],
+    [TRACKER_A, TRACKER_D, TRACKER_C, TRACKER_B, TRACKER_E]);
+end;
+
+procedure TTestUpdateTorrent.Test_Order_U2_Append_After_Keep_New_Intact;
+begin
+  PrepareTwoFilesForModes;
+  UpdateWithOrder(tloAppendNewAfterAndKeepNewIntact);
+
+  CheckTrackerListInFile(FTrackerList.TorrentFileNameList[0],
+    [TRACKER_B, TRACKER_D, TRACKER_A, TRACKER_C, TRACKER_E]);
+  CheckTrackerListInFile(FTrackerList.TorrentFileNameList[1],
+    [TRACKER_D, TRACKER_A, TRACKER_C, TRACKER_B, TRACKER_E]);
+end;
+
+procedure TTestUpdateTorrent.Test_Order_U3_Append_After_Keep_Original_Intact;
+begin
+  PrepareTwoFilesForModes;
+  UpdateWithOrder(tloAppendNewAfterAndKeepOriginalIntact);
+
+  CheckTrackerListInFile(FTrackerList.TorrentFileNameList[0],
+    [TRACKER_B, TRACKER_C, TRACKER_D, TRACKER_A, TRACKER_E]);
+  CheckTrackerListInFile(FTrackerList.TorrentFileNameList[1],
+    [TRACKER_D, TRACKER_C, TRACKER_A, TRACKER_B, TRACKER_E]);
+end;
+
+procedure TTestUpdateTorrent.Test_Order_U5_Insert_Before_Remove_Nothing;
+var
+  UpdateResult: TUpdateTorrentResult;
+begin
+  PrepareTwoFilesForModes;
+  UpdateResult := UpdateWithOrder(tloInsertNewBeforeAndKeepOriginalIntactAndRemoveNothing);
+
+  //The trackers kept from the other files are not added
+  CheckTrackerListInFile(FTrackerList.TorrentFileNameList[0],
+    [TRACKER_A, TRACKER_B, TRACKER_C, TRACKER_D]);
+  CheckTrackerListInFile(FTrackerList.TorrentFileNameList[1],
+    [TRACKER_A, TRACKER_D, TRACKER_C]);
+  CheckEquals(3, UpdateResult.TrackerCount, 'The count is of the last file');
+end;
+
+procedure TTestUpdateTorrent.Test_Order_U6_Append_After_Remove_Nothing;
+begin
+  PrepareTwoFilesForModes;
+  UpdateWithOrder(tloAppendNewAfterAndKeepOriginalIntactAndRemoveNothing);
+
+  CheckTrackerListInFile(FTrackerList.TorrentFileNameList[0],
+    [TRACKER_B, TRACKER_C, TRACKER_D, TRACKER_A]);
+  CheckTrackerListInFile(FTrackerList.TorrentFileNameList[1],
+    [TRACKER_D, TRACKER_C, TRACKER_A]);
+end;
+
+procedure TTestUpdateTorrent.Test_Order_U7_Randomize_Writes_The_Same_Trackers;
+var
+  Sorted: TStringList;
+  FileName: string;
+begin
+  PrepareTwoFilesForModes;
+  UpdateWithOrder(tloRandomize);
+
+  Sorted := TStringList.Create;
+  try
+    //Added: A, C. Kept from all files: B, D, E. The order is random.
+    for FileName in FTrackerList.TorrentFileNameList do
+    begin
+      Check(FDecodeTorrent.DecodeTorrent(FileName), 'Can not decode ' + FileName);
+      Sorted.Assign(FDecodeTorrent.TrackerList);
+      Sorted.Sort;
+      CheckEquals(5, Sorted.Count, 'Wrong tracker count in ' + FileName);
+      CheckEquals(TRACKER_A, Sorted[0], 'Tracker A is lost in ' + FileName);
+      CheckEquals(TRACKER_B, Sorted[1], 'Tracker B is lost in ' + FileName);
+      CheckEquals(TRACKER_C, Sorted[2], 'Tracker C is lost in ' + FileName);
+      CheckEquals(TRACKER_D, Sorted[3], 'Tracker D is lost in ' + FileName);
+      CheckEquals(TRACKER_E, Sorted[4], 'Tracker E is lost in ' + FileName);
+    end;
+  finally
+    Sorted.Free;
+  end;
+end;
+
+procedure TTestUpdateTorrent.Test_Ban_And_Deselected_Lists_Remove_Trackers_From_Every_File;
+begin
+  PrepareTwoFilesForModes;
+  //B is banned. E is deselected. A is deselected too, but the user added it, so it stays.
+  FTrackerList.TrackerBanByUserList.Add(TRACKER_B);
+  FTrackerList.TrackerManuallyDeselectedByUserList.Add(TRACKER_E);
+  FTrackerList.TrackerManuallyDeselectedByUserList.Add(TRACKER_A);
+
+  UpdateWithOrder(tloInsertNewBeforeAndKeepNewIntact);
+
+  CheckTrackerListInFile(FTrackerList.TorrentFileNameList[0],
+    [TRACKER_A, TRACKER_C, TRACKER_D]);
+  CheckTrackerListInFile(FTrackerList.TorrentFileNameList[1],
+    [TRACKER_A, TRACKER_C, TRACKER_D]);
+
+  //The lists of the caller are not changed by the update
+  CheckEquals(1, FTrackerList.TrackerBanByUserList.Count, 'Ban list');
+  CheckEquals(2, FTrackerList.TrackerManuallyDeselectedByUserList.Count, 'Deselected list');
+end;
+
+procedure TTestUpdateTorrent.Test_Source_Tag_Is_Kept_Replaced_Or_Removed;
+var
+  FileName: string;
+begin
+  FileName := CreateTorrentFile('one.torrent', [TRACKER_A]);
+  FTrackerList.TorrentFileNameList.Add(FileName);
+
+  //The torrent has a source
+  Check(FDecodeTorrent.DecodeTorrent(FileName), 'Can not decode the torrent');
+  Check(FDecodeTorrent.InfoSourceAdd('OLD'), 'Can not add the source');
+  Check(FDecodeTorrent.SaveTorrent(FileName), 'Can not save the torrent');
+
+  FTrackerList.TrackerAddedByUserList.Add(TRACKER_A);
+
+  //An empty source tag does not change anything
+  FTrackerList.SourceTag := '';
+  FTrackerList.RemoveAllSourceTag := False;
+  UpdateWithOrder(tloSort);
+  Check(FDecodeTorrent.DecodeTorrent(FileName), 'Can not decode the torrent');
+  CheckEquals('OLD', FDecodeTorrent.InfoSource, 'An empty source tag must keep the source');
+
+  FTrackerList.SourceTag := 'NEW';
+  UpdateWithOrder(tloSort);
+  Check(FDecodeTorrent.DecodeTorrent(FileName), 'Can not decode the torrent');
+  CheckEquals('NEW', FDecodeTorrent.InfoSource, 'The source must be replaced');
+
+  //Remove all source tags wins over the source tag
+  FTrackerList.RemoveAllSourceTag := True;
+  UpdateWithOrder(tloSort);
+  Check(FDecodeTorrent.DecodeTorrent(FileName), 'Can not decode the torrent');
+  CheckEquals('', FDecodeTorrent.InfoSource, 'The source must be removed');
+end;
+
+procedure TTestUpdateTorrent.Test_One_Tracker_Writes_Announce_Without_AnnounceList;
+var
+  Root: TBEncoded;
+begin
+  FTrackerList.TorrentFileNameList.Add(CreateTorrentFile('one.torrent',
+    [TRACKER_B, TRACKER_C]));
+  FTrackerList.TrackerAddedByUserList.Add(TRACKER_A);
+
+  UpdateWithOrder(tloSort);
+
+  Root := ReadBEncodedFile(FTrackerList.TorrentFileNameList[0]);
+  try
+    CheckEquals(TRACKER_A, Root.ListData.FindElement('announce').StringData,
+      'Wrong announce');
+    CheckNull(Root.ListData.FindElement('announce-list'),
+      'One tracker must not have an announce-list');
+  finally
+    Root.Free;
+  end;
+end;
+
+procedure TTestUpdateTorrent.Test_Several_Trackers_Write_Announce_And_AnnounceList;
+var
+  Root: TBEncoded;
+begin
+  FTrackerList.TorrentFileNameList.Add(CreateTorrentFile('one.torrent', [TRACKER_C]));
+  FTrackerList.TrackerAddedByUserList.Add(TRACKER_B);
+  FTrackerList.TrackerAddedByUserList.Add(TRACKER_A);
+
+  UpdateWithOrder(tloSort);
+
+  Root := ReadBEncodedFile(FTrackerList.TorrentFileNameList[0]);
+  try
+    CheckEquals(TRACKER_A, Root.ListData.FindElement('announce').StringData,
+      'The announce must be the first tracker');
+    CheckEquals(2, Root.ListData.FindElement('announce-list').ListData.Count,
+      'Wrong tier count');
+  finally
+    Root.Free;
+  end;
+end;
+
+procedure TTestUpdateTorrent.Test_Private_Torrent_With_Same_Settings_Stays_Byte_Identical;
+var
+  FileName: string;
+  Original, After: UTF8String;
+  Stream: TFileStream;
+  Settings: TTorrentFileSettingArray;
+begin
+  //The 'info' keys are deliberately not in order. Writing them again would change the info hash.
+  Original := 'd8:announce' + BEncodeString(TRACKER_A) + '7:comment3:abc4:info' +
+    'd7:privatei1e6:source3:abc6:lengthi1024e4:name8:test.bin' +
+    '12:piece lengthi16384e6:pieces' + PIECES + 'ee';
+
+  FileName := FTempFolder + 'private.torrent';
+  Stream := TFileStream.Create(FileName, fmCreate);
+  try
+    Stream.WriteBuffer(Original[1], Length(Original));
+  finally
+    Stream.Free;
+  end;
+  FTrackerList.TorrentFileNameList.Add(FileName);
+
+  FTrackerList.TrackerAddedByUserList.Add(TRACKER_A);
+  FTrackerList.SourceTag := 'abc';
+  CombineFiveTrackerListToOne(tloSort, FTrackerList, FDecodeTorrent.TrackerList);
+
+  //Private, same comment, same source and the same tracker as the torrent has
+  Settings := DefaultFileSettingList;
+  Settings[0].PublicTorrent := False;
+  Settings[0].Comment := 'abc';
+  CheckEquals(1, UpdateTorrentFileList(FTrackerList, FDecodeTorrent, Settings).FilesUpdated,
+    'The file must be updated');
+
+  Stream := TFileStream.Create(FileName, fmOpenRead);
+  try
+    SetLength(After, Stream.Size);
+    Stream.ReadBuffer(After[1], Length(After));
+  finally
+    Stream.Free;
+  end;
+  Check(Original = After, 'The torrent must stay byte identical');
+end;
+
+procedure TTestUpdateTorrent.Test_Mismatched_FileSettingList_Length_Is_Refused;
+var
+  Settings: TTorrentFileSettingArray;
+  Raised: boolean;
+begin
+{$IFOPT C+}
+  FTrackerList.TorrentFileNameList.Add(CreateTorrentFile('one.torrent', [TRACKER_B]));
+  FTrackerList.TorrentFileNameList.Add(CreateTorrentFile('two.torrent', [TRACKER_B]));
+  FTrackerList.TrackerAddedByUserList.Add(TRACKER_A);
+  CombineFiveTrackerListToOne(tloSort, FTrackerList, FDecodeTorrent.TrackerList);
+
+  //One setting for two files
+  Settings := DefaultFileSettingList;
+  SetLength(Settings, 1);
+
+  Raised := False;
+  try
+    UpdateTorrentFileList(FTrackerList, FDecodeTorrent, Settings);
+  except
+    on E: EAssertionFailedError do raise;
+    on E: Exception do Raised := True;
+  end;
+  Check(Raised, 'A wrong number of settings must be refused');
+
+  //No file may be changed
+  CheckTrackerListInFile(FTrackerList.TorrentFileNameList[0], [TRACKER_B]);
+  CheckTrackerListInFile(FTrackerList.TorrentFileNameList[1], [TRACKER_B]);
+{$ELSE}
+  Settings := nil;
+  Raised := False;
+  Ignore('Assertions are off, the length of the settings is only checked by an assert');
+{$ENDIF}
 end;
 
 initialization
