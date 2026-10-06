@@ -169,6 +169,7 @@ type
     FControllerGridTorrentData: TControllerGridTorrentData;
     function CheckForAnnounce(const TrackerURL: utf8string): boolean;
     procedure AppendTrackersToMemoNewTrackers(TrackerList: TStringList);
+    procedure AppendNgosangTrackersToMemoNewTrackers(TrackerList: TStringList);
     procedure ShowUserErrorMessage(ErrorText: string; const FormText: string = '');
     function TrackerWithURLAndAnnounce(const TrackerURL: utf8string): boolean;
     procedure UpdateTorrent;
@@ -426,42 +427,42 @@ end;
 
 procedure TFormTrackerModify.MenuItemNgosangAppendAllBestIpClick(Sender: TObject);
 begin
-  AppendTrackersToMemoNewTrackers(FngosangTrackerList.TrackerList_Best_IP);
+  AppendNgosangTrackersToMemoNewTrackers(FngosangTrackerList.TrackerList_Best_IP);
 end;
 
 procedure TFormTrackerModify.MenuItemNgosangAppendAllClick(Sender: TObject);
 begin
-  AppendTrackersToMemoNewTrackers(FngosangTrackerList.TrackerList_All);
+  AppendNgosangTrackersToMemoNewTrackers(FngosangTrackerList.TrackerList_All);
 end;
 
 procedure TFormTrackerModify.MenuItemNgosangAppendAllHttpClick(Sender: TObject);
 begin
-  AppendTrackersToMemoNewTrackers(FngosangTrackerList.TrackerList_All_HTTP);
+  AppendNgosangTrackersToMemoNewTrackers(FngosangTrackerList.TrackerList_All_HTTP);
 end;
 
 procedure TFormTrackerModify.MenuItemNgosangAppendAllHttpsClick(Sender: TObject);
 begin
-  AppendTrackersToMemoNewTrackers(FngosangTrackerList.TrackerList_All_HTTPS);
+  AppendNgosangTrackersToMemoNewTrackers(FngosangTrackerList.TrackerList_All_HTTPS);
 end;
 
 procedure TFormTrackerModify.MenuItemNgosangAppendAllIpClick(Sender: TObject);
 begin
-  AppendTrackersToMemoNewTrackers(FngosangTrackerList.TrackerList_All_IP);
+  AppendNgosangTrackersToMemoNewTrackers(FngosangTrackerList.TrackerList_All_IP);
 end;
 
 procedure TFormTrackerModify.MenuItemNgosangAppendAllUdpClick(Sender: TObject);
 begin
-  AppendTrackersToMemoNewTrackers(FngosangTrackerList.TrackerList_All_UDP);
+  AppendNgosangTrackersToMemoNewTrackers(FngosangTrackerList.TrackerList_All_UDP);
 end;
 
 procedure TFormTrackerModify.MenuItemNgosangAppendAllWsClick(Sender: TObject);
 begin
-  AppendTrackersToMemoNewTrackers(FngosangTrackerList.TrackerList_All_WS);
+  AppendNgosangTrackersToMemoNewTrackers(FngosangTrackerList.TrackerList_All_WS);
 end;
 
 procedure TFormTrackerModify.MenuItemNgosangAppendBestClick(Sender: TObject);
 begin
-  AppendTrackersToMemoNewTrackers(FngosangTrackerList.TrackerList_Best);
+  AppendNgosangTrackersToMemoNewTrackers(FngosangTrackerList.TrackerList_Best);
 end;
 
 procedure TFormTrackerModify.MenuItemOnlineCheckSubmitNewTrackonClick(Sender: TObject);
@@ -513,6 +514,16 @@ begin
   begin
     MemoNewTrackers.Text := PreviousText;
   end;
+end;
+
+procedure TFormTrackerModify.AppendNgosangTrackersToMemoNewTrackers(
+  TrackerList: TStringList);
+begin
+  //TrackerList is the result of the download, so LastDownloadFailed is already set.
+  if FngosangTrackerList.LastDownloadFailed then
+    ShowUserErrorMessage('Can not downloading the trackers from internet')
+  else
+    AppendTrackersToMemoNewTrackers(TrackerList);
 end;
 
 procedure TFormTrackerModify.MenuItemOnlineCheckAppendStableTrackersClick(

@@ -35,8 +35,17 @@ type
   TngosangTrackerList = class
   private
     FTRackerList: array [Tngosang_List] of TStringList;
+    FBaseURL: string;
+    FLastDownloadFailed: boolean;
     function DownloadTracker(ngosang_List: Tngosang_List): TStringList;
   public
+
+    //Folder URL of the tracker list files. Only changed to test a failing download.
+    property BaseURL: string read FBaseURL write FBaseURL;
+
+    //True when the last download failed. The returned list is then empty, but an
+    //empty list can also be a valid answer.
+    property LastDownloadFailed: boolean read FLastDownloadFailed;
 
     property TrackerList_Blacklist: TStringList index ngl_URL_Blacklist
       read DownloadTracker;
@@ -73,17 +82,19 @@ const
   HTTP_CONNECT_TIMEOUT_MS = 10000;
   HTTP_IO_TIMEOUT_MS = 15000;
 
-  URL: array [Tngosang_List] of string =
-    (//Warning: the URL strings must be in the same order as Tngosang_List
-    'https://raw.githubusercontent.com/ngosang/trackerslist/master/blacklist.txt',
-    'https://raw.githubusercontent.com/ngosang/trackerslist/master/trackers_all.txt',
-    'https://raw.githubusercontent.com/ngosang/trackerslist/master/trackers_all_http.txt',
-    'https://raw.githubusercontent.com/ngosang/trackerslist/master/trackers_all_https.txt',
-    'https://raw.githubusercontent.com/ngosang/trackerslist/master/trackers_all_ip.txt',
-    'https://raw.githubusercontent.com/ngosang/trackerslist/master/trackers_all_udp.txt',
-    'https://raw.githubusercontent.com/ngosang/trackerslist/master/trackers_all_ws.txt',
-    'https://raw.githubusercontent.com/ngosang/trackerslist/master/trackers_best.txt',
-    'https://raw.githubusercontent.com/ngosang/trackerslist/master/trackers_best_ip.txt'
+  BASE_URL = 'https://raw.githubusercontent.com/ngosang/trackerslist/master/';
+
+  FILE_NAME: array [Tngosang_List] of string =
+    (//Warning: the file names must be in the same order as Tngosang_List
+    'blacklist.txt',
+    'trackers_all.txt',
+    'trackers_all_http.txt',
+    'trackers_all_https.txt',
+    'trackers_all_ip.txt',
+    'trackers_all_udp.txt',
+    'trackers_all_ws.txt',
+    'trackers_best.txt',
+    'trackers_best_ip.txt'
     );
 
 { TngosangTrackerList }
@@ -91,6 +102,7 @@ function TngosangTrackerList.DownloadTracker(ngosang_List: Tngosang_List): TStri
 var
   HTTPClient: TFPHTTPClient;
 begin
+  FLastDownloadFailed := False;
   try
     HTTPClient := TFPHTTPClient.Create(nil);
     try
@@ -98,7 +110,7 @@ begin
       HTTPClient.IOTimeout := HTTP_IO_TIMEOUT_MS;
 
       //download via URL and put the data in the TrackerList
-      FTRackerList[ngosang_List].Text := HTTPClient.Get(URL[ngosang_List]);
+      FTRackerList[ngosang_List].Text := HTTPClient.Get(FBaseURL + FILE_NAME[ngosang_List]);
     finally
       HTTPClient.Free;
     end;
@@ -108,6 +120,7 @@ begin
 
   except
     //No OpenSSL or web server is down
+    FLastDownloadFailed := True;
     FTRackerList[ngosang_List].Clear;
   end;
 
@@ -118,6 +131,7 @@ constructor TngosangTrackerList.Create;
 var
   i: Tngosang_List;
 begin
+  FBaseURL := BASE_URL;
 
   //Create all the TStringList
   for i in Tngosang_List do

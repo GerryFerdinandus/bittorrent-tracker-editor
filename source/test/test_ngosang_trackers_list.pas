@@ -18,6 +18,7 @@ type
     procedure TearDown; override;
   published
     procedure Test_DownloadAPI;
+    procedure Test_Failed_Download_Is_Reported;
   end;
 
 implementation
@@ -33,6 +34,8 @@ begin
 
   Check(FngosangTrackerList.TrackerList_All.Count > 0,
     'TrackerList_All should never be empty');
+  CheckFalse(FngosangTrackerList.LastDownloadFailed,
+    'A successful download must not be reported as failed');
 
   Check(FngosangTrackerList.TrackerList_All_HTTP.Count > 0,
     'TrackerList_All_HTTP should never be empty');
@@ -61,6 +64,17 @@ begin
   Check(
     FngosangTrackerList.TrackerList_Best_IP.Count > 0,
     'TrackerList_Best_IP should never be empty');
+end;
+
+procedure TTestNgosangTrackersList.Test_Failed_Download_Is_Reported;
+begin
+  //An invalid IP address fails at once, without waiting for a connection timeout.
+  FngosangTrackerList.BaseURL := 'http://999.999.999.999/';
+
+  CheckEquals(0, FngosangTrackerList.TrackerList_All.Count,
+    'A failed download must give an empty list');
+  CheckTrue(FngosangTrackerList.LastDownloadFailed,
+    'A failed download must be reported');
 end;
 
 procedure TTestNgosangTrackersList.SetUp;
