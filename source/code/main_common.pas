@@ -382,7 +382,7 @@ var
   LogFile: TextFile;
   FileNameOrDirStr: UTF8String;
   FilePresentBanByUserList: boolean;
-  MustExitWithErrorCode, LogFileIsOpen: boolean;
+  MustExitWithErrorCode, LogFileIsOpen, AddTrackersFileIsValid: boolean;
 begin
   CreateTrackerList(TrackerList);
   DecodeTorrentObj := TDecodeTorrent.Create;
@@ -395,7 +395,11 @@ begin
     try
       LoadAddTrackersRaw(FolderForTrackerListLoadAndSave, AddedTrackersRawList);
       //Initial load must never fail on the announce check, only on a malformed URL scheme.
-      if not ValidateAndSanitizeTrackers(AddedTrackersRawList, TrackerList, True) then
+      //The error is in the log. Continuing with an empty add list would still change the
+      //torrent files, and remove every tracker if remove_trackers.txt is empty.
+      AddTrackersFileIsValid :=
+        ValidateAndSanitizeTrackers(AddedTrackersRawList, TrackerList, True);
+      if not AddTrackersFileIsValid then
         AddedTrackersRawList.Clear;
 
       LoadRemoveTrackers(FolderForTrackerListLoadAndSave, TrackerList, FilePresentBanByUserList);
@@ -405,7 +409,8 @@ begin
       ReWrite(LogFile);
       LogFileIsOpen := True;
 
-      if ConsoleModeDecodeParameter(FileNameOrDirStr, TrackerList) then
+      if AddTrackersFileIsValid and ConsoleModeDecodeParameter(FileNameOrDirStr,
+        TrackerList) then
       begin
         if PathIsTorrentFolder(FileNameOrDirStr) then
         begin //A folder. Its name may contain a dot.

@@ -979,6 +979,7 @@ type
     procedure Test_SOURCE_Without_Value_Fails;
     procedure Test_Empty_SOURCE_Removes_Source_Tag;
     procedure Test_Update_Parameter_U8_Fails;
+    procedure Test_Invalid_Add_Trackers_File_Fails_And_Changes_Nothing;
     procedure Test_Folder_With_Corrupt_Torrent_Fails_And_Changes_Nothing;
     procedure Test_Folder_Without_Torrents_Fails;
     procedure Test_Folder_Name_With_Dot_Is_Accepted;
@@ -1280,6 +1281,30 @@ begin
 
   CheckErrorLog('ERROR: can not decode update parameter -U : -U8');
   CheckTrackersInFile(TorrentFile, ['udp://orig1.test/announce']);
+end;
+
+procedure TTestStartUpParameterCli.
+Test_Invalid_Add_Trackers_File_Fails_And_Changes_Nothing;
+const
+  TYPO_TRACKER = 'udpp://typo.test/announce';
+var
+  TorrentFile: string;
+begin
+  PrepareWorkFolder;
+  TorrentFile := FWorkFolder + 'a.torrent';
+  WriteTextFile(FILE_NAME_ADD_TRACKERS, [TYPO_TRACKER]);
+
+  //No remove_trackers.txt: the error is reported and the torrent is not touched
+  CreateTorrentFile(TorrentFile, ['udp://orig1.test/announce', 'udp://orig2.test/announce']);
+  RunCli([TorrentFile, '-U4']);
+  CheckErrorLog(TYPO_TRACKER + ' : ' + InvalidTrackerURLMessage);
+  CheckTrackersInFile(TorrentFile, ['udp://orig1.test/announce', 'udp://orig2.test/announce']);
+
+  //An empty remove_trackers.txt must not remove the trackers inside the torrent either
+  WriteTextFile(FILE_NAME_REMOVE_TRACKERS, []);
+  RunCli([TorrentFile, '-U4']);
+  CheckErrorLog(TYPO_TRACKER + ' : ' + InvalidTrackerURLMessage);
+  CheckTrackersInFile(TorrentFile, ['udp://orig1.test/announce', 'udp://orig2.test/announce']);
 end;
 
 procedure TTestStartUpParameterCli.
