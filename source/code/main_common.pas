@@ -74,7 +74,7 @@ begin
   // PATH: ~/.config/trackereditor/
   Result := GetAppConfigDir(False);
   if not DirectoryExists(Result) then
-    CreateDirUTF8(Result);
+    ForceDirectoriesUTF8(Result); // ~/.config may not exist yet
   {$ENDIF DARWIN}
 
   if Result = '' then

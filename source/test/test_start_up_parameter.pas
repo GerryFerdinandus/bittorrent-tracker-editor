@@ -841,7 +841,7 @@ begin
 
   {$IFDEF DARWIN}
   // PATH: ~/.config/test_trackereditor/ -> ~/.config/trackereditor/
-  // The path must be already created by trackereditor
+  // The path is created in SetUp when it does not exist yet
   // This unit test must use the same working forder as trackereditor
   FFullPathToEndUser := GetAppConfigDir(False);
   FFullPathToEndUser := IncludeTrailingPathDelimiter(FFullPathToEndUser)
@@ -892,6 +892,8 @@ begin
   end;
 
   {$IFDEF DARWIN}
+  //The folder does not exist yet on a fresh machine (CI), the program is not started yet
+  ForceDirectories(FFullPathToEndUser);
   //Delete all the previous test result
   DeleteFile(FFullPathToEndUser + FILE_NAME_CONSOLE_LOG);
   DeleteFile(FFullPathToEndUser + FILE_NAME_EXPORT_TRACKERS);
