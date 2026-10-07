@@ -345,7 +345,9 @@ begin
     {find 'announce-list' and copy the list content to TrackerList}
     //process 'announce'
     TempBEncoded := FBEncoded.ListData.FindElement(BK_ANNOUNCE);
-    if assigned(TempBEncoded) then
+    //An empty 'announce' is used by torrents without a tracker. It is not a tracker.
+    if assigned(TempBEncoded) and (TempBEncoded.Format = befString) and
+      (TempBEncoded.StringData <> '') then
     begin
       TrackerList.Add(TempBEncoded.StringData);
     end;
@@ -365,7 +367,12 @@ begin
           TierBEncoded := TempBEncoded.ListData.Items[i].Data;
           if (TierBEncoded.Format <> befList) or (TierBEncoded.ListData.Count = 0) then
             Continue;
+          //The first item must be a non empty string. Else it is no tracker.
+          if TierBEncoded.ListData.First.Data.Format <> befString then
+            Continue;
           TrackerStr := TierBEncoded.ListData.First.Data.StringData;
+          if TrackerStr = '' then
+            Continue;
 
           // TrackerList is not sorted. Must use IndexOf to ignore duplicated entries.
           if TrackerList.IndexOf(TrackerStr) < 0 then

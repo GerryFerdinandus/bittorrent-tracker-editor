@@ -979,6 +979,7 @@ type
     procedure Test_SOURCE_Without_Value_Fails;
     procedure Test_Empty_SOURCE_Removes_Source_Tag;
     procedure Test_Update_Parameter_U8_Fails;
+    procedure Test_Empty_Announce_Is_Not_Counted_As_Tracker;
     procedure Test_Invalid_Add_Trackers_File_Fails_And_Changes_Nothing;
     procedure Test_Folder_With_Corrupt_Torrent_Fails_And_Changes_Nothing;
     procedure Test_Folder_Without_Torrents_Fails;
@@ -1266,6 +1267,26 @@ begin
 
   CheckSuccessLog(2);
   CheckSource(TorrentFile, '');
+end;
+
+procedure TTestStartUpParameterCli.Test_Empty_Announce_Is_Not_Counted_As_Tracker;
+var
+  TorrentFile: string;
+  Mode: string;
+begin
+  PrepareWorkFolder;
+  TorrentFile := FWorkFolder + 'a.torrent';
+  WriteTextFile(FILE_NAME_ADD_TRACKERS, ['udp://new.test/announce']);
+
+  //A tracker-less torrent has an empty 'announce'. The empty URL is no tracker, not even for
+  //-U5 that removes nothing.
+  for Mode in ['-U4', '-U5'] do
+  begin
+    CreateTorrentFile(TorrentFile, ['']);
+    RunCli([TorrentFile, Mode]);
+    CheckSuccessLog(1);
+    CheckTrackersInFile(TorrentFile, ['udp://new.test/announce']);
+  end;
 end;
 
 procedure TTestStartUpParameterCli.Test_Update_Parameter_U8_Fails;

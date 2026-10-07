@@ -61,6 +61,8 @@ type
     procedure Test_Private_And_Source_Already_Present_Keep_Info_Unchanged;
     procedure Test_Private_Flag_With_Value_Zero_Is_Replaced_Not_Duplicated;
     procedure Test_Empty_AnnounceList_Tier_Is_Skipped;
+    procedure Test_Empty_Announce_Is_Not_A_Tracker;
+    procedure Test_Empty_Or_Non_String_Tier_Tracker_Is_Skipped;
     procedure Test_Failed_Decode_Clears_Previous_Torrent_State;
     procedure Test_New_Object_Has_Unknown_Version;
     procedure Test_RoundTrip_Real_Torrent_Files_Are_Identical;
@@ -573,6 +575,43 @@ begin
     'An empty tier in announce-list must not make decoding fail');
 
   CheckEquals(2, FDecodeTorrent.InfoFilesCount, 'Wrong file count');
+  CheckEquals(2, FDecodeTorrent.TrackerList.Count, 'Wrong tracker count');
+  CheckEquals('udp://tracker.test/announce', FDecodeTorrent.TrackerList[0],
+    'Wrong first tracker');
+  CheckEquals(TRACKER_B, FDecodeTorrent.TrackerList[1], 'Wrong second tracker');
+end;
+
+procedure TTestDecodeTorrent.Test_Empty_Announce_Is_Not_A_Tracker;
+const
+  TRACKER_B = 'udp://b.test/announce';
+begin
+  //Torrents without a tracker can have an empty 'announce'. It is not a tracker.
+  Check(DecodeTorrentString('d8:announce0:4:info' + INFO_SINGLE_FILE + 'e'),
+    'Can not decode a torrent with an empty announce');
+  CheckEquals(0, FDecodeTorrent.TrackerList.Count, 'An empty announce is no tracker');
+
+  //'announce' is not a string
+  Check(DecodeTorrentString('d8:announcei5e4:info' + INFO_SINGLE_FILE + 'e'),
+    'Can not decode a torrent with an integer announce');
+  CheckEquals(0, FDecodeTorrent.TrackerList.Count, 'An integer announce is no tracker');
+
+  //The trackers of the 'announce-list' are still read
+  Check(DecodeTorrentString('d8:announce0:13:announce-listll' + BEncodeString(TRACKER_B) +
+    'ee4:info' + INFO_SINGLE_FILE + 'e'),
+    'Can not decode a torrent with an empty announce and an announce-list');
+  CheckEquals(1, FDecodeTorrent.TrackerList.Count, 'Wrong tracker count');
+  CheckEquals(TRACKER_B, FDecodeTorrent.TrackerList[0], 'Wrong tracker');
+end;
+
+procedure TTestDecodeTorrent.Test_Empty_Or_Non_String_Tier_Tracker_Is_Skipped;
+const
+  TRACKER_B = 'udp://b.test/announce';
+begin
+  //Tiers with an empty string, an integer and a list as first item, and one real tracker.
+  Check(DecodeTorrentString('d' + ANNOUNCE + '13:announce-listll0:el' + 'i5eell1:xee' +
+    'l' + BEncodeString(TRACKER_B) + 'ee4:info' + INFO_SINGLE_FILE + 'e'),
+    'Can not decode a torrent with empty tier trackers');
+
   CheckEquals(2, FDecodeTorrent.TrackerList.Count, 'Wrong tracker count');
   CheckEquals('udp://tracker.test/announce', FDecodeTorrent.TrackerList[0],
     'Wrong first tracker');
