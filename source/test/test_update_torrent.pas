@@ -78,6 +78,7 @@ type
     procedure Test_ReadAddTrackersFile_Unreadable_Keeps_Lines;
     procedure Test_LoadAddTrackersRaw_Without_File_Uses_Recommended_Trackers;
     procedure Test_LoadRemoveTrackers_Present_And_Missing;
+    procedure Test_LoadRemoveTrackers_Unreadable_Is_Reported;
     procedure Test_TrySaveTrackerFinalListToFile_Writes_One_Group_Per_Tracker;
     procedure Test_TrySaveTrackerFinalListToFile_Failure_Is_Reported_Not_Raised;
     procedure Test_LoadTorrentViaDir_Uppercase_Extension_And_Skips_Folders;
@@ -835,6 +836,41 @@ begin
     CheckTrue(FilePresent, 'File must be detected');
     CheckEquals(1, TrackerList.TrackerBanByUserList.Count, 'Wrong ban list count');
     CheckEquals(TRACKER_A, TrackerList.TrackerBanByUserList[0], 'Wrong ban list item');
+  finally
+    DeleteFile(FTempFolder + FILE_NAME_REMOVE_TRACKERS);
+    TrackerFile.Free;
+    FreeTrackerList(TrackerList);
+  end;
+end;
+
+procedure TTestUpdateTorrent.Test_LoadRemoveTrackers_Unreadable_Is_Reported;
+var
+  TrackerList: TTrackerList;
+  TrackerFile: TStringList;
+  LockedFile: TFileStream;
+  FilePresent: boolean;
+begin
+  CreateTrackerList(TrackerList);
+  TrackerFile := TStringList.Create;
+  try
+    TrackerFile.Add(TRACKER_A);
+    TrackerFile.SaveToFile(FTempFolder + FILE_NAME_REMOVE_TRACKERS);
+
+    //An exclusive lock makes the file unreadable
+    LockedFile := TFileStream.Create(FTempFolder + FILE_NAME_REMOVE_TRACKERS,
+      fmOpenRead or fmShareExclusive);
+    try
+      CheckFalse(LoadRemoveTrackers(FTempFolder, TrackerList, FilePresent),
+        'An unreadable file must be reported');
+    finally
+      LockedFile.Free;
+    end;
+    CheckFalse(FilePresent, 'An unreadable file is treated as not present');
+    CheckEquals(0, TrackerList.TrackerBanByUserList.Count, 'No ban list from an unreadable file');
+
+    CheckTrue(LoadRemoveTrackers(FTempFolder, TrackerList, FilePresent),
+      'The same file must load when it is not locked');
+    CheckEquals(1, TrackerList.TrackerBanByUserList.Count, 'Wrong ban list count');
   finally
     DeleteFile(FTempFolder + FILE_NAME_REMOVE_TRACKERS);
     TrackerFile.Free;

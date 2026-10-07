@@ -293,8 +293,10 @@ begin
   LoadTrackersTextFileAddTrackers(True);
 
   //Load the unwanted trackers list.
-  main_common.LoadRemoveTrackers(FFolderForTrackerListLoadAndSave, FTrackerList,
-    FFilePresentBanByUserList);
+  if not main_common.LoadRemoveTrackers(FFolderForTrackerListLoadAndSave, FTrackerList,
+    FFilePresentBanByUserList) then
+    ShowUserErrorMessage('Can not read the file, no trackers will be removed via this file.',
+      FFolderForTrackerListLoadAndSave + FILE_NAME_REMOVE_TRACKERS);
 
   //Create download for ngosang tracker list
   FngosangTrackerList := TngosangTrackerList.Create;

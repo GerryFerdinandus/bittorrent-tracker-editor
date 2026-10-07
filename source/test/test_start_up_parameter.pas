@@ -983,6 +983,7 @@ type
     procedure Test_Update_Parameter_U8_Fails;
     procedure Test_Empty_Announce_Is_Not_Counted_As_Tracker;
     procedure Test_Invalid_Add_Trackers_File_Fails_And_Changes_Nothing;
+    procedure Test_Unreadable_Remove_Trackers_File_Fails_And_Changes_Nothing;
     procedure Test_Folder_With_Corrupt_Torrent_Fails_And_Changes_Nothing;
     procedure Test_Folder_Without_Torrents_Fails;
     procedure Test_Folder_Name_With_Dot_Is_Accepted;
@@ -1384,6 +1385,31 @@ begin
   WriteTextFile(FILE_NAME_REMOVE_TRACKERS, []);
   RunCli([TorrentFile, '-U4']);
   CheckErrorLog(TYPO_TRACKER + ' : ' + InvalidTrackerURLMessage);
+  CheckTrackersInFile(TorrentFile, ['udp://orig1.test/announce', 'udp://orig2.test/announce']);
+end;
+
+procedure TTestStartUpParameterCli.
+Test_Unreadable_Remove_Trackers_File_Fails_And_Changes_Nothing;
+var
+  TorrentFile: string;
+  LockedFile: TFileStream;
+begin
+  PrepareWorkFolder;
+  TorrentFile := FWorkFolder + 'a.torrent';
+  CreateTorrentFile(TorrentFile, ['udp://orig1.test/announce', 'udp://orig2.test/announce']);
+  WriteTextFile(FILE_NAME_ADD_TRACKERS, ['udp://new.test/announce']);
+  WriteTextFile(FILE_NAME_REMOVE_TRACKERS, ['udp://orig1.test/announce']);
+
+  //An exclusive lock makes the file unreadable for the other process
+  LockedFile := TFileStream.Create(FWorkFolder + FILE_NAME_REMOVE_TRACKERS,
+    fmOpenRead or fmShareExclusive);
+  try
+    RunCli([TorrentFile, '-U4']);
+  finally
+    LockedFile.Free;
+  end;
+
+  CheckErrorLog('ERROR: Can not read ' + FILE_NAME_REMOVE_TRACKERS);
   CheckTrackersInFile(TorrentFile, ['udp://orig1.test/announce', 'udp://orig2.test/announce']);
 end;
 

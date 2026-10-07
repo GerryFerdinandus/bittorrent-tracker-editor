@@ -37,8 +37,10 @@ function ReadAddTrackersFile(const FileName: string; Lines: TStrings): boolean;
 procedure LoadAddTrackersRaw(const Folder: string; Lines: TStrings);
 
 //Loads remove_trackers.txt from Folder into TrackerList.TrackerBanByUserList.
-procedure LoadRemoveTrackers(const Folder: string; var TrackerList: TTrackerList;
-  out FilePresentBanByUserList: boolean);
+//False when the file exists but can not be read. It is then treated as not present.
+//A missing file is not an error. Invalid URLs inside the file are not an error either (by design).
+function LoadRemoveTrackers(const Folder: string; var TrackerList: TTrackerList;
+  out FilePresentBanByUserList: boolean): boolean;
 
 //Writes the export_trackers.txt file, one tracker group per URL.
 procedure SaveTrackerFinalListToFile(const Folder: string; TrackerFinalList: TStringList);
@@ -202,20 +204,28 @@ begin
   end;
 end;
 
-procedure LoadRemoveTrackers(const Folder: string; var TrackerList: TTrackerList;
-  out FilePresentBanByUserList: boolean);
+function LoadRemoveTrackers(const Folder: string; var TrackerList: TTrackerList;
+  out FilePresentBanByUserList: boolean): boolean;
 var
   FileName: UTF8String;
 begin
+  Result := True;
   FileName := Folder + FILE_NAME_REMOVE_TRACKERS;
   try
     FilePresentBanByUserList := FileExistsUTF8(FileName);
     if FilePresentBanByUserList then
       TrackerList.TrackerBanByUserList.LoadFromFile(FileName);
   except
+    //A half loaded or unreadable file must not remove anything.
+    Result := False;
     FilePresentBanByUserList := False;
+    TrackerList.TrackerBanByUserList.Clear;
   end;
 
+  //By design the lines are NOT validated as tracker URLs, unlike add_trackers.txt.
+  //A "remove" line only has to match a tracker, and the user may want to ban a malformed or
+  //obsolete URL that is still inside a torrent. Rejecting the file because of one bad line
+  //would block the valid removals. A line that matches nothing is silently skipped.
   SanitizeTrackerList(TrackerList.TrackerBanByUserList);
 end;
 
@@ -410,7 +420,8 @@ var
   LogFile: TextFile;
   FileNameOrDirStr: UTF8String;
   FilePresentBanByUserList: boolean;
-  MustExitWithErrorCode, LogFileIsOpen, AddTrackersFileIsValid: boolean;
+  MustExitWithErrorCode, LogFileIsOpen, AddTrackersFileIsValid,
+    RemoveTrackersFileIsReadable: boolean;
 begin
   CreateTrackerList(TrackerList);
   DecodeTorrentObj := TDecodeTorrent.Create;
@@ -430,15 +441,21 @@ begin
       if not AddTrackersFileIsValid then
         AddedTrackersRawList.Clear;
 
-      LoadRemoveTrackers(FolderForTrackerListLoadAndSave, TrackerList, FilePresentBanByUserList);
+      //An unreadable remove_trackers.txt must not be ignored: the torrent files would be updated
+      //without the removals the user asked for.
+      RemoveTrackersFileIsReadable :=
+        LoadRemoveTrackers(FolderForTrackerListLoadAndSave, TrackerList,
+        FilePresentBanByUserList);
+      if not RemoveTrackersFileIsReadable then
+        LogConsoleError(TrackerList, 'ERROR: Can not read ' + FILE_NAME_REMOVE_TRACKERS);
 
       //Create the log file. The old one will be overwritten
       AssignFile(LogFile, FolderForTrackerListLoadAndSave + FILE_NAME_CONSOLE_LOG);
       ReWrite(LogFile);
       LogFileIsOpen := True;
 
-      if AddTrackersFileIsValid and ConsoleModeDecodeParameter(FileNameOrDirStr,
-        TrackerList) then
+      if AddTrackersFileIsValid and RemoveTrackersFileIsReadable and
+        ConsoleModeDecodeParameter(FileNameOrDirStr, TrackerList) then
       begin
         if PathIsTorrentFolder(FileNameOrDirStr) then
         begin //A folder. Its name may contain a dot.
