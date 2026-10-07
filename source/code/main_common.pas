@@ -295,9 +295,12 @@ end;
 //Console equivalent of the GUI's UpdateViewRemoveTracker, without any per-tracker Checked grid:
 //CombineFiveTrackerListToOne already removes TrackerManuallyDeselectedByUserList unconditionally,
 //so "remove everything already inside the torrent" only needs a straight list copy.
-procedure ApplyBanListRemoval(var TrackerList: TTrackerList; AddedTrackersRawList: TStringList;
-  FilePresentBanByUserList: boolean);
+//False when the add list is rejected. The error is then already in the log.
+function ApplyBanListRemoval(var TrackerList: TTrackerList; AddedTrackersRawList: TStringList;
+  FilePresentBanByUserList: boolean): boolean;
 begin
+  Result := True;
+
   //'Remove nothing' modes (-U5, -U6) must never remove or uncheck any tracker.
   if (TrackerList.TrackerListOrderForUpdatedTorrent =
     tloInsertNewBeforeAndKeepOriginalIntactAndRemoveNothing) or
@@ -311,12 +314,15 @@ begin
       TrackerList.TrackerFromInsideTorrentFilesList);
 
   if not ValidateAndSanitizeTrackers(AddedTrackersRawList, TrackerList, False) then
+  begin
+    Result := False;
     exit;
+  end;
 
   //remove all the trackers that are ban from the user's 'add' list.
   RemoveTrackersFromList(TrackerList.TrackerBanByUserList, AddedTrackersRawList);
 
-  ValidateAndSanitizeTrackers(AddedTrackersRawList, TrackerList, False);
+  Result := ValidateAndSanitizeTrackers(AddedTrackersRawList, TrackerList, False);
 end;
 
 procedure SaveTrackerFinalListToFile(const Folder: string; TrackerFinalList: TStringList);
@@ -439,9 +445,10 @@ begin
           if ConsoleDecodeTorrentFolder(FileNameOrDirStr, TrackerList, DecodeTorrentObj,
             FileSettingList) then
           begin
-            ApplyBanListRemoval(TrackerList, AddedTrackersRawList, FilePresentBanByUserList);
-            RunUpdateTorrentPipeline(TrackerList, DecodeTorrentObj, FileSettingList,
-              AddedTrackersRawList, FolderForTrackerListLoadAndSave);
+            if ApplyBanListRemoval(TrackerList, AddedTrackersRawList,
+              FilePresentBanByUserList) then
+              RunUpdateTorrentPipeline(TrackerList, DecodeTorrentObj, FileSettingList,
+                AddedTrackersRawList, FolderForTrackerListLoadAndSave);
           end
           else
             LogConsoleError(TrackerList, 'Can not load torrent via folder');
@@ -451,9 +458,10 @@ begin
           if ConsoleDecodeSingleTorrentFile(FileNameOrDirStr, TrackerList, DecodeTorrentObj,
             FileSettingList) then
           begin
-            ApplyBanListRemoval(TrackerList, AddedTrackersRawList, FilePresentBanByUserList);
-            RunUpdateTorrentPipeline(TrackerList, DecodeTorrentObj, FileSettingList,
-              AddedTrackersRawList, FolderForTrackerListLoadAndSave);
+            if ApplyBanListRemoval(TrackerList, AddedTrackersRawList,
+              FilePresentBanByUserList) then
+              RunUpdateTorrentPipeline(TrackerList, DecodeTorrentObj, FileSettingList,
+                AddedTrackersRawList, FolderForTrackerListLoadAndSave);
           end
           else
             LogConsoleError(TrackerList, 'Can not load torrent file.');

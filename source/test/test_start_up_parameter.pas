@@ -978,6 +978,7 @@ type
     procedure Test_ReadOnly_Torrent_Is_Reported;
     procedure Test_SOURCE_Without_Value_Fails;
     procedure Test_Unknown_Parameter_Fails_And_Changes_Nothing;
+    procedure Test_Announce_Error_Of_Add_Trackers_Is_Logged_Once;
     procedure Test_Empty_SOURCE_Removes_Source_Tag;
     procedure Test_Update_Parameter_U8_Fails;
     procedure Test_Empty_Announce_Is_Not_Counted_As_Tracker;
@@ -1281,6 +1282,35 @@ begin
   CheckErrorLog('ERROR: There is no value after -SOURCE');
   CheckTrackersInFile(TorrentFile, ['udp://orig1.test/announce']);
   CheckSource(TorrentFile, 'OLD');
+end;
+
+procedure TTestStartUpParameterCli.Test_Announce_Error_Of_Add_Trackers_Is_Logged_Once;
+const
+  NEW_TRACKER = 'udp://new.test';
+  //Every mode: the 'remove nothing' modes -U5 and -U6 check the list in an other place
+  MODES: array[0..7] of string = ('-U0', '-U1', '-U2', '-U3', '-U4', '-U5', '-U6', '-U7');
+var
+  TorrentFile, Mode, Line: string;
+  ErrorLines: integer;
+begin
+  PrepareWorkFolder;
+  TorrentFile := FWorkFolder + 'a.torrent';
+  //The URL has no '/announce': it is only accepted with -SAC
+  WriteTextFile(FILE_NAME_ADD_TRACKERS, [NEW_TRACKER]);
+
+  for Mode in MODES do
+  begin
+    CreateTorrentFile(TorrentFile, ['udp://orig1.test/announce']);
+    RunCli([TorrentFile, Mode]);
+
+    CheckErrorLog(NEW_TRACKER + ' : ERROR: Tracker URL must end with /announce or /announce.php');
+    ErrorLines := 0;
+    for Line in FLog do
+      if Line <> '' then
+        Inc(ErrorLines);
+    CheckEquals(1, ErrorLines, 'The error must be in the log once, mode ' + Mode);
+    CheckTrackersInFile(TorrentFile, ['udp://orig1.test/announce']);
+  end;
 end;
 
 procedure TTestStartUpParameterCli.Test_Empty_SOURCE_Removes_Source_Tag;
