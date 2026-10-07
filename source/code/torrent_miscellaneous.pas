@@ -671,7 +671,7 @@ begin
    Must keep backward compatible with the first and previous release.
    First or second parameter must be related to -Ux
 
-   other parameter after are optional -SOC and -SOURCE
+   other parameter after are optional -SAC and -SOURCE "value". Any other parameter is an error.
 
    example:
    "path_to_folder" -U3 -SAC -SOURCE "ABC"
@@ -724,19 +724,27 @@ begin
         exit;
       end;
 
-      //Check for parameter -SAC and -SOURCE.
-      //Must be done for both '-Ux' parameter positions.
-      for i := 1 to Arguments.Count - 1 do
+      //The first two parameters are the file/folder and -Ux. A wrong -Ux is already logged.
+      if not Result then
+        exit;
+
+      //The other parameters are -SAC and -SOURCE "value". Must be done for both '-Ux' positions.
+      //Every other text is a mistake, e.g. '-sac' or '-SORUCE'. Ignoring it would update the
+      //torrent files without what the user wanted.
+      i := 2;
+      while i < Arguments.Count do
       begin
         if Arguments[i] = '-SAC' then
         begin
           TrackerList.SkipAnnounceCheck := True;
-          Continue;
-        end;
-
+        end
+        else
         if Arguments[i] = '-SOURCE' then
         begin
-          if Arguments.Count < i + 2 then
+          //The parameter after -SOURCE is its value. It is never an option, so '-SOURCE -SAC'
+          //is a missing value and not a source tag '-SAC'.
+          if (Arguments.Count < i + 2) or (Arguments[i + 1] = '-SAC') or
+            (Arguments[i + 1] = '-SOURCE') then
           begin
             TrackerList.LogStringList.Add(
               'ERROR: There is no value after -SOURCE');
@@ -744,11 +752,21 @@ begin
             exit;
           end;
 
-          // parameter after -SOURCE must be the value.
           TrackerList.SourceTag := Arguments[i + 1];
           // Empty '' -> remove all source tag
           TrackerList.RemoveAllSourceTag := TrackerList.SourceTag = '';
+
+          //The value is done.
+          Inc(i);
+        end
+        else
+        begin
+          TrackerList.LogStringList.Add('ERROR: Unknown parameter: ' + Arguments[i]);
+          Result := False;
+          exit;
         end;
+
+        Inc(i);
       end;
 
     end;

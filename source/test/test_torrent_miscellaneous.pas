@@ -82,6 +82,8 @@ type
     procedure Test_Arguments_SAC_And_SOURCE;
     procedure Test_Arguments_Empty_SOURCE_Removes_Source_Tag;
     procedure Test_Arguments_SOURCE_Without_Value;
+    procedure Test_Arguments_Unknown_Parameter_Fails;
+    procedure Test_Arguments_SOURCE_Value_Is_Not_Read_As_A_Parameter;
   end;
 
 implementation
@@ -805,6 +807,62 @@ begin
   CheckFalse(Decode(['torrents', '-U4', '-SOURCE'], FileNameOrDirStr),
     '-SOURCE without a value must fail');
   CheckEquals(1, FTrackerList.LogStringList.Count, 'One error expected');
+end;
+
+procedure TTestTorrentMiscellaneous.Test_Arguments_Unknown_Parameter_Fails;
+var
+  FileNameOrDirStr: UTF8String;
+begin
+  //A typo must not be ignored: the torrent would be changed without what the user wanted.
+  CheckFalse(Decode(['torrents', '-U4', '-sac'], FileNameOrDirStr),
+    'A flag in the wrong letter case must fail');
+  CheckEquals(1, FTrackerList.LogStringList.Count, 'One error expected');
+  CheckEquals('ERROR: Unknown parameter: -sac', FTrackerList.LogStringList[0],
+    'Wrong error text');
+  CheckFalse(FTrackerList.SkipAnnounceCheck, 'The unknown flag must not enable -SAC');
+
+  FTrackerList.LogStringList.Clear;
+  CheckFalse(Decode(['-U4', 'torrents', '-SORUCE', 'ABC'], FileNameOrDirStr),
+    'A misspelled -SOURCE must fail');
+  CheckEquals('ERROR: Unknown parameter: -SORUCE', FTrackerList.LogStringList[0],
+    'Wrong error text for -SORUCE');
+  CheckEquals('', FTrackerList.SourceTag, 'The misspelled -SOURCE must not set the tag');
+
+  //Also an extra value after valid flags
+  FTrackerList.LogStringList.Clear;
+  CheckFalse(Decode(['torrents', '-U4', '-SAC', 'extra'], FileNameOrDirStr),
+    'An extra argument must fail');
+  CheckEquals('ERROR: Unknown parameter: extra', FTrackerList.LogStringList[0],
+    'Wrong error text for the extra argument');
+end;
+
+procedure TTestTorrentMiscellaneous.
+Test_Arguments_SOURCE_Value_Is_Not_Read_As_A_Parameter;
+var
+  FileNameOrDirStr: UTF8String;
+begin
+  //The word after -SOURCE is its value, not an option. Forgetting the value must be an error,
+  //it must not enable -SAC and it must not use '-SAC' as the source tag.
+  CheckFalse(Decode(['torrents', '-U4', '-SOURCE', '-SAC'], FileNameOrDirStr),
+    '-SOURCE -SAC has no value for -SOURCE');
+  CheckEquals('ERROR: There is no value after -SOURCE', FTrackerList.LogStringList[0],
+    'Wrong error text');
+  CheckFalse(FTrackerList.SkipAnnounceCheck, '-SAC after -SOURCE is no option');
+  CheckEquals('', FTrackerList.SourceTag, '-SAC must not be the source tag');
+
+  FTrackerList.LogStringList.Clear;
+  CheckFalse(Decode(['torrents', '-U4', '-SOURCE', '-SOURCE'], FileNameOrDirStr),
+    '-SOURCE -SOURCE has no value for -SOURCE');
+  CheckEquals('ERROR: There is no value after -SOURCE', FTrackerList.LogStringList[0],
+    'Wrong error text for -SOURCE -SOURCE');
+
+  //The value is not checked as a parameter: any other text is the tag, and a flag can follow
+  FTrackerList.LogStringList.Clear;
+  CheckTrue(Decode(['torrents', '-U4', '-SOURCE', 'my tag', '-SAC'], FileNameOrDirStr),
+    'A value and a flag after it');
+  CheckEquals('my tag', FTrackerList.SourceTag, 'Wrong source tag');
+  CheckTrue(FTrackerList.SkipAnnounceCheck, '-SAC after the value must be detected');
+  CheckEquals(0, FTrackerList.LogStringList.Count, 'No error expected');
 end;
 
 initialization

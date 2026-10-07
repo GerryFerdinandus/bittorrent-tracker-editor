@@ -977,6 +977,7 @@ type
     procedure Test_Missing_Add_Trackers_File_Uses_Recommended_Trackers;
     procedure Test_ReadOnly_Torrent_Is_Reported;
     procedure Test_SOURCE_Without_Value_Fails;
+    procedure Test_Unknown_Parameter_Fails_And_Changes_Nothing;
     procedure Test_Empty_SOURCE_Removes_Source_Tag;
     procedure Test_Update_Parameter_U8_Fails;
     procedure Test_Empty_Announce_Is_Not_Counted_As_Tracker;
@@ -1250,6 +1251,34 @@ begin
 
   CheckErrorLog('ERROR: There is no value after -SOURCE');
   //Nothing is changed
+  CheckTrackersInFile(TorrentFile, ['udp://orig1.test/announce']);
+  CheckSource(TorrentFile, 'OLD');
+end;
+
+procedure TTestStartUpParameterCli.Test_Unknown_Parameter_Fails_And_Changes_Nothing;
+var
+  TorrentFile: string;
+begin
+  PrepareWorkFolder;
+  TorrentFile := FWorkFolder + 'a.torrent';
+  CreateTorrentFile(TorrentFile, ['udp://orig1.test/announce'], 'OLD');
+  //The URL has no '/announce': it is only accepted with -SAC
+  WriteTextFile(FILE_NAME_ADD_TRACKERS, ['udp://new.test']);
+
+  //A misspelled flag
+  RunCli([TorrentFile, '-U4', '-SORUCE', 'NEW']);
+  CheckErrorLog('ERROR: Unknown parameter: -SORUCE');
+  CheckTrackersInFile(TorrentFile, ['udp://orig1.test/announce']);
+  CheckSource(TorrentFile, 'OLD');
+
+  //-SAC in the wrong letter case
+  RunCli([TorrentFile, '-U4', '-sac']);
+  CheckErrorLog('ERROR: Unknown parameter: -sac');
+  CheckTrackersInFile(TorrentFile, ['udp://orig1.test/announce']);
+
+  //-SAC is the value of -SOURCE here: it is not an option, and the value is missing
+  RunCli([TorrentFile, '-U4', '-SOURCE', '-SAC']);
+  CheckErrorLog('ERROR: There is no value after -SOURCE');
   CheckTrackersInFile(TorrentFile, ['udp://orig1.test/announce']);
   CheckSource(TorrentFile, 'OLD');
 end;
