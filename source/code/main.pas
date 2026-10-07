@@ -559,6 +559,11 @@ begin
   if not FDownloadStatus then
   begin
     MenuItemOnlineCheckDownloadNewTrackonClick(nil);
+
+    //The error is already shown. Without the lists every tracker has the status
+    //'unknown', so nothing may be unchecked.
+    if not FDownloadStatus then
+      Exit;
   end;
 
   //0 = Unstable
