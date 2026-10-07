@@ -11,7 +11,8 @@ unit test_torrent_miscellaneous;
 interface
 
 uses
-  Classes, SysUtils, fpcunit, testregistry, torrent_miscellaneous, main_common;
+  Classes, SysUtils, fpcunit, testregistry, torrent_miscellaneous, main_common,
+  DecodeTorrent;
 
 type
 
@@ -57,6 +58,12 @@ type
     procedure Test_Randomize_Empty_And_Single_Item_List;
     procedure Test_Randomize_Keeps_All_Items;
 
+    procedure Test_AddTorrentFileTrackers_Remembers_Private_Torrent_Trackers;
+    procedure Test_AddTorrentFileTrackers_Uses_The_Private_Flag_Of_The_Torrent;
+    procedure Test_OnlineSubmit_Skips_Private_Torrent_Trackers;
+    procedure Test_OnlineSubmit_Skips_Tracker_Also_Inside_Public_Torrent;
+    procedure Test_OnlineSubmit_Without_Private_Torrents_Keeps_All_Trackers;
+    procedure Test_OnlineSubmit_Only_Private_Torrents_Gives_Empty_List;
     procedure Test_ValidTrackerURL;
     procedure Test_WebTorrentTrackerURL;
     procedure Test_TrackerURLWithAnnounce;
@@ -86,6 +93,11 @@ const
   PRESENT_3 = 'udp://p3.test/announce';
   OTHER_1 = 'udp://x1.test/announce';
 
+  PUBLIC_1 = 'udp://pub1.test/announce';
+  PUBLIC_2 = 'udp://pub2.test/announce';
+  //A private tracker URL has the passkey of the user inside
+  PRIVATE_1 = 'https://private1.test/0123456789abcdef/announce';
+  PRIVATE_2 = 'https://private2.test/announce?passkey=fedcba9876543210';
 { TTestTorrentMiscellaneous }
 
 procedure TTestTorrentMiscellaneous.SetUp;
@@ -412,6 +424,171 @@ begin
         'Tracker ' + IntToStr(i) + ' is lost');
   finally
     List.Free;
+  end;
+end;
+
+function BuildTestTorrent(const Tracker: UTF8String; PrivateTorrent: boolean): UTF8String;
+begin
+  //Dictionary keys must be in alphabetical order
+  Result := 'd8:announce' + IntToStr(Length(Tracker)) + ':' + Tracker +
+    '4:infod6:lengthi1024e4:name8:test.bin12:piece lengthi16384e' +
+    '6:pieces20:AAAAAAAAAAAAAAAAAAAA';
+  if PrivateTorrent then
+    Result := Result + '7:privatei1e';
+  Result := Result + 'ee';
+end;
+
+procedure TTestTorrentMiscellaneous.Test_AddTorrentFileTrackers_Remembers_Private_Torrent_Trackers;
+var
+  PublicTorrent, PrivateTorrent: TStringList;
+begin
+  FTrackerList.TrackerFromInsideTorrentFilesList.Clear;
+  PublicTorrent := TStringList.Create;
+  PrivateTorrent := TStringList.Create;
+  try
+    PublicTorrent.Add(PUBLIC_1);
+    PublicTorrent.Add(PUBLIC_2);
+    PrivateTorrent.Add(PRIVATE_1);
+    PrivateTorrent.Add(PRIVATE_2);
+
+    AddTorrentFileTrackers(PublicTorrent, False, FTrackerList);
+    AddTorrentFileTrackers(PrivateTorrent, True, FTrackerList);
+  finally
+    PublicTorrent.Free;
+    PrivateTorrent.Free;
+  end;
+
+  CheckStringList([PRIVATE_1, PRIVATE_2, PUBLIC_1, PUBLIC_2],
+    FTrackerList.TrackerFromInsideTorrentFilesList, 'Trackers inside the torrents');
+  CheckStringList([PRIVATE_1, PRIVATE_2], FTrackerList.TrackerFromPrivateTorrentsList,
+    'Trackers inside the private torrents');
+end;
+
+procedure TTestTorrentMiscellaneous.
+Test_AddTorrentFileTrackers_Uses_The_Private_Flag_Of_The_Torrent;
+var
+  Torrent: TDecodeTorrent;
+  Stream: TStringStream;
+  TorrentStr: UTF8String;
+  i: integer;
+begin
+  FTrackerList.TrackerFromInsideTorrentFilesList.Clear;
+  Torrent := TDecodeTorrent.Create;
+  try
+    for i := 0 to 1 do
+    begin
+      //The second torrent is the private one
+      if i = 0 then
+        TorrentStr := BuildTestTorrent(PUBLIC_1, False)
+      else
+        TorrentStr := BuildTestTorrent(PRIVATE_1, True);
+      Stream := TStringStream.Create(TorrentStr);
+      try
+        Check(Torrent.DecodeTorrent(Stream), 'Can not decode the torrent ' + IntToStr(i));
+      finally
+        Stream.Free;
+      end;
+      CheckEquals(i = 1, Torrent.PrivateTorrent, 'Wrong private flag of torrent ' +
+        IntToStr(i));
+      AddTorrentFileTrackers(Torrent.TrackerList, Torrent.PrivateTorrent, FTrackerList);
+    end;
+  finally
+    Torrent.Free;
+  end;
+
+  CheckStringList([PRIVATE_1, PUBLIC_1], FTrackerList.TrackerFromInsideTorrentFilesList,
+    'Trackers inside the torrents');
+  CheckStringList([PRIVATE_1], FTrackerList.TrackerFromPrivateTorrentsList,
+    'Trackers inside the private torrents');
+end;
+
+procedure TTestTorrentMiscellaneous.Test_OnlineSubmit_Skips_Private_Torrent_Trackers;
+var
+  SubmitList: TStringList;
+begin
+  FTrackerList.TrackerFromInsideTorrentFilesList.Clear;
+  FTrackerList.TrackerFromInsideTorrentFilesList.Add(PUBLIC_1);
+  FTrackerList.TrackerFromInsideTorrentFilesList.Add(PRIVATE_1);
+  FTrackerList.TrackerFromInsideTorrentFilesList.Add(PUBLIC_2);
+  FTrackerList.TrackerFromInsideTorrentFilesList.Add(PRIVATE_2);
+  FTrackerList.TrackerFromPrivateTorrentsList.Add(PRIVATE_1);
+  FTrackerList.TrackerFromPrivateTorrentsList.Add(PRIVATE_2);
+
+  SubmitList := TStringList.Create;
+  try
+    //The result replaces what the list had
+    SubmitList.Add(OTHER_1);
+    GetTrackersForOnlineSubmit(FTrackerList, SubmitList);
+    CheckStringList([PUBLIC_1, PUBLIC_2], SubmitList, 'Trackers to submit');
+  finally
+    SubmitList.Free;
+  end;
+
+  CheckStringList([PRIVATE_1, PRIVATE_2, PUBLIC_1, PUBLIC_2],
+    FTrackerList.TrackerFromInsideTorrentFilesList,
+    'The trackers inside the torrents must not change');
+end;
+
+procedure TTestTorrentMiscellaneous.
+Test_OnlineSubmit_Skips_Tracker_Also_Inside_Public_Torrent;
+var
+  SubmitList: TStringList;
+  PublicTorrent, PrivateTorrent: TStringList;
+begin
+  //One URL is in a public and in a private torrent. It can have a passkey: not sent.
+  FTrackerList.TrackerFromInsideTorrentFilesList.Clear;
+  PublicTorrent := TStringList.Create;
+  PrivateTorrent := TStringList.Create;
+  SubmitList := TStringList.Create;
+  try
+    PublicTorrent.Add(PUBLIC_1);
+    PublicTorrent.Add(PRIVATE_1);
+    PrivateTorrent.Add(PRIVATE_1);
+    AddTorrentFileTrackers(PublicTorrent, False, FTrackerList);
+    AddTorrentFileTrackers(PrivateTorrent, True, FTrackerList);
+
+    GetTrackersForOnlineSubmit(FTrackerList, SubmitList);
+    CheckStringList([PUBLIC_1], SubmitList, 'Trackers to submit');
+  finally
+    PublicTorrent.Free;
+    PrivateTorrent.Free;
+    SubmitList.Free;
+  end;
+end;
+
+procedure TTestTorrentMiscellaneous.
+Test_OnlineSubmit_Without_Private_Torrents_Keeps_All_Trackers;
+var
+  SubmitList: TStringList;
+begin
+  FTrackerList.TrackerFromInsideTorrentFilesList.Clear;
+  FTrackerList.TrackerFromInsideTorrentFilesList.Add(PUBLIC_1);
+  FTrackerList.TrackerFromInsideTorrentFilesList.Add(PUBLIC_2);
+
+  SubmitList := TStringList.Create;
+  try
+    GetTrackersForOnlineSubmit(FTrackerList, SubmitList);
+    CheckStringList([PUBLIC_1, PUBLIC_2], SubmitList, 'Trackers to submit');
+  finally
+    SubmitList.Free;
+  end;
+end;
+
+procedure TTestTorrentMiscellaneous.Test_OnlineSubmit_Only_Private_Torrents_Gives_Empty_List;
+var
+  SubmitList: TStringList;
+begin
+  FTrackerList.TrackerFromInsideTorrentFilesList.Clear;
+  FTrackerList.TrackerFromInsideTorrentFilesList.Add(PRIVATE_1);
+  FTrackerList.TrackerFromPrivateTorrentsList.Add(PRIVATE_1);
+
+  SubmitList := TStringList.Create;
+  try
+    SubmitList.Add(OTHER_1);
+    GetTrackersForOnlineSubmit(FTrackerList, SubmitList);
+    CheckEquals(0, SubmitList.Count, 'There is nothing that may be submitted');
+  finally
+    SubmitList.Free;
   end;
 end;
 

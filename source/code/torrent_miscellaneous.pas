@@ -76,6 +76,10 @@ type
     //Trackers that are already inside the torrent.
     TrackerFromInsideTorrentFilesList,
 
+    //The trackers of TrackerFromInsideTorrentFilesList that are inside a private torrent.
+    //A private tracker URL can have a passkey: it must never be sent to an online service.
+    TrackerFromPrivateTorrentsList,
+
     //trackers that must not be present inside torrent.
     TrackerManuallyDeselectedByUserList,
 
@@ -105,6 +109,17 @@ procedure SanitizeTrackerList(StringList: TStringList);
 procedure RandomizeTrackerList(StringList: TStringList);
 
 procedure AddButIgnoreDuplicates(StringList: TStringList; const Str: UTF8String);
+
+//Adds the trackers of one decoded torrent file to TrackerList.TrackerFromInsideTorrentFilesList.
+//The trackers of a private torrent are also added to TrackerList.TrackerFromPrivateTorrentsList.
+procedure AddTorrentFileTrackers(DecodedTrackers: TStrings; PrivateTorrent: boolean;
+  var TrackerList: TTrackerList);
+
+//The trackers inside the torrent files that may be sent to an online service, in SubmitList.
+//A tracker that is inside a private torrent is never in it, also not when a public torrent
+//has the same tracker: its URL can have a passkey.
+procedure GetTrackersForOnlineSubmit(const TrackerList: TTrackerList;
+  SubmitList: TStringList);
 
 function ByteSizeToBiggerSizeFormatStr(ByteSize: int64): string;
 
@@ -258,6 +273,26 @@ begin
     StringList.add(Str);
   end;
 
+end;
+
+procedure AddTorrentFileTrackers(DecodedTrackers: TStrings; PrivateTorrent: boolean;
+  var TrackerList: TTrackerList);
+var
+  TrackerStr: UTF8String;
+begin
+  for TrackerStr in DecodedTrackers do
+  begin
+    AddButIgnoreDuplicates(TrackerList.TrackerFromInsideTorrentFilesList, TrackerStr);
+    if PrivateTorrent then
+      AddButIgnoreDuplicates(TrackerList.TrackerFromPrivateTorrentsList, TrackerStr);
+  end;
+end;
+
+procedure GetTrackersForOnlineSubmit(const TrackerList: TTrackerList;
+  SubmitList: TStringList);
+begin
+  SubmitList.Assign(TrackerList.TrackerFromInsideTorrentFilesList);
+  RemoveTrackersFromList(TrackerList.TrackerFromPrivateTorrentsList, SubmitList);
 end;
 
 function ByteSizeToBiggerSizeFormatStr(ByteSize: int64): string;

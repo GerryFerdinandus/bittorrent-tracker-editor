@@ -416,21 +416,35 @@ end;
 procedure TFormTrackerModify.MenuItemOnlineCheckSubmitNewTrackonClick(Sender: TObject);
 var
   SendStatus: boolean;
-  TrackerSendCount: integer;
+  TrackerSendCount, PrivateCount: integer;
   PopupStr: string;
+  SubmitList: TStringList;
 begin
+  SubmitList := TStringList.Create;
   try
-    screen.Cursor := crHourGlass;
-    SendStatus := FControllerTrackerListOnline.SubmitTrackers(
-      FTrackerList.TrackerFromInsideTorrentFilesList, TrackerSendCount);
+    //The URL of a private torrent can have a passkey. It must not be sent to the internet.
+    GetTrackersForOnlineSubmit(FTrackerList, SubmitList);
+    PrivateCount := FTrackerList.TrackerFromInsideTorrentFilesList.Count -
+      SubmitList.Count;
+
+    try
+      screen.Cursor := crHourGlass;
+      SendStatus := FControllerTrackerListOnline.SubmitTrackers(SubmitList,
+        TrackerSendCount);
+    finally
+      screen.Cursor := crDefault;
+    end;
   finally
-    screen.Cursor := crDefault;
+    SubmitList.Free;
   end;
 
   if SendStatus then
   begin
     //Successful upload
     PopupStr := format('Successful upload of %d unique tracker URL', [TrackerSendCount]);
+    if PrivateCount > 0 then
+      PopupStr := PopupStr + sLineBreak + format(
+        '%d tracker URL from private torrents are not sent', [PrivateCount]);
     Application.MessageBox(
       PChar(@PopupStr[1]),
       '', MB_ICONINFORMATION + MB_OK);
@@ -914,14 +928,11 @@ begin
 end;
 
 procedure TFormTrackerModify.UpdateTorrentTrackerList;
-var
-  TrackerStr: utf8string;
 begin
   //Copy the trackers found in one torrent file to FTrackerList.TrackerFromInsideTorrentFilesList
-  for TrackerStr in FDecodePresentTorrent.TrackerList do
-  begin
-    AddButIgnoreDuplicates(FTrackerList.TrackerFromInsideTorrentFilesList, TrackerStr);
-  end;
+  //The ones of a private torrent are also remembered, they are never sent online.
+  AddTorrentFileTrackers(FDecodePresentTorrent.TrackerList,
+    FDecodePresentTorrent.PrivateTorrent, FTrackerList);
 end;
 
 procedure TFormTrackerModify.ShowTrackerInsideFileList;
@@ -1364,6 +1375,7 @@ begin
         //Cancel everything. The view rows must go too, they are index-matched to TorrentFileNameList.
         FTrackerList.TorrentFileNameList.Clear;
         FTrackerList.TrackerFromInsideTorrentFilesList.Clear;
+        FTrackerList.TrackerFromPrivateTorrentsList.Clear;
         ClearTorrentFilesView;
         ShowUserErrorMessage('Error: Can not read torrent.', TorrentFileNameStr);
         Result := False;
@@ -1391,6 +1403,7 @@ begin
   ViewUpdateBegin;
   //Copy all the trackers in inside the torrent files to FTrackerList.TrackerFromInsideTorrentFilesList
   FTrackerList.TrackerFromInsideTorrentFilesList.Clear;
+  FTrackerList.TrackerFromPrivateTorrentsList.Clear;
   i := 0;
   while i < FTrackerList.TorrentFileNameList.Count do
   begin
@@ -1417,6 +1430,7 @@ procedure TFormTrackerModify.ClearAllTorrentFilesNameAndTrackerInside;
 begin
   FTrackerList.TorrentFileNameList.Clear;
   FTrackerList.TrackerFromInsideTorrentFilesList.Clear;
+  FTrackerList.TrackerFromPrivateTorrentsList.Clear;
   //  Caption := FORM_CAPTION;
   //  ShowTorrentFilesAfterBeingLoaded;
 end;

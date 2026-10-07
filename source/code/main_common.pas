@@ -107,6 +107,10 @@ begin
   TrackerList.TrackerFromInsideTorrentFilesList.Duplicates := dupIgnore;
   TrackerList.TrackerFromInsideTorrentFilesList.Sorted := True;
 
+  TrackerList.TrackerFromPrivateTorrentsList := TStringList.Create;
+  TrackerList.TrackerFromPrivateTorrentsList.Duplicates := dupIgnore;
+  TrackerList.TrackerFromPrivateTorrentsList.Sorted := True;
+
   TrackerList.TrackerFinalList := TStringList.Create;
   TrackerList.TrackerFinalList.Duplicates := dupIgnore;
   TrackerList.TrackerFinalList.Sorted := False;
@@ -128,6 +132,7 @@ begin
   TrackerList.TrackerBanByUserList.Free;
   TrackerList.TrackerManuallyDeselectedByUserList.Free;
   TrackerList.TrackerFromInsideTorrentFilesList.Free;
+  TrackerList.TrackerFromPrivateTorrentsList.Free;
   TrackerList.TrackerFinalList.Free;
   TrackerList.TorrentFileNameList.Free;
   TrackerList.LogStringList.Free;
@@ -216,7 +221,7 @@ function ConsoleDecodeTorrentFiles(TorrentFileNameStringList: TStringList;
   var FileSettingList: TTorrentFileSettingArray): boolean;
 var
   Count, SettingIndex: integer;
-  TorrentFileNameStr, TrackerStr: UTF8String;
+  TorrentFileNameStr: UTF8String;
 begin
   Result := True;
 
@@ -226,8 +231,8 @@ begin
 
     if DecodeTorrentObj.DecodeTorrent(TorrentFileNameStr) then
     begin
-      for TrackerStr in DecodeTorrentObj.TrackerList do
-        AddButIgnoreDuplicates(TrackerList.TrackerFromInsideTorrentFilesList, TrackerStr);
+      AddTorrentFileTrackers(DecodeTorrentObj.TrackerList, DecodeTorrentObj.PrivateTorrent,
+        TrackerList);
 
       TrackerList.TorrentFileNameList.Add(TorrentFileNameStr);
 
@@ -242,6 +247,7 @@ begin
       //Something is wrong. Can not decode torrent tracker item. Cancel everything.
       TrackerList.TorrentFileNameList.Clear;
       TrackerList.TrackerFromInsideTorrentFilesList.Clear;
+      TrackerList.TrackerFromPrivateTorrentsList.Clear;
       SetLength(FileSettingList, 0);
       LogConsoleError(TrackerList, 'Error: Can not read torrent.', TorrentFileNameStr);
       Result := False;
