@@ -603,7 +603,7 @@ procedure TFormTrackerModify.UpdateTorrent;
 var
   Reply, BoxStyle, CountTrackers: integer;
   PopUpMenuStr: string;
-  AllFilesAreReadBackCorrectly: boolean;
+  AllFilesAreReadBackCorrectly, ExportFileIsWritten: boolean;
   UpdateResult: TUpdateTorrentResult;
 begin
   //Update all the torrent files.
@@ -620,6 +620,7 @@ begin
   UpdateResult.SomeFilesCannotBeWritten := False;
   UpdateResult.SomeFilesAreReadOnly := False;
   UpdateResult.SomeFilesCanNotBeDecoded := False;
+  ExportFileIsWritten := True;
 
   try
 
@@ -679,9 +680,10 @@ begin
       ReadTorrentFileSettingList);
     CountTrackers := UpdateResult.TrackerCount;
 
-    //Create tracker.txt file
-    main_common.SaveTrackerFinalListToFile(FFolderForTrackerListLoadAndSave,
-      FTrackerList.TrackerFinalList);
+    //Create tracker.txt file. The torrent files are already written: a failure here must not
+    //stop the reload of the view and the summary.
+    ExportFileIsWritten := main_common.TrySaveTrackerFinalListToFile(
+      FFolderForTrackerListLoadAndSave, FTrackerList.TrackerFinalList);
 
     //Show/reload the just updated torrent files.
     AllFilesAreReadBackCorrectly := ReloadAllTorrentAndRefreshView;
@@ -740,6 +742,13 @@ begin
     //add warning if some files written are failed. Something is wrong with the disk.
     PopUpMenuStr := PopUpMenuStr +
       ' WARNING: Some torrent files are not updated because they failed at write.';
+  end;
+
+  if not ExportFileIsWritten then
+  begin
+    //The torrent files are updated, only the export file is missing.
+    PopUpMenuStr := PopUpMenuStr + ' WARNING: Can not write the file ' +
+      FILE_NAME_EXPORT_TRACKERS + ' in the folder ' + FFolderForTrackerListLoadAndSave;
   end;
 
   //Show the MessageBox

@@ -78,6 +78,8 @@ type
     procedure Test_ReadAddTrackersFile_Unreadable_Keeps_Lines;
     procedure Test_LoadAddTrackersRaw_Without_File_Uses_Recommended_Trackers;
     procedure Test_LoadRemoveTrackers_Present_And_Missing;
+    procedure Test_TrySaveTrackerFinalListToFile_Writes_One_Group_Per_Tracker;
+    procedure Test_TrySaveTrackerFinalListToFile_Failure_Is_Reported_Not_Raised;
     procedure Test_LoadTorrentViaDir_Uppercase_Extension_And_Skips_Folders;
     procedure Test_Order_U0_Insert_Before_Keep_New_Intact;
     procedure Test_Order_U1_Insert_Before_Keep_Original_Intact;
@@ -762,6 +764,54 @@ begin
     DeleteFile(FTempFolder + FILE_NAME_ADD_TRACKERS);
     TrackerFile.Free;
     Lines.Free;
+  end;
+end;
+
+procedure TTestUpdateTorrent.
+Test_TrySaveTrackerFinalListToFile_Writes_One_Group_Per_Tracker;
+var
+  Trackers, Saved: TStringList;
+begin
+  Trackers := TStringList.Create;
+  Saved := TStringList.Create;
+  try
+    Trackers.Add(TRACKER_A);
+    Trackers.Add(TRACKER_B);
+
+    CheckTrue(TrySaveTrackerFinalListToFile(FTempFolder, Trackers),
+      'The export file must be written');
+
+    Saved.LoadFromFile(FTempFolder + FILE_NAME_EXPORT_TRACKERS);
+    //Every tracker is a separate tracker group, one empty line between each
+    CheckEquals(4, Saved.Count, 'Wrong line count');
+    CheckEquals(TRACKER_A, Saved[0], 'Wrong first tracker');
+    CheckEquals('', Saved[1], 'Wrong first separator');
+    CheckEquals(TRACKER_B, Saved[2], 'Wrong second tracker');
+    CheckEquals('', Saved[3], 'Wrong second separator');
+  finally
+    DeleteFile(FTempFolder + FILE_NAME_EXPORT_TRACKERS);
+    Saved.Free;
+    Trackers.Free;
+  end;
+end;
+
+procedure TTestUpdateTorrent.
+Test_TrySaveTrackerFinalListToFile_Failure_Is_Reported_Not_Raised;
+var
+  Trackers: TStringList;
+begin
+  Trackers := TStringList.Create;
+  try
+    Trackers.Add(TRACKER_A);
+
+    //A folder with the name of the export file: it can not be written.
+    //The GUI must still reload the torrent files and show the result after this.
+    ForceDirectories(FTempFolder + FILE_NAME_EXPORT_TRACKERS);
+    CheckFalse(TrySaveTrackerFinalListToFile(FTempFolder, Trackers),
+      'An export file that can not be written must be reported');
+  finally
+    RemoveDir(FTempFolder + FILE_NAME_EXPORT_TRACKERS);
+    Trackers.Free;
   end;
 end;
 

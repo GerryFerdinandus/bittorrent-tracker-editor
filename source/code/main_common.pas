@@ -43,6 +43,11 @@ procedure LoadRemoveTrackers(const Folder: string; var TrackerList: TTrackerList
 //Writes the export_trackers.txt file, one tracker group per URL.
 procedure SaveTrackerFinalListToFile(const Folder: string; TrackerFinalList: TStringList);
 
+//Same as SaveTrackerFinalListToFile, but False instead of an exception when the file can not be
+//written (e.g. a read only program folder).
+function TrySaveTrackerFinalListToFile(const Folder: string;
+  TrackerFinalList: TStringList): boolean;
+
 //Runs the full console pipeline (decodes ParamStr/ParamCount itself). Writes console_log.txt
 //and export_trackers.txt into FolderForTrackerListLoadAndSave. Returns True on success.
 function RunConsoleMode(const FolderForTrackerListLoadAndSave: string): boolean;
@@ -330,6 +335,17 @@ begin
     end;
   finally
     CloseFile(TrackerFile);
+  end;
+end;
+
+function TrySaveTrackerFinalListToFile(const Folder: string;
+  TrackerFinalList: TStringList): boolean;
+begin
+  try
+    SaveTrackerFinalListToFile(Folder, TrackerFinalList);
+    Result := True;
+  except
+    Result := False;
   end;
 end;
 
