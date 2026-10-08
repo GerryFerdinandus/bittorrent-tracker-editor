@@ -65,6 +65,8 @@ type
     procedure Test_OnlineSubmit_Without_Private_Torrents_Keeps_All_Trackers;
     procedure Test_OnlineSubmit_Only_Private_Torrents_Gives_Empty_List;
     procedure Test_ValidTrackerURL;
+    procedure Test_ValidTrackerURL_Scheme_Is_Case_Sensitive;
+    procedure Test_ByteSizeToBiggerSizeFormatStr;
     procedure Test_WebTorrentTrackerURL;
     procedure Test_TrackerURLWithAnnounce;
     procedure Test_TrackerDependsOnSkipAnnounceCheck;
@@ -609,6 +611,48 @@ begin
   CheckFalse(ValidTrackerURL('udp:/a.test/announce'), 'one slash');
   CheckFalse(ValidTrackerURL(' udp://a.test/announce'), 'The caller must trim the URL');
   CheckFalse(ValidTrackerURL('xhttp://a.test/announce'), 'The scheme must be at the begin');
+end;
+
+procedure TTestTorrentMiscellaneous.Test_ValidTrackerURL_Scheme_Is_Case_Sensitive;
+begin
+  //Current behaviour: the scheme must be in lower case, the prefix check is case sensitive.
+  //RFC 3986 says a scheme is case insensitive, so accepting 'UDP://' would also be valid.
+  //Changing this must be a decision: WebTorrentTrackerURL() and the stored URL depend on it.
+  CheckFalse(ValidTrackerURL('UDP://a.test:6969/announce'), 'UDP');
+  CheckFalse(ValidTrackerURL('Http://a.test/announce'), 'Http');
+  CheckFalse(ValidTrackerURL('HTTPS://a.test/announce'), 'HTTPS');
+  CheckFalse(ValidTrackerURL('WSS://a.test'), 'WSS');
+  CheckFalse(WebTorrentTrackerURL('WS://a.test'), 'WS is not a WebTorrent URL either');
+
+  //The host and the path can have any letter case
+  CheckTrue(ValidTrackerURL('udp://A.TEST:6969/ANNOUNCE'), 'host and path in upper case');
+end;
+
+procedure TTestTorrentMiscellaneous.Test_ByteSizeToBiggerSizeFormatStr;
+const
+  GIB = int64(1024) * 1024 * 1024;
+var
+  SavedSeparator: char;
+begin
+  //The decimal separator is the one of the user (Format() uses the locale). Use a fixed one.
+  SavedSeparator := DefaultFormatSettings.DecimalSeparator;
+  try
+    DefaultFormatSettings.DecimalSeparator := '.';
+    CheckEquals('(0 Bytes)', Trim(ByteSizeToBiggerSizeFormatStr(0)), 'Zero');
+    CheckEquals('(1023 Bytes)', Trim(ByteSizeToBiggerSizeFormatStr(1023)), 'Below 1 KiB');
+    CheckEquals('1.00 KiB (1024 Bytes)', ByteSizeToBiggerSizeFormatStr(1024), '1 KiB');
+    CheckEquals('1.50 KiB (1536 Bytes)', ByteSizeToBiggerSizeFormatStr(1536), '1.5 KiB');
+    CheckEquals('1.00 MiB (1048576 Bytes)', ByteSizeToBiggerSizeFormatStr(1048576), '1 MiB');
+    CheckEquals('1.00 GiB (1073741824 Bytes)', ByteSizeToBiggerSizeFormatStr(GIB), '1 GiB');
+    CheckEquals('5120.00 GiB (5497558138880 Bytes)',
+      ByteSizeToBiggerSizeFormatStr(5 * 1024 * GIB), 'Above 4 GiB must not overflow');
+
+    DefaultFormatSettings.DecimalSeparator := ',';
+    CheckEquals('1,50 KiB (1536 Bytes)', ByteSizeToBiggerSizeFormatStr(1536),
+      'The decimal separator of the user is used, the byte count has no separator');
+  finally
+    DefaultFormatSettings.DecimalSeparator := SavedSeparator;
+  end;
 end;
 
 procedure TTestTorrentMiscellaneous.Test_WebTorrentTrackerURL;

@@ -79,6 +79,8 @@ type
     procedure Test_LoadAddTrackersRaw_Without_File_Uses_Recommended_Trackers;
     procedure Test_LoadRemoveTrackers_Present_And_Missing;
     procedure Test_LoadRemoveTrackers_Unreadable_Is_Reported;
+    procedure Test_PackagedTrackerListFolder_Rules;
+    procedure Test_DetermineTrackerListFolder_Default_Is_Folder_Of_Program;
     procedure Test_TrySaveTrackerFinalListToFile_Writes_One_Group_Per_Tracker;
     procedure Test_TrySaveTrackerFinalListToFile_Failure_Is_Reported_Not_Raised;
     procedure Test_LoadTorrentViaDir_Uppercase_Extension_And_Skips_Folders;
@@ -846,6 +848,58 @@ begin
     TrackerFile.Free;
     FreeTrackerList(TrackerList);
   end;
+end;
+
+procedure TTestUpdateTorrent.Test_PackagedTrackerListFolder_Rules;
+const
+  SNAP = '/snap/common';
+  FLATPAK_DATA = '/flatpak/data';
+  OWD = '/original/work/dir';
+begin
+  CheckEquals('', PackagedTrackerListFolder('', '', '', '', ''), 'Not packaged');
+  CheckEquals('', PackagedTrackerListFolder('', '', FLATPAK_DATA, '', OWD),
+    'The other variables are not used without snap, flatpak or AppImage');
+
+  CheckEquals(SNAP, PackagedTrackerListFolder(SNAP, '', '', '', ''), 'Snap');
+
+  CheckEquals(FLATPAK_DATA, PackagedTrackerListFolder('', 'flatpak', FLATPAK_DATA, '', ''),
+    'Flatpak');
+  CheckEquals('', PackagedTrackerListFolder('', 'podman', FLATPAK_DATA, '', ''),
+    'Only the container "flatpak" uses XDG_DATA_HOME');
+  CheckEquals('', PackagedTrackerListFolder(SNAP, 'flatpak', '', '', ''),
+    'Flatpak without XDG_DATA_HOME gives the folder of the program');
+
+  CheckEquals(OWD, PackagedTrackerListFolder('', '', '', '/tmp/.mount/app.AppImage', OWD),
+    'AppImage uses the original working directory');
+  CheckEquals('', PackagedTrackerListFolder('', '', '', '/tmp/.mount/app.AppImage', ''),
+    'AppImage without OWD gives the folder of the program');
+
+  CheckEquals(FLATPAK_DATA, PackagedTrackerListFolder(SNAP, 'flatpak', FLATPAK_DATA, '', ''),
+    'Flatpak is stronger than snap');
+  CheckEquals(OWD, PackagedTrackerListFolder(SNAP, 'flatpak', FLATPAK_DATA,
+    '/tmp/.mount/app.AppImage', OWD), 'AppImage is stronger than flatpak and snap');
+end;
+
+procedure TTestUpdateTorrent.Test_DetermineTrackerListFolder_Default_Is_Folder_Of_Program;
+var
+  Folder: string;
+begin
+  {$IFDEF DARWIN}
+  //macOS always uses ~/.config/trackereditor/ and creates it.
+  Ignore('The folder is ~/.config/trackereditor/ on macOS');
+  {$ELSE}
+  {$IFDEF LINUX}
+  if (GetEnvironmentVariable('SNAP_USER_COMMON') <> '') or
+    (GetEnvironmentVariable('container') = 'flatpak') or
+    (GetEnvironmentVariable('APPIMAGE') <> '') then
+  begin
+    Ignore('The test runs inside a snap, flatpak or AppImage');
+    Exit;
+  end;
+  {$ENDIF}
+  Folder := DetermineTrackerListFolder(FTempFolder + 'program');
+  CheckEquals(FTempFolder, Folder, 'The folder of the program, with a path delimiter');
+  {$ENDIF}
 end;
 
 procedure TTestUpdateTorrent.Test_LoadRemoveTrackers_Unreadable_Is_Reported;

@@ -70,6 +70,7 @@ type
     procedure Test_V2_Version_Hashes_And_Metadata;
     procedure Test_V2_File_Tree_And_Padding;
     procedure Test_Hybrid_Uses_V2_Files_And_Detects_V1_Padding;
+    procedure Test_Hybrid_Single_File_Torrent;
     procedure Test_V1_Padding_File_Is_Not_Counted;
     procedure Test_AnnounceList_Multiple_Tiers;
     procedure Test_AnnounceList_Url_Also_In_Announce_Is_Not_Duplicated;
@@ -824,6 +825,32 @@ begin
   CheckTrue(FDecodeTorrent.PaddingPresent_V1, 'Padding V1');
   CheckFalse(FDecodeTorrent.PaddingPresent_V2, 'Padding V2');
   CheckEquals('V1:Yes V2:No', FDecodeTorrent.PaddingToString, 'Padding text');
+end;
+
+procedure TTestDecodeTorrent.Test_Hybrid_Single_File_Torrent;
+const
+  //V1 part: 'length' and no 'files'. V2 part: 'file tree' with the one file.
+  INFO_HYBRID_SINGLE_FILE = 'd9:file treed8:test.bind0:d6:lengthi1024eeee6:lengthi1024e' +
+    '12:meta versioni2e4:name8:test.bin12:piece lengthi16384e6:pieces' + PIECES + 'e';
+var
+  Torrent: UTF8String;
+begin
+  Torrent := BuildTorrent(INFO_HYBRID_SINGLE_FILE);
+  Check(DecodeTorrentString(Torrent), 'Can not decode a hybrid torrent with one file');
+
+  CheckEquals(Ord(tv_Hybrid), Ord(FDecodeTorrent.TorrentVersion), 'Version');
+  CheckNotEquals(NO_INFO_HASH, FDecodeTorrent.InfoHash_V1, 'V1 info hash');
+  CheckNotEquals(NO_INFO_HASH, FDecodeTorrent.InfoHash_V2, 'V2 info hash');
+  CheckEquals('test.bin', FDecodeTorrent.Name, 'Name');
+
+  CheckEquals(1, FDecodeTorrent.InfoFilesCount, 'File count');
+  CheckEquals('test.bin', FDecodeTorrent.InfoFilesNameIndex(0), 'File name');
+  CheckEquals(1024, FDecodeTorrent.InfoFilesLengthIndex(0), 'File length');
+  CheckEquals(1024, FDecodeTorrent.TotalFileSize, 'Total size');
+  CheckEquals('V1:No V2:No', FDecodeTorrent.PaddingToString, 'Padding text');
+
+  //Saving without a change must not change the torrent, so also not its info hashes
+  Check(Torrent = SaveAndReadBack, 'Saved bytes differ');
 end;
 
 procedure TTestDecodeTorrent.Test_V1_Padding_File_Is_Not_Counted;

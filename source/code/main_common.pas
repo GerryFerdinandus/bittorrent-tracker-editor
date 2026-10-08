@@ -26,6 +26,12 @@ const
 //Mirrors the Snap/Flatpak/AppImage/macOS/default rules from the GUI's FormCreate.
 function DetermineTrackerListFolder(const ExeFileName: string): string;
 
+//The Linux packaging rules of DetermineTrackerListFolder, for the given environment values.
+//Snap, then flatpak, then AppImage: the last one that applies wins. '' when none applies (or
+//its folder is empty), then the folder of the executable is used.
+function PackagedTrackerListFolder(const SnapUserCommon, Container, XdgDataHome, AppImage,
+  OriginalWorkDir: string): string;
+
 //Creates all the lists of TrackerList. Release them with FreeTrackerList.
 procedure CreateTrackerList(out TrackerList: TTrackerList);
 procedure FreeTrackerList(var TrackerList: TTrackerList);
@@ -58,23 +64,28 @@ implementation
 
 uses LazUTF8, LazFileUtils;
 
+function PackagedTrackerListFolder(const SnapUserCommon, Container, XdgDataHome, AppImage,
+  OriginalWorkDir: string): string;
+begin
+  // If it is a Ubuntu snap program, save it a special folder
+  Result := SnapUserCommon;
+  // If it is a flatpak program, save it in a special folder
+  if Container = 'flatpak' then
+    Result := XdgDataHome;
+  // If it is a appimage program, save it in a present folder.
+  // OWD = Path to working directory at the time the AppImage is called
+  if AppImage <> '' then
+    Result := OriginalWorkDir;
+end;
+
 function DetermineTrackerListFolder(const ExeFileName: string): string;
 begin
   Result := '';
 
   {$IFDEF LINUX}
-  // If it is a Ubuntu snap program, save it a special folder
-  Result := GetEnvironmentVariable('SNAP_USER_COMMON');
-  // If it is a flatpak program, save it in a special folder
-  if GetEnvironmentVariable('container') = 'flatpak' then
-  begin
-    Result := GetEnvironmentVariable('XDG_DATA_HOME');
-  end;
-  // If it is a appimage program, save it in a present folder.
-  if GetEnvironmentVariable('APPIMAGE') <> '' then
-  begin // OWD = Path to working directory at the time the AppImage is called
-    Result := GetEnvironmentVariable('OWD');
-  end;
+  Result := PackagedTrackerListFolder(GetEnvironmentVariable('SNAP_USER_COMMON'),
+    GetEnvironmentVariable('container'), GetEnvironmentVariable('XDG_DATA_HOME'),
+    GetEnvironmentVariable('APPIMAGE'), GetEnvironmentVariable('OWD'));
   {$ENDIF LINUX}
 
   {$IFDEF DARWIN}

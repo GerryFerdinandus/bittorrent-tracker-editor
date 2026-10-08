@@ -974,6 +974,7 @@ type
     procedure Test_Single_Torrent_File_Path_Without_Update_Parameter;
     procedure Test_Single_Torrent_File_Path_With_Update_Parameter;
     procedure Test_Empty_Remove_Trackers_File_Removes_All_Trackers_Inside_Torrent;
+    procedure Test_Remove_Trackers_File_With_Trackers_Removes_Only_Those;
     procedure Test_Missing_Add_Trackers_File_Uses_Recommended_Trackers;
     procedure Test_ReadOnly_Torrent_Is_Reported;
     procedure Test_SOURCE_Without_Value_Fails;
@@ -1194,6 +1195,45 @@ begin
   CheckSuccessLog(3);
   CheckTrackersInFile(TorrentFile, ['udp://new.test/announce', 'udp://orig1.test/announce',
     'udp://orig2.test/announce']);
+end;
+
+procedure TTestStartUpParameterCli.
+Test_Remove_Trackers_File_With_Trackers_Removes_Only_Those;
+const
+  ORIG1 = 'udp://orig1.test/announce';
+  ORIG2 = 'udp://orig2.test/announce';
+  NEW1 = 'udp://new.test/announce';
+  BANNED = 'udp://banned.test/announce';
+var
+  TorrentFile: string;
+begin
+  PrepareWorkFolder;
+  TorrentFile := FWorkFolder + 'a.torrent';
+
+  //A tracker inside the torrent that is in remove_trackers.txt is removed, the others stay.
+  //A comment after the URL, and a line that is no tracker URL, do not matter.
+  WriteTextFile(FILE_NAME_ADD_TRACKERS, [NEW1]);
+  WriteTextFile(FILE_NAME_REMOVE_TRACKERS, [ORIG1 + ' # old tracker', 'not a tracker']);
+  CreateTorrentFile(TorrentFile, [ORIG1, ORIG2]);
+  RunCli([TorrentFile, '-U4']);
+  CheckSuccessLog(2);
+  CheckTrackersInFile(TorrentFile, [NEW1, ORIG2]);
+
+  //A tracker that is in both add_trackers.txt and remove_trackers.txt is not added
+  WriteTextFile(FILE_NAME_ADD_TRACKERS, [NEW1, BANNED]);
+  WriteTextFile(FILE_NAME_REMOVE_TRACKERS, [BANNED]);
+  CreateTorrentFile(TorrentFile, [ORIG1]);
+  RunCli([TorrentFile, '-U4']);
+  CheckSuccessLog(2);
+  CheckTrackersInFile(TorrentFile, [NEW1, ORIG1]);
+
+  //-U5 'remove nothing': remove_trackers.txt is not used
+  WriteTextFile(FILE_NAME_ADD_TRACKERS, [NEW1]);
+  WriteTextFile(FILE_NAME_REMOVE_TRACKERS, [ORIG1]);
+  CreateTorrentFile(TorrentFile, [ORIG1, ORIG2]);
+  RunCli([TorrentFile, '-U5']);
+  CheckSuccessLog(3);
+  CheckTrackersInFile(TorrentFile, [NEW1, ORIG1, ORIG2]);
 end;
 
 procedure TTestStartUpParameterCli.Test_Missing_Add_Trackers_File_Uses_Recommended_Trackers;
