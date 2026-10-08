@@ -9,3 +9,6 @@
 
 #items in these folder should be added explicit
 /enduser
+
+# editor settings of the developer
+/.vscode/
