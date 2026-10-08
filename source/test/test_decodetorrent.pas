@@ -91,6 +91,7 @@ type
     procedure Test_InfoHash_Is_Recalculated_After_Private_Flag_And_Source_Change;
     procedure Test_InfoHash_V1_And_V2_Are_Recalculated_For_Hybrid;    {$IFDEF UNIX}
     procedure Test_SaveTorrent_Keeps_Permissions_Of_Original;
+    procedure Test_SaveTorrent_Keeps_Symlink_And_Updates_Target;
     {$ENDIF}
   end;
 
@@ -1166,6 +1167,45 @@ begin
       'Saving must keep the permissions of the original');
   finally
     DeleteFile(TempFileName);
+  end;
+end;
+procedure TTestDecodeTorrent.Test_SaveTorrent_Keeps_Symlink_And_Updates_Target;
+var
+  TargetFolder, LinkFolder, TargetFile, LinkFile: string;
+  Info: Stat;
+  Reloaded: TDecodeTorrent;
+begin
+  Check(DecodeTorrentString(BuildTorrent(INFO_SINGLE_FILE)),
+    'Can not decode a torrent with one file');
+
+  TargetFolder := GetTempDir + 'test_decodetorrent_symlink_target' + PathDelim;
+  LinkFolder := GetTempDir + 'test_decodetorrent_symlink_link' + PathDelim;
+  TargetFile := TargetFolder + 'real.torrent';
+  LinkFile := LinkFolder + 'link.torrent';
+  ForceDirectories(TargetFolder);
+  ForceDirectories(LinkFolder);
+  Reloaded := TDecodeTorrent.Create;
+  try
+    Check(FDecodeTorrent.SaveTorrent(TargetFile), 'Can not save the real torrent');
+    Check(FpSymlink(PChar(TargetFile), PChar(LinkFile)) = 0, 'Can not create the symlink');
+
+    Check(FDecodeTorrent.ChangeAnnounce('udp://changed.test/announce'), 'ChangeAnnounce');
+    Check(FDecodeTorrent.SaveTorrent(LinkFile), 'Can not save via the symlink');
+
+    Check(FpLStat(LinkFile, Info) = 0, 'Can not read the symlink');
+    Check(fpS_ISLNK(Info.st_mode), 'The symlink must still be a symlink');
+    Check(Reloaded.DecodeTorrent(TargetFile), 'Can not decode the real torrent');
+    CheckEquals(1, Reloaded.TrackerList.Count, 'Tracker count');
+    CheckEquals('udp://changed.test/announce', Reloaded.TrackerList[0],
+      'The file behind the symlink must be updated');
+    Check(not FileExists(TargetFile + '.tmp'), 'No temp file next to the real torrent');
+    Check(not FileExists(LinkFile + '.tmp'), 'No temp file next to the symlink');
+  finally
+    Reloaded.Free;
+    DeleteFile(LinkFile);
+    DeleteFile(TargetFile);
+    RemoveDir(LinkFolder);
+    RemoveDir(TargetFolder);
   end;
 end;
 {$ENDIF}

@@ -194,6 +194,19 @@ begin
   {$ENDIF}
 end;
 
+//A rename over a symlink replaces the link by a regular file. Write to the file behind the link
+//instead, so the link stays and the temp file is on the same volume as the real torrent.
+function ResolveSymlinks(const Filename: utf8string): utf8string;
+begin
+  Result := Filename;
+  {$IFDEF UNIX}
+  //Empty when the link can not be resolved. Then keep the name.
+  Result := ReadAllLinks(Filename, False);
+  if Result = '' then
+    Result := Filename;
+  {$ENDIF}
+end;
+
 const
   // Root-level bencode dictionary keys
   BK_ANNOUNCE = 'announce';
@@ -985,10 +998,11 @@ function TDecodeTorrent.SaveTorrent(const Filename: utf8string): boolean;
 var
   str: utf8string;
   S: TFileStream;
-  TempFilename: utf8string;
+  TargetFilename, TempFilename: utf8string;
 begin
   Result := False;
-  TempFilename := Filename + '.tmp';
+  TargetFilename := ResolveSymlinks(Filename);
+  TempFilename := TargetFilename + '.tmp';
   try
     //Encode it to string format
     str := '';
@@ -1002,8 +1016,8 @@ begin
     end;
     if Result then
     begin
-      CopyFileOwnerAndMode(Filename, TempFilename);
-      Result := ReplaceFile(TempFilename, Filename);
+      CopyFileOwnerAndMode(TargetFilename, TempFilename);
+      Result := ReplaceFile(TempFilename, TargetFilename);
     end;
   except
     Result := False;
