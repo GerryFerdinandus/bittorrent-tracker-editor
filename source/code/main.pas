@@ -316,8 +316,19 @@ begin
 end;
 
 procedure TFormTrackerModify.CheckBoxSkipAnnounceCheckChange(Sender: TObject);
+var
+  i: integer;
 begin
   FTrackerList.SkipAnnounceCheck := CheckBoxSkipAnnounceCheck.Checked;
+
+  //The trackers without /announce are unchecked by default, until -SAC is ticked.
+  //Only those rows follow the new setting, the other choices of the user stay as they are.
+  for i := 0 to FControllerTrackerListOnline.Count - 1 do
+  begin
+    if TrackerDependsOnSkipAnnounceCheck(FControllerTrackerListOnline.TrackerURL(i)) then
+      FControllerTrackerListOnline.Checked[i] := FTrackerList.SkipAnnounceCheck;
+  end;
+
   ViewUpdateFormCaption;
 end;
 

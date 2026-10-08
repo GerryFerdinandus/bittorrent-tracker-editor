@@ -67,6 +67,7 @@ type
     procedure Test_ValidTrackerURL;
     procedure Test_WebTorrentTrackerURL;
     procedure Test_TrackerURLWithAnnounce;
+    procedure Test_TrackerDependsOnSkipAnnounceCheck;
 
     procedure Test_DecodeConsoleUpdateParameter_Valid_Range;
     procedure Test_DecodeConsoleUpdateParameter_Invalid_Values;
@@ -632,6 +633,21 @@ begin
   CheckFalse(TrackerURLWithAnnounce('http://a.test/announce/'), 'trailing slash');
   //A passkey as query needs the SkipAnnounceCheck option
   CheckFalse(TrackerURLWithAnnounce('https://a.test/announce?passkey=abc'), 'passkey as query');
+end;
+
+procedure TTestTorrentMiscellaneous.Test_TrackerDependsOnSkipAnnounceCheck;
+begin
+  //These are only accepted with -SAC, so ticking -SAC in the GUI must check them
+  CheckTrue(TrackerDependsOnSkipAnnounceCheck('udp://a.test:6969'), 'no announce');
+  CheckTrue(TrackerDependsOnSkipAnnounceCheck('https://a.test/announce?passkey=abc'),
+    'passkey as query');
+
+  CheckFalse(TrackerDependsOnSkipAnnounceCheck('udp://a.test:6969/announce'), '/announce');
+  CheckFalse(TrackerDependsOnSkipAnnounceCheck('http://a.test/announce.php'), '/announce.php');
+  CheckFalse(TrackerDependsOnSkipAnnounceCheck('wss://a.test'), 'WebTorrent needs no announce');
+  //An invalid URL is never accepted, with or without -SAC
+  CheckFalse(TrackerDependsOnSkipAnnounceCheck('udpp://a.test/foo'), 'invalid scheme');
+  CheckFalse(TrackerDependsOnSkipAnnounceCheck(''), 'empty');
 end;
 
 procedure TTestTorrentMiscellaneous.Test_DecodeConsoleUpdateParameter_Valid_Range;

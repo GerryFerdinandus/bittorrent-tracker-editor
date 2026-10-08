@@ -163,6 +163,10 @@ function DecodeConsoleUpdateParameter(const ConsoleUpdateParameter: UTF8String;
 
 function TrackerURLWithAnnounce(const TrackerURL: UTF8String): boolean;
 
+//True for a valid tracker URL that is only accepted when the announce check is skipped (-SAC):
+//no /announce at the end, and not a WebTorrent URL.
+function TrackerDependsOnSkipAnnounceCheck(const TrackerURL: UTF8String): boolean;
+
 const
   //Index [3] and [4] must stay the WebTorrent ws:// and wss:// prefixes, in this order.
   //WebTorrentTrackerURL() relies on this fixed layout - do not reorder.
@@ -825,6 +829,12 @@ begin
   Result := (RightStr(TrackerURL, length(ANNOUNCE_STRING)) = ANNOUNCE_STRING) or
     (RightStr(TrackerURL, length(ANNOUNCE_PHP_STRING)) = ANNOUNCE_PHP_STRING);
 
+end;
+
+function TrackerDependsOnSkipAnnounceCheck(const TrackerURL: UTF8String): boolean;
+begin
+  Result := ValidTrackerURL(TrackerURL) and (not WebTorrentTrackerURL(TrackerURL)) and
+    (not TrackerURLWithAnnounce(TrackerURL));
 end;
 
 end.
