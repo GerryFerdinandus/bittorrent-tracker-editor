@@ -543,6 +543,11 @@ begin
   CheckTrue(PathIsTorrentFile('A.TORRENT'), '.torrent must be case insensitive');
   CheckFalse(PathIsTorrentFile('a.txt'), 'A .txt is not a torrent');
   CheckFalse(PathIsTorrentFile('a.torrent.bak'), 'A .bak is not a torrent');
+
+  CheckTrue(PathIsTrackerListFile('a.txt'), 'Wrong .txt detection');
+  CheckTrue(PathIsTrackerListFile('A.TXT'), '.txt must be case insensitive');
+  CheckFalse(PathIsTrackerListFile('a.torrent'), 'A .torrent is not a tracker list');
+  CheckFalse(PathIsTrackerListFile('a.txt.bak'), 'A .bak is not a tracker list');
 end;
 
 procedure TTestUpdateTorrent.Test_LoadTorrentViaDir_Uppercase_Extension_And_Skips_Folders;

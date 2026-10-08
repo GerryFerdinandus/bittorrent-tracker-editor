@@ -1287,7 +1287,7 @@ begin
         TorrentFileNameStringList.Add(FileNameOrDirStr);
       end
       //if '.txt' then it must be a tracker list.
-      else if ExtractFileExt(FileNameOrDirStr) = '.txt' then
+      else if PathIsTrackerListFile(FileNameOrDirStr) then
       begin
         try
           TrackerFileNameStringList.LoadFromFile(FileNameOrDirStr);

@@ -132,6 +132,9 @@ function PathIsTorrentFolder(const Path: UTF8String): boolean;
 //True when the file name has the extension '.torrent', in any letter case.
 function PathIsTorrentFile(const Path: UTF8String): boolean;
 
+//True when the file name has the extension '.txt', in any letter case.
+function PathIsTrackerListFile(const Path: UTF8String): boolean;
+
 function ValidTrackerURL(const TrackerURL: UTF8String): boolean;
 
 //Error text for a tracker URL that fails ValidTrackerURL(). Lists every VALID_TRACKERS_URL prefix.
@@ -345,6 +348,11 @@ end;
 function PathIsTorrentFile(const Path: UTF8String): boolean;
 begin
   Result := UTF8LowerCase(ExtractFileExt(Path)) = '.torrent';
+end;
+
+function PathIsTrackerListFile(const Path: UTF8String): boolean;
+begin
+  Result := UTF8LowerCase(ExtractFileExt(Path)) = '.txt';
 end;
 
 
