@@ -1,7 +1,7 @@
 ---
+name: build-and-test
 description: "Build the project and run unit tests. Compiles Release build then Debug tests, runs FPCUnit suite, and reports results."
-agent: "agent"
-tools: ["terminal"]
+disable-model-invocation: true
 ---
 Build and test the bittorrent-tracker-editor project. Run these steps in sequence, stopping on failure:
 

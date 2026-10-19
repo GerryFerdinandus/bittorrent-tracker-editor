@@ -1,7 +1,7 @@
 ---
+name: build-release-only
 description: "Build the project in Release mode only, without running tests. Quick compilation check."
-agent: "agent"
-tools: ["terminal"]
+disable-model-invocation: true
 ---
 Build the bittorrent-tracker-editor project in Release mode:
 
