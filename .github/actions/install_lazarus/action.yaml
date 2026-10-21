@@ -13,6 +13,9 @@ inputs:
   qt_version_ci:  # id of input
     description: 'QT version'
     required: false
+  gtk_version_ci:  # id of input
+    description: 'GTK version'
+    required: false
 
 runs:
   using: "composite"
@@ -38,8 +41,13 @@ runs:
       shell: bash
 
     - name: Install dependency for gtk2
-      if: runner.os == 'Linux' && inputs.qt_version_ci == ''
+      if: runner.os == 'Linux' && inputs.gtk_version_ci == '2'
       run: sudo apt-get install -y libgtk2.0-dev
+      shell: bash
+
+    - name: Install dependency for gtk3
+      if: runner.os == 'Linux' && inputs.gtk_version_ci == '3'
+      run: sudo apt-get install -y libgtk-3-dev
       shell: bash
 
     - name: Install dependency for qt5

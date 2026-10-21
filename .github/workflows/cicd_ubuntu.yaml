@@ -40,6 +40,12 @@ jobs:
           - BUILD_TARGET: gtk2_amd64
             RELEASE_FILE_NAME: trackereditor_linux_amd64_gtk2.zip
             LAZ_OPT: --widgetset=gtk2
+            GTK_VERSION_CI: '2'
+
+          - BUILD_TARGET: gtk3_amd64
+            RELEASE_FILE_NAME: trackereditor_linux_amd64_gtk3.zip
+            LAZ_OPT: --widgetset=gtk3
+            GTK_VERSION_CI: '3'
 
           - BUILD_TARGET: qt5_amd64
             RELEASE_FILE_NAME: trackereditor_linux_amd64_qt5.zip
@@ -87,13 +93,14 @@ jobs:
       uses: ./.github/actions/install_lazarus
       with:
         qt_version_ci: ${{ matrix.QT_VERSION_CI }}
+        gtk_version_ci: ${{ matrix.GTK_VERSION_CI }}
 
     - name: Install dependency for all build
       # trackereditor_cli is a real console app and needs no display server.
       if: matrix.CLI_BUILD != true
       run: |
         sudo apt-get update
-        sudo apt-get install -y xvfb
+        sudo apt-get install -y xvfb at-spi2-core
       shell: bash
 
     - name: Install dependency for AppImage
