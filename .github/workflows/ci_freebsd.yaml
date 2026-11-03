@@ -1,0 +1,77 @@
+# No FreeBSD product release is provided; this workflow only checks that the source code builds and tests on FreeBSD.
+# Continuous Integration workflow for FreeBSD systems.
+
+
+name: CI on FreeBSD systems.
+
+on:
+    push:
+    pull_request:
+    workflow_dispatch:
+    # Automatic cron build every 6 months to check if everything still works.
+    schedule:
+    - cron: "0 0 1 1/6 *"
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    name: A job to run tests in FreeBSD
+    steps:
+    - uses: actions/checkout@v7
+    - name: Test in FreeBSD
+      id: test
+      uses: vmactions/freebsd-vm@v1
+      with:
+        # Avoid ENOSPC when saving the large FreeBSD VM image on the GitHub runner.
+        cache-after-prepare: false
+        prepare: |
+          pkg install -y fpc git curl gmake llvm qt6-base xorg-vfbserver xdpyinfo
+
+        run: |
+          pwd
+          ls -lah
+          whoami
+          env
+          freebsd-version
+          uname -a
+          export PROJECT_ROOT="$PWD"
+
+          # Download and build Lazarus
+          curl -L -O "https://github.com/GerryFerdinandus/bittorrent-tracker-editor/releases/download/V1.32.0/lazarus.tar.gz"
+          tar -xzf *.tar.gz
+          cd lazarus
+          gmake lazbuild
+          echo "$PWD/lazbuild --primary-config-path=$PWD --lazarusdir=$PWD \"\$@\"" > "$PROJECT_ROOT/lazbuild"
+          cd $PROJECT_ROOT
+          chmod +x lazbuild
+
+          # Build libQt6Pas.so
+          cd "lazarus/lcl/interfaces/qt6/cbindings/"
+          qmake6
+          gmake -j$(sysctl -n hw.ncpu)
+          gmake install
+
+          cd $PROJECT_ROOT
+          git clone --recursive https://github.com/GerryFerdinandus/bittorrent-tracker-editor.git
+
+          # Build lazarus
+          ./lazbuild --build-all --build-mode=Release --widgetset=qt6 ./bittorrent-tracker-editor/source/project/tracker_editor/trackereditor.lpi
+          ./lazbuild --build-all --build-mode=Release ./bittorrent-tracker-editor/source/project/tracker_editor/trackereditor_cli.lpi
+
+          # Build test
+          ./lazbuild --build-all --build-mode=Debug  ./bittorrent-tracker-editor/source/project/unit_test/tracker_editor_test.lpi
+
+          # Start the Xvfb virtual display.
+          Xvfb :99 -screen 0 1024x768x24 >/dev/null 2>&1 &
+          sleep 2
+
+          # Ensure the Xvfb virtual display is running before proceeding.
+          export DISPLAY=:99
+
+          # Verify the Xvfb display is responding; stop the job if it is unavailable.
+          xdpyinfo >/dev/null || exit 1
+
+          # Run the tests in the Xvfb virtual display environment.
+          ./bittorrent-tracker-editor/enduser/trackereditor -TEST_SSL
+          ./bittorrent-tracker-editor/enduser/test_trackereditor -a --format=plain
