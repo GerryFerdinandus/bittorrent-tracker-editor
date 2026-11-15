@@ -1,22 +1,193 @@
-Build from source.
+Build from source
+=================
 
--------- Windows
-Install latest Lazarus IDE
-http://www.lazarus.freepascal.org/
+Quick start
+-----------
+Install GNU Make and Lazarus IDE with Free Pascal (FPC), then open a terminal:
 
-Open project file:
-menu Project -> open project
-select 'trackereditor.lpi' file inside 'source/project/tracker_editor/'
+  git clone --recursive https://github.com/GerryFerdinandus/bittorrent-tracker-editor.git
+  cd bittorrent-tracker-editor
+  make help
+  make all
+  make test
 
-Build:
-Menu Run -> Build
-Executable file is created in the 'enduser' directory.
+Run these commands from the repository root.
+If you already cloned without --recursive, run:
 
--------- Linux Ubuntu 14.04
-sudo apt-get update
-sudo apt-get install git lazarus -y
-cd ~
-git clone --recursive https://github.com/GerryFerdinandus/bittorrent-tracker-editor.git
-lazbuild bittorrent-tracker-editor/source/project/tracker_editor/trackereditor.lpi
+  git submodule update --init --recursive
 
-Executable file is created in the 'enduser' directory.
+No dependencies are installed or downloaded by the Makefile. It checks that
+lazbuild can run and that the DCPcrypt submodule source is present before building.
+Bare "make" displays help, including when Lazarus is not yet installed.
+
+Targets and outputs
+-------------------
+  make help   Built-in instructions and examples (the default target).
+  make gui    Build the desktop application.
+  make cli    Build the headless console application (Windows/Linux only).
+  make all    Build both applications (macOS: GUI only).
+  make test   Build the applications and Debug test runner, then run all tests.
+
+Applications default to Release. Every build uses lazbuild --build-all, matching
+CI and avoiding stale units when switching build mode or Linux toolkit.
+Builds are serialized even with make -j because Lazarus shares package state.
+
+Executables are written to enduser:
+  Windows: trackereditor.exe, trackereditor_cli.exe, test_trackereditor.exe
+  Linux:   trackereditor, trackereditor_cli, test_trackereditor
+  macOS:   trackereditor (and its Lazarus app bundle), test_trackereditor
+Compiled units are written to lib. Toolkit variants share an executable name;
+building a different toolkit replaces the previous local GUI build.
+This builds for the native architecture, not universal binaries or release
+installers/AppImages. Existing GitHub Actions handle release packaging.
+
+Windows prerequisites
+---------------------
+1. Install Lazarus IDE including FPC:
+   https://www.lazarus-ide.org/
+   CI installs it with: winget install lazarus
+2. Install GNU Make and ensure it is on PATH as "make". For example, install
+   GnuWin32 Make and add its bin directory to PATH before any other make.
+   "make --version" should identify itself as GNU Make. Embarcadero Make and
+   Microsoft's nmake are not compatible. Bash/MSYS is not required: native
+   Windows GNU Make uses cmd.exe recipes.
+3. Add Lazarus to PATH (commonly C:\lazarus) and reopen your terminal, or override
+   LAZBUILD explicitly:
+
+     make all "LAZBUILD=C:\lazarus\lazbuild.exe"
+     make gui "LAZBUILD=C:\Program Files\Lazarus\lazbuild.exe"
+     make test
+
+   Quote the entire NAME=value argument for a path with spaces. Do not put
+   additional quote characters inside the LAZBUILD value.
+4. For HTTPS functionality and HTTPS-related tests, place OpenSSL 3 runtime
+   DLLs libssl-3-x64.dll and libcrypto-3-x64.dll next to the executable in enduser.
+   The project's Windows release downloads include them; see the Windows CI
+   workflow for the download URLs.
+
+Windows GUI builds use the win32 Lazarus widgetset (also for 64-bit executables).
+
+macOS prerequisites
+-------------------
+Install Apple's command-line development tools (xcode-select --install), GNU Make,
+and Lazarus with FPC. Lazarus installers are available at:
+  https://www.lazarus-ide.org/
+
+If installed outside PATH, specify LAZBUILD, for example:
+  make gui "LAZBUILD=/Applications/Lazarus/lazbuild"
+
+The Makefile supports GNU Make 3.81 and later. If your package manager installs
+GNU Make as gmake, use gmake instead of make.
+
+  make gui
+  make all
+  make test
+
+These use Cocoa and build for the current machine's architecture. Following the
+macOS CI workflow, no CLI is built: all builds the GUI only, test runs the existing
+macOS suite (which excludes CLI tests), and an explicit "make cli" fails clearly.
+macOS integration tests use ~/.config/trackereditor for tracker-list text files;
+back up any personal configuration there before running tests.
+
+Linux prerequisites and toolkit selection
+-----------------------------------------
+Install GNU Make, FPC, Lazarus (including lazbuild and LCL units/source), and the
+development libraries for your GUI toolkit. On Debian/Ubuntu, a starting point is:
+
+  sudo apt update
+  sudo apt install git make fpc lazarus
+
+Qt6 is the default. Choose ONE toolkit below and install its dependencies.
+Package names/availability vary by distribution and Lazarus version.
+
+  Toolkit  Debian/Ubuntu development packages       Build command
+  GTK2     libgtk2.0-dev                            make gui WIDGETSET=gtk2
+  GTK3     libgtk-3-dev                             make gui WIDGETSET=gtk3
+  Qt5      libqt5x11extras5-dev libqt5pas-dev        make gui WIDGETSET=qt5
+  Qt6      qt6-base-dev libqt6pas-dev                make gui WIDGETSET=qt6
+
+For example:
+  sudo apt install qt6-base-dev libqt6pas-dev
+  make all WIDGETSET=qt6
+  make test WIDGETSET=qt6
+
+The Lazarus installation must support the requested widgetset. GTK3 requires
+Lazarus 5.0 or newer, which may be newer than your distribution supplies.
+CI builds Lazarus from source and exercises all four widgetsets; see:
+  .github/actions/install_lazarus/action.yaml
+  .github/workflows/cicd_ubuntu.yaml
+
+Qt requires the matching Qt Pascal binding library (libQt5Pas/libQt6Pas), not just
+Qt itself. If your distribution lacks its development package, follow CI's
+approach: build/install the cbindings in the matching Lazarus source tree under
+lcl/interfaces/qt5/cbindings or lcl/interfaces/qt6/cbindings using the matching
+qmake and make. An error such as "cannot find -lQt6Pas" means this dependency is
+missing. Keep the corresponding runtime libraries installed to run the GUI.
+
+The CLI does not need GUI toolkit libraries:
+  make cli
+
+Tests
+-----
+  make test
+
+On Windows/Linux this builds BOTH GUI and CLI, then the Debug test runner, then
+runs enduser/test_trackereditor with -a --format=plain. The application builds
+default to Release; tests always use Debug for assertions and runtime checks.
+Compiler/test failures stop Make with a nonzero exit status.
+Some network-dependent tests report skips when remote services are unreachable.
+
+CI can separate building from running:
+  make test-build          Build applications and the Debug test runner.
+  make cli test-runner-build
+                           Build CLI and test runner without the GUI.
+  make test-run            Run existing binaries without rebuilding.
+
+Only use test-run after building the required binaries. CLI-only jobs select
+TEST_ARGS="--suite=TTestStartUpParameterCli --format=plain"; the full suite needs
+both applications on Windows/Linux. AppImage CI uses test-run after substituting
+the packaged GUI binary, so that it is not overwritten by another build.
+
+During tests, the screen may flicker or windows may briefly appear as the GUI
+application is repeatedly started and closed. This is expected.
+
+Use the same widgetset for builds and tests. On Linux without a display server,
+CI uses Xvfb; install xvfb and use:
+  make test WIDGETSET=qt6 TEST_RUNNER="xvfb-run --auto-servernum"
+
+To select one suite (the applications are still built):
+  make test TEST_ARGS="--suite=TTestBEncode --format=plain"
+
+Options and troubleshooting
+---------------------------
+  make all BUILD_MODE=Debug
+  make gui WIDGETSET=gtk2
+  make all "LAZBUILD=/path with spaces/lazbuild"
+  make test LAZBUILD_FLAGS="--lazarusdir=/usr/lib/lazarus/4.4"
+
+BUILD_MODE accepts Release or Debug for applications. WIDGETSET applies to GUI
+and test builds, never the headless CLI. LAZBUILD is just the executable name or
+path; put additional lazbuild options in LAZBUILD_FLAGS instead.
+
+If lazbuild is missing or cannot run, the Makefile explains how to install it
+or set PATH/LAZBUILD. Check "lazbuild --version" in the same terminal.
+If Lazarus reports a stale installation path, LAZBUILD_FLAGS can supply
+--lazarusdir as above. If a toolkit is unavailable, install its dependencies and
+matching Lazarus support or choose another WIDGETSET.
+
+IDE and direct build alternatives
+---------------------------------
+In Lazarus, use Project -> Open Project and select:
+  source/project/tracker_editor/trackereditor.lpi       GUI
+  source/project/tracker_editor/trackereditor_cli.lpi   CLI (Windows/Linux)
+  source/project/unit_test/tracker_editor_test.lpi      Tests
+Select the desired build mode, then Run -> Build.
+
+The equivalent direct commands (shown with Linux Qt6) are:
+  lazbuild --build-all --build-mode=Release --widgetset=qt6 source/project/tracker_editor/trackereditor.lpi
+  lazbuild --build-all --build-mode=Release source/project/tracker_editor/trackereditor_cli.lpi
+  lazbuild --build-all --build-mode=Debug --widgetset=qt6 source/project/unit_test/tracker_editor_test.lpi
+  enduser/test_trackereditor -a --format=plain
+
+On Windows use --widgetset=win32 and enduser\test_trackereditor.exe; on macOS
+use --widgetset=cocoa and omit the CLI command.

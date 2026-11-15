@@ -32,7 +32,6 @@ env:
   MACOS_APP: enduser/trackereditor.app
   PROGRAM_NAME_WITH_PATH: 'enduser/trackereditor'
   BUILD_WITH_CERTIFICATE: ${{ secrets.PROD_MACOS_CERTIFICATE_NAME }}
-  PROJECT_LPI: source/project/tracker_editor/trackereditor.lpi
   RELEASE_DMG_FILE: trackereditor_macOS_notarized_universal_binary.dmg
 
 jobs:
@@ -73,14 +72,8 @@ jobs:
     - name: Install Lazarus IDE
       uses: ./.github/actions/install_lazarus
 
-    - name: Build trackereditor app for Apple (${{ matrix.ARCH }})
-      run: |
-        lazbuild --build-all --build-mode=Release --widgetset=cocoa --cpu=${{ matrix.ARCH }} ${{ env.PROJECT_LPI }}
-      shell: bash
-
-    - name: Build Unit Test on macOS (${{ matrix.ARCH }})
-      # Build unit test project (Debug mode)
-      run: lazbuild --build-all --build-mode=Debug --widgetset=cocoa --cpu=${{ matrix.ARCH }} source/project/unit_test/tracker_editor_test.lpi
+    - name: Build Release app and Debug tests (${{ matrix.ARCH }})
+      run: make test-build LAZBUILD_FLAGS="--cpu=${{ matrix.ARCH }}"
       shell: bash
 
     - name: Test App SSL connection (${{ matrix.ARCH }})
@@ -88,7 +81,7 @@ jobs:
       shell: bash
 
     - name: Run Unit Test on macOS (${{ matrix.ARCH }})
-      run:  enduser/test_trackereditor -a --format=plain
+      run: make test-run
       shell: bash
 
     - name: Zip the macOS .app bundle for artifact upload

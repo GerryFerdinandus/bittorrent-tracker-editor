@@ -14,7 +14,6 @@ jobs:
     timeout-minutes: 60
     env:
       RELEASE_ZIP_FILE: trackereditor_windows_amd64.zip
-      LAZ_OPT:
 
     steps:
     - uses: actions/checkout@v7
@@ -32,21 +31,8 @@ jobs:
           curl -L -O --output-dir enduser https://github.com/GerryFerdinandus/bittorrent-tracker-editor/releases/download/V1.32.0/libcrypto-3-x64.dll
       shell: bash
 
-    - name: Build Release version
-      # Build trackereditor project (Release mode)
-      run: lazbuild --build-all --build-mode=Release ${{ env.LAZ_OPT }} source/project/tracker_editor/trackereditor.lpi
-      shell: bash
-
-    - name: Build trackereditor_cli
-      # Console-only: no widgetset needed. Always built (even on GUI targets): the full
-      # unit test suite ('test non-AppImage'/'Test AppImage', which run '-a') exercises
-      # TTestStartUpParameterCli and needs this binary to be present too.
-      run: lazbuild --build-all --build-mode=Release source/project/tracker_editor/trackereditor_cli.lpi
-      shell: bash
-
-    - name: Build Unit Test on Windows
-      # Build unit test project (Debug mode)
-      run: lazbuild --build-all --build-mode=Debug ${{ env.LAZ_OPT }} source/project/unit_test/tracker_editor_test.lpi
+    - name: Build Release applications and Debug tests
+      run: make test-build
       shell: bash
 
     - name: Run Unit Test on Windows
@@ -55,7 +41,7 @@ jobs:
       # Undo all changes made by testing.
       run:  |
         set -e
-        enduser/test_trackereditor -a --format=plain
+        make test-run
         set +e
 
         # remove file created by unit test

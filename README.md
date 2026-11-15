@@ -47,6 +47,30 @@ There is no backup function in this software. Use it at your own risk. Bittorren
 
 ---
 
+## Build from source: ##
+
+Install **GNU Make** and **Lazarus with Free Pascal**, then:
+
+```sh
+git clone --recursive https://github.com/GerryFerdinandus/bittorrent-tracker-editor.git
+cd bittorrent-tracker-editor
+make help
+make all
+make test
+```
+
+Ensure `make --version` identifies GNU Make. Bare `make` shows help.
+Use `make gui` or `make cli` to build just one application;
+macOS supports GUI builds only. Linux defaults to Qt6; install its development
+libraries and Qt Pascal bindings, or select `WIDGETSET=gtk2`, `gtk3`, or `qt5`.
+`make test` builds all required applications before running the tests.
+Executables are created in [enduser](enduser/).
+
+See [SourceCodeBuild.txt](SourceCodeBuild.txt) for platform prerequisites,
+toolkit examples, troubleshooting, and IDE/direct build alternatives.
+
+---
+
 ## Software history: ##
 ### 1.33.1 ###
   * FIX: Cannot open torrent file V2 format. ([Issue 51](https://github.com/GerryFerdinandus/bittorrent-tracker-editor/issues/51)) 

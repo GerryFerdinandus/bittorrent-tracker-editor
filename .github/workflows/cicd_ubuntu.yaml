@@ -39,34 +39,34 @@ jobs:
         include:
           - BUILD_TARGET: gtk2_amd64
             RELEASE_FILE_NAME: trackereditor_linux_amd64_gtk2.zip
-            LAZ_OPT: --widgetset=gtk2
+            WIDGETSET: gtk2
             GTK_VERSION_CI: '2'
 
           - BUILD_TARGET: gtk3_amd64
             RELEASE_FILE_NAME: trackereditor_linux_amd64_gtk3.zip
-            LAZ_OPT: --widgetset=gtk3
+            WIDGETSET: gtk3
             GTK_VERSION_CI: '3'
 
           - BUILD_TARGET: qt5_amd64
             RELEASE_FILE_NAME: trackereditor_linux_amd64_qt5.zip
-            LAZ_OPT: --widgetset=qt5
+            WIDGETSET: qt5
             QT_VERSION_CI: '5'
 
           - BUILD_TARGET: qt6_amd64
             RELEASE_FILE_NAME: trackereditor_linux_amd64_qt6.zip
-            LAZ_OPT: --widgetset=qt6
+            WIDGETSET: qt6
             QT_VERSION_CI: '6'
 
           - BUILD_TARGET: AppImage_amd64
             RELEASE_FILE_NAME: trackereditor_linux_amd64_qt6.AppImage
-            LAZ_OPT: --widgetset=qt6
+            WIDGETSET: qt6
             QT_VERSION_CI: '6'
             LINUX_DEPLOY_FILE_CPU: x86_64
             APPIMAGE_BUILD: true
 
           - BUILD_TARGET: AppImage_arm64
             RELEASE_FILE_NAME: trackereditor_linux_arm64_qt6.AppImage
-            LAZ_OPT: --widgetset=qt6
+            WIDGETSET: qt6
             QT_VERSION_CI: '6'
             LINUX_DEPLOY_FILE_CPU: aarch64
             APPIMAGE_BUILD: true
@@ -115,27 +115,19 @@ jobs:
         chmod +x linuxdeploy-*.AppImage
       shell: bash
 
-    - name: Build trackereditor
-      # Build trackereditor project (Release mode)
+    - name: Build Release applications and Debug tests
       if: matrix.CLI_BUILD != true
-      run: lazbuild --build-all --build-mode=Release ${{ matrix.LAZ_OPT }} source/project/tracker_editor/trackereditor.lpi
+      run: make test-build WIDGETSET=${{ matrix.WIDGETSET }}
       shell: bash
 
-    - name: Build trackereditor_cli
-      # Console-only: no widgetset needed. Always built (even on GUI targets): the full
-      # unit test suite ('test non-AppImage'/'Test AppImage', which run '-a') exercises
-      # TTestStartUpParameterCli and needs this binary to be present too.
-      run: lazbuild --build-all --build-mode=Release source/project/tracker_editor/trackereditor_cli.lpi
+    - name: Build Release CLI and Debug tests
+      if: matrix.CLI_BUILD == true
+      run: make cli test-runner-build
       shell: bash
 
     - name: Test if OpenSSL works on Linux CI
       if: matrix.CLI_BUILD != true
       run: xvfb-run --auto-servernum enduser/trackereditor -TEST_SSL
-      shell: bash
-
-    - name: Build Unit Test on Linux
-      # Build trackereditor project (Debug mode) and run tests
-      run: lazbuild --build-all --build-mode=Debug ${{ matrix.LAZ_OPT }} source/project/unit_test/tracker_editor_test.lpi
       shell: bash
 
     - name: test non-AppImage
@@ -146,7 +138,7 @@ jobs:
       # Undo all changes made by testing.
       run:  |
         set -e
-        xvfb-run --auto-servernum enduser/test_trackereditor -a --format=plain
+        make test-run TEST_RUNNER="xvfb-run --auto-servernum"
         set +e
 
         # remove file created by unit test
@@ -163,7 +155,7 @@ jobs:
       if: matrix.CLI_BUILD == true
       run: |
         set -e
-        enduser/test_trackereditor --suite=TTestStartUpParameterCli --format=plain
+        make test-run TEST_ARGS="--suite=TTestStartUpParameterCli --format=plain"
         set +e
 
         rm -f enduser/console_log.txt
@@ -227,8 +219,7 @@ jobs:
         set -e
         xvfb-run --auto-servernum ./${{ matrix.RELEASE_FILE_NAME }} -TEST_SSL
         cp ./${{ matrix.RELEASE_FILE_NAME }} enduser/trackereditor
-        cd enduser
-        xvfb-run --auto-servernum ./test_trackereditor -a --format=plain
+        make test-run TEST_RUNNER="xvfb-run --auto-servernum"
       shell: bash
 
     - name: Upload Artifact
