@@ -64,7 +64,7 @@ parts:
       plugin: nil
       parse-info: [metainfo/io.github.gerryferdinandus.bittorrent-tracker-editor.metainfo.xml]
       override-build: |
-        lazbuild --build-mode=Release --widgetset=qt6 source/project/tracker_editor/trackereditor.lpi
+        make gui WIDGETSET=qt6
         install enduser/trackereditor $CRAFT_PART_INSTALL/
         install metainfo/io.github.gerryferdinandus.bittorrent-tracker-editor.desktop $CRAFT_PART_INSTALL/
 

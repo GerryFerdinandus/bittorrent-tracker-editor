@@ -19,6 +19,8 @@ jobs:
     name: A job to run tests in FreeBSD
     steps:
     - uses: actions/checkout@v7
+      with:
+        submodules: true
     - name: Test in FreeBSD
       id: test
       uses: vmactions/freebsd-vm@v1
@@ -55,12 +57,7 @@ jobs:
           cd $PROJECT_ROOT
           git clone --recursive https://github.com/GerryFerdinandus/bittorrent-tracker-editor.git
 
-          # Build lazarus
-          ./lazbuild --build-all --build-mode=Release --widgetset=qt6 ./bittorrent-tracker-editor/source/project/tracker_editor/trackereditor.lpi
-          ./lazbuild --build-all --build-mode=Release ./bittorrent-tracker-editor/source/project/tracker_editor/trackereditor_cli.lpi
-
-          # Build test
-          ./lazbuild --build-all --build-mode=Debug  ./bittorrent-tracker-editor/source/project/unit_test/tracker_editor_test.lpi
+          gmake -C bittorrent-tracker-editor test-build LAZBUILD="$PROJECT_ROOT/lazbuild" WIDGETSET=qt6
 
           # Start the Xvfb virtual display.
           Xvfb :99 -screen 0 1024x768x24 >/dev/null 2>&1 &
@@ -74,4 +71,4 @@ jobs:
 
           # Run the tests in the Xvfb virtual display environment.
           ./bittorrent-tracker-editor/enduser/trackereditor -TEST_SSL
-          ./bittorrent-tracker-editor/enduser/test_trackereditor -a --format=plain
+          gmake -C bittorrent-tracker-editor test-run
