@@ -777,6 +777,8 @@ var
 begin
   //Collect the user settings of every torrent file from the view.
   //ReorderGrid must already be called to keep the grid in sync with the file list.
+  // Initialize the managed result explicitly to suppress the build warning.
+  Result := nil;
   SetLength(Result, FTrackerList.TorrentFileNameList.Count);
   for i := 0 to High(Result) do
   begin
