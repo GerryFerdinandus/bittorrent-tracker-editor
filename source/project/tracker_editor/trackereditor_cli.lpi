@@ -111,7 +111,7 @@ end;"/>
         <PackageName Value="FCL"/>
       </Item2>
     </RequiredPackages>
-    <Units Count="11">
+    <Units Count="10">
       <Unit0>
         <Filename Value="trackereditor_cli.lpr"/>
         <IsPartOfProject Value="True"/>
@@ -135,32 +135,28 @@ end;"/>
         <IsPartOfProject Value="True"/>
       </Unit4>
       <Unit5>
-        <Filename Value="..\..\code\fix_openssl.pas"/>
+        <Filename Value="..\..\code\main_common.pas"/>
         <IsPartOfProject Value="True"/>
       </Unit5>
       <Unit6>
-        <Filename Value="..\..\code\main_common.pas"/>
+        <Filename Value="..\..\code\main_cli.pas"/>
         <IsPartOfProject Value="True"/>
       </Unit6>
       <Unit7>
-        <Filename Value="..\..\code\main_cli.pas"/>
-        <IsPartOfProject Value="True"/>
-      </Unit7>
-      <Unit8>
         <Filename Value="..\..\..\submodule\dcpcrypt\Hashes\dcpsha256.pas"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="DCPsha256"/>
-      </Unit8>
-      <Unit9>
+      </Unit7>
+      <Unit8>
         <Filename Value="..\..\..\submodule\dcpcrypt\dcpconst.pas"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="DCPconst"/>
-      </Unit9>
-      <Unit10>
+      </Unit8>
+      <Unit9>
         <Filename Value="..\..\..\submodule\dcpcrypt\dcpcrypt2.pas"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="DCPcrypt2"/>
-      </Unit10>
+      </Unit9>
     </Units>
   </ProjectOptions>
   <CompilerOptions>
