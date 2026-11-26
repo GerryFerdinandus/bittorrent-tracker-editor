@@ -36,7 +36,7 @@ After that every push to `main` that changes `docs/` rebuilds the site: <https:/
 - Diagrams are fenced code blocks with the language `mermaid`. They are drawn in the browser.
   - Put a label in double quotes when it contains `( ) [ ] { } < > ; :`, and use `<br/>` for a line break.
   - Keep a diagram small enough to read. Prefer two diagrams over one huge one.
-- Liquid (the template language of Jekyll) reads `{{ ... }}` and `{% ... %}` **everywhere**, also in code blocks. Pascal code with a Lazarus hint such as `{%H-}` must be wrapped in `{% raw %}...{% endraw %}`.
+- Liquid (the template language of Jekyll) reads `&#123;&#123; ... &#125;&#125;` and `&#123;% ... %&#125;` **everywhere**, also in code blocks. Pascal code with a Lazarus hint such as `&#123;%H-&#125;` must be wrapped in `&#123;% raw %}...&#123;% endraw %&#125;`.
 - Callouts: put `{: .note }`, `{: .tip }` or `{: .warning }` on the line before a paragraph.
 - Use the exact names of the program: menu captions as they are in `main.lfm`, parameters as in `torrent_miscellaneous.pas`.
 - Write short sentences. The readers are end users and programmers who do not speak English as a first language.
