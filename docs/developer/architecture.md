@@ -19,7 +19,7 @@ nav_order: 1
 | `source/project/unit_test/` | Lazarus project `tracker_editor_test.lpi` of the FPCUnit tests. |
 | `source/test/` | The FPCUnit test units. |
 | `submodule/dcpcrypt/` | Git submodule, the SHA256 of DCPcrypt2 (for the V2 info hash). Never modify it. |
-| `enduser/` | Output folder of the executables **and** the files that are shipped to the user: `readme.txt`, `add_trackers.txt`, `remove_trackers.txt`, `tracker-order-modes.svg`. |
+| `enduser/` | Output folder of the executables **and** the files that are shipped to the user: `readme.txt`, `add_trackers.txt`, `remove_trackers.txt`. The CI adds `tracker-order-modes.svg` (copied from `docs/assets/`) to the release zips. |
 | `test_torrent/` | Torrent files used by the tests (fixtures: no test may change them). |
 | `lib/` | Compiled units (build output, not in git). |
 | `metainfo/`, `snap/` | Linux packaging (Flathub/AppStream metadata, Snap). |

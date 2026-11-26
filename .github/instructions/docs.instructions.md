@@ -27,7 +27,7 @@ The site is Jekyll with the `just-the-docs` remote theme, published from branch 
 | Change | Update |
 |--------|--------|
 | `enduser/readme.txt` | `docs/user/console-mode.md` and `docs/user/tracker-order-modes.md` (the same text) |
-| `enduser/tracker-order-modes.svg` | `docs/assets/tracker-order-modes.svg` (identical file) |
+| `docs/assets/tracker-order-modes.svg` | Nothing: it is the only copy. The Windows and Linux CI copy it to `enduser/` for the release zips. |
 | Menu item, tab or caption in `main.lfm`, menu handler in `main.pas` | `docs/user/gui.md` (and `docs/developer/gui.md` for a structural change) |
 | Console parameter, exit code, `console_log.txt`, file location rule | `docs/user/console-mode.md`, `docs/user/files-and-folders.md`, `docs/user/troubleshooting.md`, `docs/developer/console-mode.md`, `enduser/readme.txt` |
 | Unit added/removed/renamed, `uses` dependency changed | `docs/developer/architecture.md` (unit table and the mermaid dependency graph) |

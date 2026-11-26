@@ -53,7 +53,9 @@ jobs:
       shell: bash
 
     - name: Create a zip file for Windows release.
+      # The svg is stored only in docs/assets. Copy it to enduser/ to include it in the zip.
       run: |
+        Copy-Item docs\assets\tracker-order-modes.svg enduser\
         Compress-Archive -Path enduser\*.txt, enduser\*.svg, enduser\*.exe, enduser\*.dll -DestinationPath $Env:RELEASE_ZIP_FILE
       shell: pwsh
 

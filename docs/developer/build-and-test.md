@@ -131,6 +131,6 @@ Notes: `TTestStartUpParameter` runs only the console mode, so no X server/`DISPL
 | `ci_freebsd.yaml` | FreeBSD | Uses `gmake test-build` / `gmake test-run`. |
 | `snap.yml` | Snap (amd64) | `snap/snapcraft.yaml`. |
 
-The release zips contain `enduser/*.txt` and `enduser/*.svg`. That is how `readme.txt`, `add_trackers.txt`, `remove_trackers.txt` and `tracker-order-modes.svg` reach the user. The workflows delete `console_log.txt` and `export_trackers.txt` and `git restore` the two preset `.txt` files first, so that test runs do not leak into the zip.
+The release zips contain `enduser/*.txt` and `enduser/*.svg`. That is how `readme.txt`, `add_trackers.txt`, `remove_trackers.txt` and `tracker-order-modes.svg` reach the user. The svg is stored only in `docs/assets/`: the Windows and Linux workflows copy it to `enduser/` just before the zip step. The workflows delete `console_log.txt` and `export_trackers.txt` and `git restore` the two preset `.txt` files first, so that test runs do not leak into the zip.
 
 Adding a file to `enduser/` that must ship? Check the globs above. A new file type (for example `*.md`) needs a change in the workflows.

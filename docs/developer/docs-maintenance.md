@@ -26,7 +26,7 @@ After that every push to `main` that changes `docs/` rebuilds the site: <https:/
 | `history.md` | Software history (changelog). |
 | `user/` | The user guide (GUI, console mode, tracker order modes, files, troubleshooting). |
 | `developer/` | The programmer guide (this section). |
-| `assets/` | Pictures. `tracker-order-modes.svg` is a copy of `enduser/tracker-order-modes.svg`. |
+| `assets/` | Pictures. `tracker-order-modes.svg` is the only copy; the Windows and Linux CI copy it to `enduser/` for the release zips. |
 
 ## Rules for writing pages
 
@@ -46,7 +46,6 @@ After that every push to `main` that changes `docs/` rebuilds the site: <https:/
 | If you change ... | ... then also update |
 |:------------------|:---------------------|
 | `enduser/readme.txt` | `docs/user/console-mode.md` (and `tracker-order-modes.md` for the `-Ux` text). **Keep both the same.** |
-| `enduser/tracker-order-modes.svg` | The copy `docs/assets/tracker-order-modes.svg` (identical file). |
 | A menu item, a tab or a caption in `main.lfm`, or the behaviour of a menu handler in `main.pas` | `docs/user/gui.md` (and `docs/developer/gui.md` for a structural change). |
 | A console parameter, the exit code or the content of `console_log.txt` | `docs/user/console-mode.md`, `docs/user/troubleshooting.md`, `docs/developer/console-mode.md`, `enduser/readme.txt`. |
 | Where the text files are loaded and saved (`DetermineTrackerListFolder`, packaging) | `docs/user/files-and-folders.md`, `docs/developer/console-mode.md`. |

@@ -128,12 +128,12 @@ docs/
 ├── index.md, history.md              # home, Software history (the changelog)
 ├── user/                             # end user: gui.md, console-mode.md, tracker-order-modes.md, files-and-folders.md, troubleshooting.md
 ├── developer/                        # programmer: architecture.md (mermaid unit graph), torrent-format.md, tracker-pipeline.md, console-mode.md, gui.md, online-services.md, build-and-test.md, conventions.md, docs-maintenance.md
-└── assets/tracker-order-modes.svg    # copy of enduser/tracker-order-modes.svg
+└── assets/tracker-order-modes.svg    # only copy; Windows/Linux CI copy it to enduser/ for the release zips
 ```
 
 Keep the documentation in sync in the same commit as the code change:
 
-- `enduser/readme.txt` (shipped in the release zips) and `docs/user/console-mode.md` + `docs/user/tracker-order-modes.md` must say the same. A change in one is a change in the other. `docs/assets/tracker-order-modes.svg` must be identical to `enduser/tracker-order-modes.svg`.
+- `enduser/readme.txt` (shipped in the release zips) and `docs/user/console-mode.md` + `docs/user/tracker-order-modes.md` must say the same. A change in one is a change in the other. `docs/assets/tracker-order-modes.svg` is the only copy of the svg: the Windows and Linux CI copy it to `enduser/` before zipping.
 - A menu item, tab or caption in `main.lfm`, or a changed menu handler in `main.pas`: update `docs/user/gui.md` (and `docs/developer/gui.md` when the structure changes).
 - A console parameter, exit code, `console_log.txt` text or file location rule: update `docs/user/console-mode.md`, `docs/user/files-and-folders.md`, `docs/user/troubleshooting.md`, `docs/developer/console-mode.md` and `enduser/readme.txt`.
 - A unit added, removed, renamed, or a changed `uses` dependency: update the unit table and the mermaid dependency graph in `docs/developer/architecture.md`.

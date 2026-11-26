@@ -179,6 +179,12 @@ jobs:
         EOF
       shell: bash
 
+    - name: Copy tracker-order-modes.svg from docs to enduser before releasing the zip files.
+      # The svg is stored only in docs/assets.
+      if: ${{ !matrix.APPIMAGE_BUILD }}
+      run: cp -v ${{ github.workspace }}/docs/assets/tracker-order-modes.svg ${{ github.workspace }}/enduser/
+      shell: bash
+
     - name: Create a gtk2 or Qt5/Qt6 release in zip file format.
       if: ${{ !matrix.APPIMAGE_BUILD && matrix.CLI_BUILD != true }}
       run: zip -j ${{ matrix.RELEASE_FILE_NAME }} enduser/*.txt enduser/*.svg enduser/libQt* enduser/trackereditor
