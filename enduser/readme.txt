@@ -1,6 +1,9 @@
 ====================
 Console / automated mode
 ====================
+Web version of this document (easier to read, with pictures):
+https://gerryferdinandus.github.io/bittorrent-tracker-editor/user/console-mode.html
+
 Below this line is documentation for the more 'automated' (command line) use of trackereditor.
 If you do not want to use it this way, then just remove both the files 'add_trackers.txt' and
 'remove_trackers.txt' from the directory, and use the normal graphical program instead.
@@ -44,6 +47,15 @@ trackereditor <file_or_folder> -Ux [-SAC] [-SOURCE "tag"]
 
 What tracker will be added/removed depends on the content of the add_trackers.txt
 and remove_trackers.txt files described below.
+
+Rules:
+- -Ux can be the first or the second parameter.
+- Any other parameter is an ERROR (for example '-sac' or '-SORUCE'). The parameters are case sensitive.
+- The value after -SOURCE is never read as a parameter: '-SOURCE -SAC' is a missing value.
+- The exit code of the program is 0 on success and 1 on any error. See console_log.txt.
+- The GUI program (trackereditor) started with only ONE parameter (a torrent file or a folder) does not
+  run the console mode: it opens the window and loads that file or folder, like a drag and drop.
+  trackereditor_cli with only one parameter runs the console mode with the default '-U4' (sort by name).
 
 --------------------
 Additional Files: Trackers file, export file and log file
@@ -222,6 +234,10 @@ trackereditor.exe "C:\dir\torrent" -U0
 original order, at its named position (BEGIN or END) of the final trackers list.
 When a tracker is present in both lists, the duplicate is always removed from the OTHER
 (non-intact) list, never from the intact one.
+
+Note: with -U0, -U1, -U2 and -U3 the trackers that are found in the OTHER torrent files being
+processed (and that are not removed via remove_trackers.txt) are appended at the END of the list,
+after the NEW and the ORIGINAL trackers. -U5 and -U6 never add them.
 
 Console parameter: -U0
 	Insert new trackers list BEFORE, the original trackers list inside the torrent file.

@@ -58,3 +58,7 @@ All strings are UTF-8. Use `UTF8String` or `string` (equivalent under `{$H+}`). 
 ## Submodule
 
 `submodule/dcpcrypt/` provides SHA256 via `DCPsha256`. Never modify files in this directory.
+
+## Documentation
+
+The architecture documentation `docs/developer/architecture.md` has a mermaid graph of the `uses` dependencies between the units. When you add, remove or rename a unit, or change a `uses` clause so that the dependencies change, update that graph and the unit table in the same commit. A changed console parameter or file location also changes `enduser/readme.txt` and `docs/user/console-mode.md` (they must say the same). See `.github/instructions/docs.instructions.md`.

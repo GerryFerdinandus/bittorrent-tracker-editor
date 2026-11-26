@@ -1,0 +1,46 @@
+# GitHub Pages site: https://gerryferdinandus.github.io/bittorrent-tracker-editor/
+# Source: branch main, folder /docs (Settings > Pages > Deploy from a branch).
+title: BitTorrent Tracker Editor
+description: Add, remove and reorder the trackers of many torrent files at once. Windows, macOS and Linux.
+url: https://gerryferdinandus.github.io
+baseurl: /bittorrent-tracker-editor
+
+remote_theme: just-the-docs/just-the-docs@v0.10.0
+plugins:
+  - jekyll-remote-theme
+
+search_enabled: true
+heading_anchors: true
+color_scheme: light
+
+# Renders the ```mermaid code blocks. https://just-the-docs.com/docs/code/#mermaid
+mermaid:
+  version: "11.4.1"
+
+# Used as {: .note } / {: .warning } / {: .tip } before a paragraph.
+callouts:
+  note:
+    title: Note
+    color: blue
+  tip:
+    title: Tip
+    color: green
+  warning:
+    title: Warning
+    color: red
+
+aux_links:
+  "GitHub repository":
+    - "https://github.com/GerryFerdinandus/bittorrent-tracker-editor"
+  "Download":
+    - "https://github.com/GerryFerdinandus/bittorrent-tracker-editor/releases"
+aux_links_new_tab: true
+
+footer_content: "Released under the <a href=\"https://opensource.org/licenses/MIT\">MIT License</a>."
+
+gh_edit_link: true
+gh_edit_link_text: "Edit this page on GitHub"
+gh_edit_repository: "https://github.com/GerryFerdinandus/bittorrent-tracker-editor"
+gh_edit_branch: "main"
+gh_edit_source: docs
+gh_edit_view_mode: "edit"

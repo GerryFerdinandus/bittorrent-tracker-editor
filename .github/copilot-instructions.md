@@ -104,7 +104,7 @@ Notes:
 
 - Test framework: FPCUnit. Test files live in `source/test/`, test project in `source/project/unit_test/`.
 - Submodule `submodule/dcpcrypt/` provides SHA256 — never modify it directly.
-- `enduser/add_trackers.txt` and `enduser/remove_trackers.txt` are user-facing preset files.
+- `enduser/add_trackers.txt` and `enduser/remove_trackers.txt` are user-facing preset files. `enduser/readme.txt` is the user-facing console documentation and must stay in sync with `docs/user/` (see "Documentation" below).
 - Console mode supports `-U0` through `-U7` for 8 tracker ordering modes, plus `-SAC` and `-SOURCE`. Any other parameter is an error, and the value after `-SOURCE` is never read as a parameter.
 - Console mode changes no torrent file when `add_trackers.txt` has an invalid URL or `remove_trackers.txt` can not be read: the error is in `console_log.txt` and the exit code is 1.
 - `remove_trackers.txt`: the lines are by design not validated as tracker URLs (unlike `add_trackers.txt`). A line that matches no tracker is skipped. An empty file (present) means: remove every tracker inside the torrents.
@@ -116,8 +116,30 @@ Notes:
 - OpenSSL 3 DLLs (`libssl-3-x64.dll`, `libcrypto-3-x64.dll`) are required at runtime on Windows for HTTPS.
 - The `{$IFDEF VER3_2_2}` blocks in `fix_openssl.pas` work around FPC 3.2.2 missing OpenSSL 3 detection — keep until FPC updates.
 - On Linux, the folder used to load/save `add_trackers.txt`/`remove_trackers.txt`/etc. depends on the packaging format (see `FormCreate` in `main.pas`): Snap → `$SNAP_USER_COMMON`, Flatpak → `$XDG_DATA_HOME`, AppImage → `$OWD` (original working directory, not the AppImage's own path), otherwise same dir as the executable. On macOS it is always `~/.config/trackereditor/`.
-- CI/CD workflows live in `.github/workflows/`: `cicd_windows.yaml`, `cicd_macos.yaml`, `cicd_ubuntu.yaml` (builds gtk2/qt5/qt6 zips plus AppImage amd64/arm64 via linuxdeploy), and `snap.yml` for the Snap Store package.
+- CI/CD workflows live in `.github/workflows/`: `cicd_windows.yaml`, `cicd_macos.yaml`, `cicd_ubuntu.yaml` (builds gtk2/gtk3/qt5/qt6 zips, CLI zips plus AppImage amd64/arm64 via linuxdeploy), `ci_freebsd.yaml` and `snap.yml` for the Snap Store package.
 - `trackereditor_cli` is built for Windows and Linux only — `cicd_macos.yaml` has no CLI build job. Its own FPCUnit suite is `TTestStartUpParameterCli` (see `source/test/test_start_up_parameter.pas`); it has no networking code, so `-TEST_SSL` is not supported.
+
+## Documentation (GitHub Pages in `docs/`)
+
+The documentation site is plain Markdown in `docs/` (Jekyll, `just-the-docs` remote theme, mermaid diagrams), published from branch `main`, folder `/docs`: https://gerryferdinandus.github.io/bittorrent-tracker-editor/. Follow `.github/instructions/docs.instructions.md` when you write or change a page.
+
+```
+docs/
+├── index.md, history.md              # home, Software history (the changelog)
+├── user/                             # end user: gui.md, console-mode.md, tracker-order-modes.md, files-and-folders.md, troubleshooting.md
+├── developer/                        # programmer: architecture.md (mermaid unit graph), torrent-format.md, tracker-pipeline.md, console-mode.md, gui.md, online-services.md, build-and-test.md, conventions.md, docs-maintenance.md
+└── assets/tracker-order-modes.svg    # copy of enduser/tracker-order-modes.svg
+```
+
+Keep the documentation in sync in the same commit as the code change:
+
+- `enduser/readme.txt` (shipped in the release zips) and `docs/user/console-mode.md` + `docs/user/tracker-order-modes.md` must say the same. A change in one is a change in the other. `docs/assets/tracker-order-modes.svg` must be identical to `enduser/tracker-order-modes.svg`.
+- A menu item, tab or caption in `main.lfm`, or a changed menu handler in `main.pas`: update `docs/user/gui.md` (and `docs/developer/gui.md` when the structure changes).
+- A console parameter, exit code, `console_log.txt` text or file location rule: update `docs/user/console-mode.md`, `docs/user/files-and-folders.md`, `docs/user/troubleshooting.md`, `docs/developer/console-mode.md` and `enduser/readme.txt`.
+- A unit added, removed, renamed, or a changed `uses` dependency: update the unit table and the mermaid dependency graph in `docs/developer/architecture.md`.
+- Merge algorithm or `TTrackerListOrder` change: `docs/developer/tracker-pipeline.md`, `docs/user/tracker-order-modes.md`, the svg and `enduser/readme.txt`.
+- Changes to the Makefile, workflows or test suites: `docs/developer/build-and-test.md`.
+- New release: add a section at the top of `docs/history.md` (newest first, with a `Compiler Lazarus: vX.Y` line, the Lazarus version used for the release) and bump `PROGRAM_VERSION` in `main.pas`. There is no `enduser/version.txt` and no "Software history" in `README.md` any more: `README.md` only links to the Pages site.
 
 ## Commit Messages
 
@@ -132,7 +154,7 @@ Use the [Conventional Commits](https://www.conventionalcommits.org/) standard (t
 ```
 
 - Types: `feat`, `fix`, `docs`, `test`, `refactor`, `perf`, `build`, `ci`, `chore`, `revert`.
-- Scope is optional and names the area, e.g. `console`, `gui`, `decode`, `tests`: `fix(console): reject unknown parameters`.
+- Scope is optional and names the area, e.g. `console`, `gui`, `decode`, `tests`, `pages`: `fix(console): reject unknown parameters`. Documentation only changes use `docs`, e.g. `docs(pages): describe the gui menu`.
 - The description is imperative, lower case, without a trailing period, and about 72 characters or less.
 - The body explains what was wrong and why the change was made, not how.
 - Breaking change: `!` after the type/scope (`feat(console)!: ...`) and/or a `BREAKING CHANGE:` footer.
